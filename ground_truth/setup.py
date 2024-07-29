@@ -20,6 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            'switch_cntr_test = ground_truth.switch_controller_test:main',
         ],
     },
 )
