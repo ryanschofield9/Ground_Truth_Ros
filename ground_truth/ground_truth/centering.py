@@ -55,26 +55,42 @@ class MoveArm(Node):
     def publish_twist(self): 
         my_twist_linear = [0.0, 0.0, 0.0] 
         my_twist_angular = [0.0, 0.0, 0.0]
-
+        cmd = TwistStamped()
+        cmd.header.frame_id = 'tool0'
+        cmd.twist.angular = Vector3(x=my_twist_angular[0], y=my_twist_angular[1], z=my_twist_angular[2])
         if self.tof_collected == False: 
             # if tof data has not been collected 
             now = time.time()
             if (now - self.start_time ) < self.move_up_collect:
                 #if it has not been the seconds needed to move up and collect tof data, keep moving up at 0.1 m/s
-                my_twist_linear[1]=  0.1 #moving up at 0.1 m/s 
+                my_twist_linear[1]=  -0.1 #moving up at 0.1 m/s (negative y is up )
+                cmd.header.stamp = self.get_clock().now().to_msg()
+                cmd.twist.linear = Vector3(x=my_twist_linear[0], y=my_twist_linear[1], z=my_twist_linear[2])
+                self.pub_vel_commands.publish(cmd)
+                self.get_logger().info(f"Sending: linear: {cmd.twist.linear} angular: {cmd.twist.angular}")
+    
+            
             else:
                 self.tof_collected = True
+                cmd.header.stamp = self.get_clock().now().to_msg()
+                cmd.twist.linear = Vector3(x=my_twist_linear[0], y=my_twist_linear[1], z=my_twist_linear[2])
+                self.pub_vel_commands.publish(cmd)
+                self.get_logger().info(f"Sending: linear: {cmd.twist.linear} angular: {cmd.twist.angular}")
+
         else: 
             if self.calc_angle_done ==False:
                 self.calculate_angle()
+                y_pose_want = (self.lowest_pos_tof1 + self.lowest_pos_tof2)/2
+                print ("y_pose_want: ", y_pose_want)
+                self.move_down_to_y(y_pose_want)
             #Add here the function that will find the position 
             #Add here the publisher that will send the robot to the saved position 
 
-        cmd = TwistStamped()
-        cmd.header.frame_id = 'tool0'
-        cmd.header.stamp = self.get_clock().now().to_msg()
-        cmd.twist.linear = Vector3(x=my_twist_linear[0], y=my_twist_linear[1], z=my_twist_linear[2])
-        cmd.twist.angular = Vector3(x=my_twist_angular[0], y=my_twist_angular[1], z=my_twist_angular[2])
+        #cmd = TwistStamped()
+        #cmd.header.frame_id = 'tool0'
+        #cmd.header.stamp = self.get_clock().now().to_msg()
+        #cmd.twist.linear = Vector3(x=my_twist_linear[0], y=my_twist_linear[1], z=my_twist_linear[2])
+        #cmd.twist.angular = Vector3(x=my_twist_angular[0], y=my_twist_angular[1], z=my_twist_angular[2])
         #self.get_logger().info(f"Sending: linear: {cmd.twist.linear} angular: {cmd.twist.angular}")
 
         self.pub_vel_commands.publish(cmd)
@@ -116,7 +132,7 @@ class MoveArm(Node):
     def get_tool_pose_y(self, time=None, as_array=True):
             try:
                 tf = self.tf_buffer.lookup_transform(
-                    self.base_frame, self.tool_frame, time or rclpy.time.Time()
+                    self.tool_frame, self.base_frame, time or rclpy.time.Time()
                 )
             except TransformException as ex:
                 self.get_logger().warn("Received TF Exception: {}".format(ex))
@@ -133,7 +149,7 @@ class MoveArm(Node):
     def get_tool_pose(self, time=None, as_array=True):
                 try:
                     tf = self.tf_buffer.lookup_transform(
-                        self.base_frame, self.tool_frame, time or rclpy.time.Time()
+                        self.tool_frame, self.base_frame, time or rclpy.time.Time()
                     )
                 except TransformException as ex:
                     self.get_logger().warn("Received TF Exception: {}".format(ex))
@@ -147,6 +163,26 @@ class MoveArm(Node):
                     print(pose)
                     return pose
 
+    def move_down_to_y(self, y_pose_want):
+        y_pose= self.get_tool_pose_y()
+        cmd = TwistStamped()
+        cmd.header.frame_id = 'tool0'
+        cmd.twist.linear = Vector3(x=0.0, y=0.0, z=0.0)
+        cmd.twist.angular = Vector3(x=0.0, y=0.0, z=0.0)
+        while(abs(y_pose - y_pose_want) > 0.01):
+            cmd.header.stamp = self.get_clock().now().to_msg()
+            cmd.twist.linear = Vector3(x=0.0, y=0.05, z=0.0)
+            self.pub_vel_commands.publish(cmd)
+            self.get_logger().info(f"Sending: linear: {cmd.twist.linear} angular: {cmd.twist.angular}")
+            y_pose= self.get_tool_pose_y()
+            print("y_pose: ", y_pose, " y_pose_want", y_pose_want)
+        cmd.header.stamp = self.get_clock().now().to_msg()
+        cmd.twist.linear = Vector3(x=0.0, y=0.0, z=0.0)
+        self.pub_vel_commands.publish(cmd)
+        self.get_logger().info(f"Sending: linear: {cmd.twist.linear} angular: {cmd.twist.angular}")
+        y_pose= self.get_tool_pose_y()
+        print("final pose at", y_pose)
+        return 
 
 def convert_tf_to_pose(tf: TransformStamped):
     pose = PoseStamped()
