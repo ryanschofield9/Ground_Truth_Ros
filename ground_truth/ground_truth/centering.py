@@ -71,7 +71,7 @@ class MoveArm(Node):
                 cmd.header.stamp = self.get_clock().now().to_msg()
                 cmd.twist.linear = Vector3(x=my_twist_linear[0], y=my_twist_linear[1], z=my_twist_linear[2])
                 self.pub_vel_commands.publish(cmd)
-                #self.get_logger().info(f"Sending: linear: {cmd.twist.linear} angular: {cmd.twist.angular}")
+                self.get_logger().info(f"Sending: linear: {cmd.twist.linear} angular: {cmd.twist.angular}")
     
             
             else:
@@ -79,7 +79,7 @@ class MoveArm(Node):
                 cmd.header.stamp = self.get_clock().now().to_msg()
                 cmd.twist.linear = Vector3(x=my_twist_linear[0], y=my_twist_linear[1], z=my_twist_linear[2])
                 self.pub_vel_commands.publish(cmd)
-                #self.get_logger().info(f"Sending: linear: {cmd.twist.linear} angular: {cmd.twist.angular}")
+                self.get_logger().info(f"Sending: linear: {cmd.twist.linear} angular: {cmd.twist.angular}")
 
         elif self.done == False: 
             if self.calc_angle_done ==False:
@@ -99,14 +99,11 @@ class MoveArm(Node):
                 cmd.header.stamp = self.get_clock().now().to_msg()
                 cmd.twist.linear = Vector3(x=0.0, y=0.0, z=0.0)
                 self.pub_vel_commands.publish(cmd)
-                #self.get_logger().info(f"Sending: linear: {cmd.twist.linear} angular: {cmd.twist.angular}")
+                self.get_logger().info(f"Sending: linear: {cmd.twist.linear} angular: {cmd.twist.angular}")
                 y_pose= self.get_tool_pose_y()
                 print("final pose at", y_pose)
                 self.done = True
-        elif self.done == True: 
-            print("Done")
-            #Add here the function that will find the position 
-            #Add here the publisher that will send the robot to the saved position 
+        
 
         #cmd = TwistStamped()
         #cmd.header.frame_id = 'tool0'
@@ -157,9 +154,16 @@ class MoveArm(Node):
     def move_down_to_y(self, y_pose_want):
         #self.get_logger().info(f"Sending: linear: {cmd.twist.linear} angular: {cmd.twist.angular}")
         print("Time TEST!!!: ", rclpy.time.Time())
+        cmd = TwistStamped()
+        cmd.header.frame_id = 'tool0'
+        cmd.twist.angular = Vector3(x=0.0, y=0.0, z=0.0)
+        cmd.header.stamp = self.get_clock().now().to_msg()
+        cmd.twist.linear = Vector3(x=0.0, y=0.05, z=0.0)
         y_pose= self.get_tool_pose_y()
         print("y_pose: ", y_pose, " y_pose_want", y_pose_want)
-        if abs(y_pose - y_pose_want) < 0.1:
+        if abs(y_pose - y_pose_want) < 0.01:
+            self.pub_vel_commands.publish(cmd)
+            self.get_logger().info(f"Sending: linear: {cmd.twist.linear} angular: {cmd.twist.angular}")
             self.move_down = True
             print("YAY")
             
@@ -207,7 +211,7 @@ class MoveArm(Node):
 def convert_tf_to_pose(tf: TransformStamped):
     pose = PoseStamped()
     pose.header = tf.header
-    print("tf header: ",tf.header)
+    #print("tf header: ",tf.header)
     tl = tf.transform.translation
     pose.pose.position = Point(x=tl.x, y=tl.y, z=tl.z)
     pose.pose.orientation = tf.transform.rotation
