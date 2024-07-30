@@ -24,6 +24,8 @@ setup(
             'pos_test = ground_truth.send_recieve_pos_test:main',
             'pub_tof = ground_truth.publisher_arduino:main',
             'centering = ground_truth.centering:main',
+            'tof1_fake_pub = ground_truth.tof1_fake_pub:main', 
+            'tof2_fake_pub = ground_truth.tof2_fake_pub:main'
 
         ],
     },
