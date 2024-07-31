@@ -46,6 +46,8 @@ class MoveArm(Node):
         self.lowest_reading_tof2 = 500 #start with value that can not be saved 
         self.calc_angle_done = False
         self.move_down = False
+        self.dis_sensors = 0.0508 # meters 
+        self.branch_angle = 0
         time.sleep(3)
         print("done waiting")
         #self.tf_buffer.wait(self.base_frame, self.tool_frame)
@@ -147,6 +149,8 @@ class MoveArm(Node):
         print("lowest y pose for tof2: ", self.lowest_pos_tof2)
         print("actual pose y value: ", self.get_tool_pose_y())
         print("actual pose: ", self.get_tool_pose())
+        distance_readings = self.lowest_pos_tof2 - self.lowest_pos_tof1
+        self.branch_angle = np.arctan(distance_readings / self.dis_sensors)
         self.calc_angle_done = True
 
 
@@ -166,6 +170,7 @@ class MoveArm(Node):
             self.get_logger().info(f"Sending: linear: {cmd.twist.linear} angular: {cmd.twist.angular}")
             self.move_down = True
             print("YAY")
+
             
         return 
 
