@@ -1,7 +1,7 @@
 import rclpy 
 from rclpy.node import Node 
 
-from std_msgs.msg import Int64
+from std_msgs.msg import Int64, Float32
 
 class TOFData(Node): 
     def __init__(self):

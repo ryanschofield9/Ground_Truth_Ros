@@ -104,6 +104,7 @@ class MoveArm(Node):
                 self.get_logger().info(f"Sending: linear: {cmd.twist.linear} angular: {cmd.twist.angular}")
                 y_pose= self.get_tool_pose_y()
                 print("final pose at", y_pose)
+                print("calculated angle needed to rotate: ", self.branch_angle)
                 self.done = True
         
 
@@ -156,6 +157,25 @@ class MoveArm(Node):
 
     
     def move_down_to_y(self, y_pose_want):
+        #self.get_logger().info(f"Sending: linear: {cmd.twist.linear} angular: {cmd.twist.angular}")
+        print("Time TEST!!!: ", rclpy.time.Time())
+        cmd = TwistStamped()
+        cmd.header.frame_id = 'tool0'
+        cmd.twist.angular = Vector3(x=0.0, y=0.0, z=0.0)
+        cmd.header.stamp = self.get_clock().now().to_msg()
+        cmd.twist.linear = Vector3(x=0.0, y=0.05, z=0.0)
+        y_pose= self.get_tool_pose_y()
+        print("y_pose: ", y_pose, " y_pose_want", y_pose_want)
+        if abs(y_pose - y_pose_want) < 0.01:
+            self.pub_vel_commands.publish(cmd)
+            self.get_logger().info(f"Sending: linear: {cmd.twist.linear} angular: {cmd.twist.angular}")
+            self.move_down = True
+            print("YAY")
+
+            
+        return 
+    
+    def rotate_to_w(self, y_pose_want):
         #self.get_logger().info(f"Sending: linear: {cmd.twist.linear} angular: {cmd.twist.angular}")
         print("Time TEST!!!: ", rclpy.time.Time())
         cmd = TwistStamped()

@@ -22,6 +22,7 @@ setup(
         'console_scripts': [
             'switch_cntr_test = ground_truth.switch_controller_test:main',
             'pos_test = ground_truth.send_recieve_pos_test:main',
+            'joint_test = ground_truth.send_recieve_joint_test:main',
             'pub_tof = ground_truth.publisher_arduino:main',
             'centering = ground_truth.centering:main',
             'tof1_fake_pub = ground_truth.tof1_fake_pub:main', 

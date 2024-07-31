@@ -14,16 +14,19 @@ from std_msgs.msg import Int64
 import time 
 
 
+
 #used Alex's code in follow the leader controller.py to get this code 
 class PosTest(Node):
     def __init__(self):
-        super().__init__("test_pose")
+        super().__init__("test_pos")
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
         self.base_frame = 'base_link'
         self.tool_frame = 'tool0'
         self.timer = self.create_timer(1, self.get_tool_pose)
-
+        self.pub_vel_commands = self.create_publisher(TwistStamped, '/servo_node/delta_twist_cmds', 10)
+        #self.pub_timer = self.create_timer(1/10, self.publish_twist)
+        self.send_joint_pos()
 
     def get_tool_pose(self, time=None, as_array=True):
             try:
@@ -43,8 +46,17 @@ class PosTest(Node):
                 print(pose)
                 return pose
     
-
-
+    def publish_twist(self): 
+        my_twist_linear = [0.0, 0.0, 0.0] 
+        my_twist_angular = [0.0, 0.0, -0.5]
+        cmd = TwistStamped()
+        cmd.header.frame_id = 'tool0'
+        cmd.header.stamp = self.get_clock().now().to_msg()
+        cmd.twist.linear = Vector3(x=my_twist_linear[0], y=my_twist_linear[1], z=my_twist_linear[2])
+        cmd.twist.angular = Vector3(x=my_twist_angular[0], y=my_twist_angular[1], z=my_twist_angular[2])
+        self.pub_vel_commands.publish(cmd)
+        self.get_tool_pose()
+    
 
 def convert_tf_to_pose(tf: TransformStamped):
     pose = PoseStamped()
