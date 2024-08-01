@@ -8,10 +8,13 @@ from tf2_ros import TransformException
 from tf2_geometry_msgs import do_transform_vector3
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
+from std_srvs.srv import Trigger
+from controller_manager_msgs.srv import SwitchController
 import numpy as np
 
 from std_msgs.msg import Int64, Float32
 import time 
+import matplotlib.pyplot as plt
 
 class MoveArm(Node):
     def __init__(self):
@@ -31,6 +34,22 @@ class MoveArm(Node):
         self.base_frame = 'base_link'
         self.tool_frame = 'tool0'
     
+        self.service_handler_group = ReentrantCallbackGroup()
+        
+        self.enable_servo = self.create_client(
+            Trigger, "/servo_node/start_servo", callback_group=self.service_handler_group
+        )
+        self.disable_servo = self.create_client(
+            Trigger, "/servo_node/stop_servo", callback_group=self.service_handler_group
+        )
+        self.switch_ctrl = self.create_client(
+            SwitchController, "/controller_manager/switch_controller", callback_group=self.service_handler_group
+        )
+
+        #inital states
+        self.servo_active = False
+        self.forward_cntr = 'forward_position_controller'
+        self.joint_cntr = 'scaled_joint_trajectory_controller'
 
         #Creating parameters 
         self.declare_parameter('speed',0.1)
@@ -49,6 +68,8 @@ class MoveArm(Node):
         self.dis_sensors = 0.0508 # meters 
         self.branch_angle = 0
         time.sleep(3)
+        self.start_servo()
+        self.switch_controller(self.forward_cntr, self.joint_cntr)
         print("done waiting")
         #self.tf_buffer.wait(self.base_frame, self.tool_frame)
         self.lowest_pos_tof1 = self.get_tool_pose_y()
@@ -105,6 +126,7 @@ class MoveArm(Node):
                 y_pose= self.get_tool_pose_y()
                 print("final pose at", y_pose)
                 print("calculated angle needed to rotate: ", self.branch_angle)
+                self.plot_tof()
                 self.done = True
         
 
@@ -214,6 +236,30 @@ class MoveArm(Node):
                 print(pose)
                 return -100000
     
+    def plot_tof(self):
+        t = []
+        t2 = []
+        found = False
+        for idx, val in enumerate(self.tof1_readings): 
+            t.append(idx)
+            if val == self.lowest_reading_tof1 and found == False:
+                lowest_x = idx
+                found = True
+        
+        found = False
+        for idx, val in enumerate(self.tof2_readings): 
+            t2.append(idx)
+            if val == self.lowest_reading_tof1 and found == False:
+                lowest_x2 = idx
+                found = True
+            
+        plt.plot(t,self.tof1_readings)
+        plt.plot(t2, self.tof2_readings)
+        plt.plot([lowest_x, lowest_x], [self.lowest_reading_tof1-100,self.lowest_reading_tof1+100, ])
+        plt.plot([lowest_x2, lowest_x2], [self.lowest_reading_tof2-100,self.lowest_reading_tof2+100, ])
+        plt.show()
+        
+    
     def get_tool_pose(self, time=None, as_array=True):
                 try:
                     print("Time: ", rclpy.time.Time())
@@ -232,7 +278,25 @@ class MoveArm(Node):
                 else:
                     print(pose)
                     return pose
-
+    def start_servo(self):
+        print("in start")
+        if self.servo_active:
+            print ("Servo is already active")
+        else:
+            self.enable_servo.call_async(Trigger.Request())
+            self.active = True
+            print("Servo has been activated") 
+        return
+    
+    def switch_controller(self, act, deact):
+        switch_ctrl_req = SwitchController.Request(
+            activate_controllers = [act], deactivate_controllers= [deact], strictness = 2
+            )
+        self.switch_ctrl.call_async(switch_ctrl_req)
+        print("Controllers have been switched")
+        print(f"Activated: {act}  Deactivated: {deact}")
+            
+        return
 def convert_tf_to_pose(tf: TransformStamped):
     pose = PoseStamped()
     pose.header = tf.header

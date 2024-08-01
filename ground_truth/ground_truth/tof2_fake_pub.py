@@ -14,7 +14,7 @@ class TOFData(Node):
     def publish_tof(self):
         msg = Int64()
         if self.count_down:
-            if self.count > 150:
+            if self.count > 180:
                 msg.data = self.count 
                 self.get_logger().info(f"Sending tof2 data: {msg.data} ")
                 self.pub.publish(msg)
