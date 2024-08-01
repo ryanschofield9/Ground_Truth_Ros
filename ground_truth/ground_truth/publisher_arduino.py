@@ -1,6 +1,6 @@
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Float32, String
+from std_msgs.msg import Float32, String, Int64
 import serial
 
 import time 
@@ -37,6 +37,10 @@ class ArduinoTOFPublisher(Node):
             try:
                 tof1val = float(newstring[1])
                 tof2val = float(newstring[3])
+                msg.data = tof1val
+                msg_2.data = tof2val
+                self.publisher_.publish(msg)
+                self.publisher_2.publish(msg_2)
             except: 
                 tof1val = 0
                 tof2val = 0
@@ -44,10 +48,6 @@ class ArduinoTOFPublisher(Node):
         except ValueError as e:
             print(f"{e}: Could not convert msg type to float.")
 
-        msg.data = tof1val
-        msg_2.data = tof2val
-        self.publisher_.publish(msg)
-        self.publisher_2.publish(msg_2)
         try: 
             self.get_logger().info(f"TOF reading: {newstring[1]}, {newstring[3]}, Publishing: {msg.data}, {msg_2.data}")
         except: 

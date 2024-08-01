@@ -13,15 +13,27 @@ from controller_manager_msgs.srv import SwitchController
 import numpy as np
 
 from std_msgs.msg import Int64, Float32
+from sensor_msgs.msg import JointState
 import time 
 import matplotlib.pyplot as plt
+
+from moveit_msgs.action import MoveGroup
+from moveit_msgs.msg import (
+    MotionPlanRequest,
+    PlanningOptions,
+    Constraints,
+    JointConstraint,
+    PositionConstraint,
+    OrientationConstraint,
+)
+from rclpy.action import ActionClient
 
 class MoveArm(Node):
     def __init__(self):
         super().__init__('move_arm')
         # create publishers and subscripers (and timers as necessary )
-        self.sub_tof1 = self.create_subscription(Int64, 'tof1', self.callback_tof1, 10)
-        self.sub_tof2 = self.create_subscription(Int64, 'tof2', self.callback_tof2, 10)
+        self.sub_tof1 = self.create_subscription(Float32, 'tof1', self.callback_tof1, 10)
+        self.sub_tof2 = self.create_subscription(Float32, 'tof2', self.callback_tof2, 10)
         self.pub_vel_commands = self.create_publisher(TwistStamped, '/servo_node/delta_twist_cmds', 10)
         self.pub_timer = self.create_timer(1/10, self.publish_twist)
         #add a publisher that will be able to publish position (x,y,z,rotation) or joint 
@@ -56,6 +68,9 @@ class MoveArm(Node):
         self.declare_parameter('distance', 20)
         self.timer_2 = self.create_timer(1, self.callback_timer)
         
+        self.moveit_planning_client = ActionClient(self, MoveGroup, "move_action")
+        #self.pub_timer = self.create_timer(1/10, self.publish_twist)
+        self.sub_joints = self.create_subscription(JointState, 'joint_states',self.callback_joints, 10 )
 
         self.tof_collected = False
         self.move_up_collect = 6 #seconds needed to move up and collect tof data 
@@ -70,6 +85,7 @@ class MoveArm(Node):
         time.sleep(3)
         self.start_servo()
         self.switch_controller(self.forward_cntr, self.joint_cntr)
+        #self.rotate_w_to_0()
         print("done waiting")
         #self.tf_buffer.wait(self.base_frame, self.tool_frame)
         self.lowest_pos_tof1 = self.get_tool_pose_y()
@@ -126,6 +142,8 @@ class MoveArm(Node):
                 y_pose= self.get_tool_pose_y()
                 print("final pose at", y_pose)
                 print("calculated angle needed to rotate: ", self.branch_angle)
+                self.switch_controller(self.joint_cntr, self.forward_cntr)
+                self.rotate_to_w()
                 self.plot_tof()
                 self.done = True
         
@@ -149,7 +167,7 @@ class MoveArm(Node):
         if (now - self.start_time ) < self.move_up_collect:
              self.tof1_readings.append(msg.data)
              #Add here if between 150 and 400 save the lowest joint pos 
-             if 150 < msg.data < 400:
+             if 150 < msg.data < 500:
                 if msg.data < self.lowest_reading_tof1:
                     self.lowest_reading_tof1 = msg.data
                     self.lowest_pos_tof1 = self.get_tool_pose_y()
@@ -160,7 +178,7 @@ class MoveArm(Node):
         if (now - self.start_time ) < self.move_up_collect:
              self.tof2_readings.append(msg.data)
              #Add here if between 150 and 400 save the lowest joint pos 
-             if 150 < msg.data < 400:
+             if 150 < msg.data < 500:
                 if msg.data < self.lowest_reading_tof2:
                     self.lowest_reading_tof2 = msg.data
                     self.lowest_pos_tof2= self.get_tool_pose_y()
@@ -172,7 +190,8 @@ class MoveArm(Node):
         print("lowest y pose for tof2: ", self.lowest_pos_tof2)
         print("actual pose y value: ", self.get_tool_pose_y())
         print("actual pose: ", self.get_tool_pose())
-        distance_readings = self.lowest_pos_tof2 - self.lowest_pos_tof1
+        #distance_readings = self.lowest_pos_tof2 - self.lowest_pos_tof1
+        distance_readings = self.lowest_pos_tof1 - self.lowest_pos_tof2
         self.branch_angle = np.arctan(distance_readings / self.dis_sensors)
         self.calc_angle_done = True
 
@@ -197,23 +216,26 @@ class MoveArm(Node):
             
         return 
     
-    def rotate_to_w(self, y_pose_want):
-        #self.get_logger().info(f"Sending: linear: {cmd.twist.linear} angular: {cmd.twist.angular}")
-        print("Time TEST!!!: ", rclpy.time.Time())
-        cmd = TwistStamped()
-        cmd.header.frame_id = 'tool0'
-        cmd.twist.angular = Vector3(x=0.0, y=0.0, z=0.0)
-        cmd.header.stamp = self.get_clock().now().to_msg()
-        cmd.twist.linear = Vector3(x=0.0, y=0.05, z=0.0)
-        y_pose= self.get_tool_pose_y()
-        print("y_pose: ", y_pose, " y_pose_want", y_pose_want)
-        if abs(y_pose - y_pose_want) < 0.01:
-            self.pub_vel_commands.publish(cmd)
-            self.get_logger().info(f"Sending: linear: {cmd.twist.linear} angular: {cmd.twist.angular}")
-            self.move_down = True
-            print("YAY")
+    def rotate_to_w(self):
+        names = self.joint_names 
+        pos = self.joints 
 
-            
+        for idx, vals in enumerate (names):
+            if vals == "wrist_3_joint":
+                pos[idx]= self.branch_angle
+
+        self.send_joint_pos(names, pos)
+        return 
+    
+    def rotate_w_to_0(self):
+        names = self.joint_names 
+        pos = self.joints 
+
+        for idx, vals in enumerate (names):
+            if vals == "wrist_3_joint":
+                pos[idx]= 0.0
+
+        self.send_joint_pos(names, pos)
         return 
 
     def get_tool_pose_y(self, as_array=True):
@@ -249,7 +271,7 @@ class MoveArm(Node):
         found = False
         for idx, val in enumerate(self.tof2_readings): 
             t2.append(idx)
-            if val == self.lowest_reading_tof1 and found == False:
+            if val == self.lowest_reading_tof2 and found == False:
                 lowest_x2 = idx
                 found = True
             
@@ -297,6 +319,39 @@ class MoveArm(Node):
         print(f"Activated: {act}  Deactivated: {deact}")
             
         return
+    
+    def send_joint_pos(self, joint_names, joints):
+        print(f"GOAL")
+        for n, p in zip (joint_names, joints):
+             print(f"{n}: {p}")
+        print(f"NOW SENDING")
+        joint_constraints = [JointConstraint(joint_name=n, position=p) for n, p in zip(joint_names, joints)]
+        kwargs = {"joint_constraints": joint_constraints}
+        goal_msg = MoveGroup.Goal()
+        goal_msg.request = MotionPlanRequest(
+            group_name="ur_manipulator",
+            goal_constraints=[Constraints(**kwargs)],
+            allowed_planning_time=5.0,
+        )
+        goal_msg.planning_options = PlanningOptions(plan_only=False)
+
+        self.moveit_planning_client.wait_for_server()
+        future = self.moveit_planning_client.send_goal_async(goal_msg)
+        future.add_done_callback(self.goal_complete)
+
+    def goal_complete(self, future):
+            rez = future.result()
+            if not rez.accepted:
+                print("Planning failed!")
+                return
+            else:
+                print("Plan succeeded!")
+
+    def callback_joints(self,msg ):
+        
+        self.joint_names = msg.name
+        self.joints= msg.position
+
 def convert_tf_to_pose(tf: TransformStamped):
     pose = PoseStamped()
     pose.header = tf.header
