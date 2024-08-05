@@ -25,8 +25,10 @@ setup(
             'joint_test = ground_truth.send_recieve_joint_test:main',
             'pub_tof = ground_truth.publisher_arduino:main',
             'centering = ground_truth.centering:main',
+            'centering_cleaned = ground_truth.centering_cleaned:main',
             'tof1_fake_pub = ground_truth.tof1_fake_pub:main', 
-            'tof2_fake_pub = ground_truth.tof2_fake_pub:main'
+            'tof2_fake_pub = ground_truth.tof2_fake_pub:main', 
+            'filter_tof =ground_truth.filter_data:main '
 
         ],
     },

@@ -5,7 +5,7 @@ from rclpy.callback_groups import ReentrantCallbackGroup
 
 from geometry_msgs.msg import PoseStamped, TransformStamped, Point, TwistStamped, Vector3
 from tf2_ros import TransformException
-from tf2_geometry_msgs import do_transform_vector3
+
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
 from std_srvs.srv import Trigger
@@ -27,27 +27,29 @@ from moveit_msgs.msg import (
     OrientationConstraint,
 )
 from rclpy.action import ActionClient
+import scipy.optimize
+
+from filterpy.kalman import KalmanFilter
 
 class MoveArm(Node):
     def __init__(self):
-        super().__init__('move_arm')
-        # create publishers and subscripers (and timers as necessary )
+        super().__init__('center_cleaned')
+        #Create publishers and subscripers (and timers as necessary )
         self.sub_tof1 = self.create_subscription(Float32, 'tof1', self.callback_tof1, 10)
         self.sub_tof2 = self.create_subscription(Float32, 'tof2', self.callback_tof2, 10)
+        self.sub_joints = self.create_subscription(JointState, 'joint_states',self.callback_joints, 10 )
         self.pub_vel_commands = self.create_publisher(TwistStamped, '/servo_node/delta_twist_cmds', 10)
-        self.pub_timer = self.create_timer(1/10, self.publish_twist)
-        #add a publisher that will be able to publish position (x,y,z,rotation) or joint 
-        #self.pub_joint_commands= 
-        #add a subscriber that will be able to get position location (proferably x,y,z, rotation tool endeffector)
-        #self.sub_loc = 
+        self.pub_timer = self.create_timer(1/10, self.main_control)
 
+        #Create tf buffer and listener 
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
-        self.base_frame = 'base_link'
-        self.tool_frame = 'tool0'
-    
+
+        
+        #Create Callback group
         self.service_handler_group = ReentrantCallbackGroup()
         
+        #Create clients 
         self.enable_servo = self.create_client(
             Trigger, "/servo_node/start_servo", callback_group=self.service_handler_group
         )
@@ -58,67 +60,54 @@ class MoveArm(Node):
             SwitchController, "/controller_manager/switch_controller", callback_group=self.service_handler_group
         )
 
+        self.moveit_planning_client = ActionClient(self, MoveGroup, "move_action")
+
         #inital states
         self.servo_active = False
+        self.tof_collected = False
+        self.calc_angle_done = False
+        self.move_down = False
+        self.done = False
+
+        #Wait three seconds to let everything get up and running (may not need)
+        time.sleep(3)
+
+        #constant variables 
         self.forward_cntr = 'forward_position_controller'
         self.joint_cntr = 'scaled_joint_trajectory_controller'
-
-        #Creating parameters 
-        self.declare_parameter('speed',0.1)
-        self.declare_parameter('distance', 20)
-        self.timer_2 = self.create_timer(1, self.callback_timer)
-        
-        self.moveit_planning_client = ActionClient(self, MoveGroup, "move_action")
-        #self.pub_timer = self.create_timer(1/10, self.publish_twist)
-        self.sub_joints = self.create_subscription(JointState, 'joint_states',self.callback_joints, 10 )
-
-        self.tof_collected = False
+        self.base_frame = 'base_link'
+        self.tool_frame = 'tool0'
         self.move_up_collect = 6 #seconds needed to move up and collect tof data 
+        self.dis_sensors = 0.0508 # meters 
+        self.branch_angle = 0
+
+        #initialize variables 
         self.tof1_readings = []
         self.tof2_readings = []
         self.lowest_reading_tof1 = 500 #start with value that can not be saved 
         self.lowest_reading_tof2 = 500 #start with value that can not be saved 
-        self.calc_angle_done = False
-        self.move_down = False
-        self.dis_sensors = 0.0508 # meters 
-        self.branch_angle = 0
-        time.sleep(3)
-        self.start_servo()
-        self.switch_controller(self.forward_cntr, self.joint_cntr)
-        #self.rotate_w_to_0()
-        print("done waiting")
-        #self.tf_buffer.wait(self.base_frame, self.tool_frame)
         self.lowest_pos_tof1 = self.get_tool_pose_y()
         self.lowest_pos_tof2 = self.get_tool_pose_y()
-        self.done = False
-        self.count = 0 
+
+
+
+        #start servoing and switch to forward position controller 
+        self.start_servo()
+        self.switch_controller(self.forward_cntr, self.joint_cntr)
+        
+        #set start_time 
         self.start_time = time.time() 
 
 
-    def publish_twist(self): 
-        my_twist_linear = [0.0, 0.0, 0.0] 
-        my_twist_angular = [0.0, 0.0, 0.0]
-        cmd = TwistStamped()
-        cmd.header.frame_id = 'tool0'
-        cmd.twist.angular = Vector3(x=my_twist_angular[0], y=my_twist_angular[1], z=my_twist_angular[2])
+    def main_control (self): 
         if self.tof_collected == False: 
             # if tof data has not been collected 
             now = time.time()
             if (now - self.start_time ) < self.move_up_collect:
-                #if it has not been the seconds needed to move up and collect tof data, keep moving up at 0.1 m/s
-                my_twist_linear[1]=  -0.1 #moving up at 0.1 m/s (negative y is up )
-                cmd.header.stamp = self.get_clock().now().to_msg()
-                cmd.twist.linear = Vector3(x=my_twist_linear[0], y=my_twist_linear[1], z=my_twist_linear[2])
-                self.pub_vel_commands.publish(cmd)
-                self.get_logger().info(f"Sending: linear: {cmd.twist.linear} angular: {cmd.twist.angular}")
-    
-            
+                self.publish_twist([0.0, -0.1, 0.0], [0.0, 0.0, 0.0]) #moving up at 0.1 m/s (negative y is up )
             else:
                 self.tof_collected = True
-                cmd.header.stamp = self.get_clock().now().to_msg()
-                cmd.twist.linear = Vector3(x=my_twist_linear[0], y=my_twist_linear[1], z=my_twist_linear[2])
-                self.pub_vel_commands.publish(cmd)
-                self.get_logger().info(f"Sending: linear: {cmd.twist.linear} angular: {cmd.twist.angular}")
+                self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving 
 
         elif self.done == False: 
             if self.calc_angle_done ==False:
@@ -126,42 +115,31 @@ class MoveArm(Node):
                 y_pose_want = (self.lowest_pos_tof1 + self.lowest_pos_tof2)/2
                 print ("y_pose_want: ", y_pose_want)
             elif self.move_down == False: 
-                cmd = TwistStamped()
-                cmd.header.frame_id = 'tool0'
-                cmd.twist.angular = Vector3(x=0.0, y=0.0, z=0.0)
-                cmd.header.stamp = self.get_clock().now().to_msg()
-                cmd.twist.linear = Vector3(x=0.0, y=0.05, z=0.0)
-                self.pub_vel_commands.publish(cmd)
+                self.publish_twist([0.0, 0.05, 0.0], [0.0, 0.0, 0.0]) #move down slowly 
                 y_pose_want = (self.lowest_pos_tof1 + self.lowest_pos_tof2)/2
                 self.move_down_to_y(y_pose_want)
             elif self.move_down == True:  
-                cmd.header.stamp = self.get_clock().now().to_msg()
-                cmd.twist.linear = Vector3(x=0.0, y=0.0, z=0.0)
-                self.pub_vel_commands.publish(cmd)
-                self.get_logger().info(f"Sending: linear: {cmd.twist.linear} angular: {cmd.twist.angular}")
+                self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving 
                 y_pose= self.get_tool_pose_y()
                 print("final pose at", y_pose)
                 print("calculated angle needed to rotate: ", self.branch_angle)
                 self.switch_controller(self.joint_cntr, self.forward_cntr)
-                self.rotate_to_w()
+                self.rotate_to_w(self.branch_angle)
                 self.plot_tof()
                 self.done = True
         
-
-        #cmd = TwistStamped()
-        #cmd.header.frame_id = 'tool0'
-        #cmd.header.stamp = self.get_clock().now().to_msg()
-        #cmd.twist.linear = Vector3(x=my_twist_linear[0], y=my_twist_linear[1], z=my_twist_linear[2])
-        #cmd.twist.angular = Vector3(x=my_twist_angular[0], y=my_twist_angular[1], z=my_twist_angular[2])
-        #self.get_logger().info(f"Sending: linear: {cmd.twist.linear} angular: {cmd.twist.angular}")
-
+    
+    def publish_twist(self, linear_speed, rot_speed):
+        my_twist_linear = linear_speed 
+        my_twist_angular = rot_speed
+        cmd = TwistStamped()
+        cmd.header.frame_id = 'tool0'
+        cmd.twist.angular = Vector3(x=my_twist_angular[0], y=my_twist_angular[1], z=my_twist_angular[2])
+        cmd.twist.linear = Vector3(x=my_twist_linear[0], y=my_twist_linear[1], z=my_twist_linear[2])
+        cmd.header.stamp = self.get_clock().now().to_msg()
         self.pub_vel_commands.publish(cmd)
-    
-    
-    def callback_timer(self):
-        self.speed = self.get_parameter('speed').get_parameter_value().double_value
-        self.distance = self.get_parameter('distance').get_parameter_value().integer_value
-    
+        self.get_logger().info(f"Sending: linear: {cmd.twist.linear} angular: {cmd.twist.angular}")
+
     def callback_tof1 (self, msg):
         now = time.time()
         if (now - self.start_time ) < self.move_up_collect:
@@ -190,57 +168,34 @@ class MoveArm(Node):
         print("lowest y pose for tof2: ", self.lowest_pos_tof2)
         print("actual pose y value: ", self.get_tool_pose_y())
         print("actual pose: ", self.get_tool_pose())
-        distance_readings = self.lowest_pos_tof2 - self.lowest_pos_tof1
-        #distance_readings = self.lowest_pos_tof1 - self.lowest_pos_tof2
+        distance_readings = self.lowest_pos_tof1 - self.lowest_pos_tof2
         self.branch_angle = np.arctan(distance_readings / self.dis_sensors)
         self.calc_angle_done = True
 
 
     
     def move_down_to_y(self, y_pose_want):
-        #self.get_logger().info(f"Sending: linear: {cmd.twist.linear} angular: {cmd.twist.angular}")
-        print("Time TEST!!!: ", rclpy.time.Time())
-        cmd = TwistStamped()
-        cmd.header.frame_id = 'tool0'
-        cmd.twist.angular = Vector3(x=0.0, y=0.0, z=0.0)
-        cmd.header.stamp = self.get_clock().now().to_msg()
-        cmd.twist.linear = Vector3(x=0.0, y=0.05, z=0.0)
         y_pose= self.get_tool_pose_y()
         print("y_pose: ", y_pose, " y_pose_want", y_pose_want)
-        if abs(y_pose - y_pose_want) < 0.01:
-            self.pub_vel_commands.publish(cmd)
-            self.get_logger().info(f"Sending: linear: {cmd.twist.linear} angular: {cmd.twist.angular}")
+        if (y_pose - y_pose_want) < 0.016: #these seems to get closest to the middle consistently, assuming the get y_pose lags a little 
+            self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving 
             self.move_down = True
-            print("YAY")
-
-            
         return 
     
-    def rotate_to_w(self):
+    def rotate_to_w(self, angle):
         names = self.joint_names 
         pos = self.joints 
 
         for idx, vals in enumerate (names):
             if vals == "wrist_3_joint":
-                pos[idx]= self.branch_angle
+                pos[idx]= angle
 
         self.send_joint_pos(names, pos)
         return 
     
-    def rotate_w_to_0(self):
-        names = self.joint_names 
-        pos = self.joints 
-
-        for idx, vals in enumerate (names):
-            if vals == "wrist_3_joint":
-                pos[idx]= 0.0
-
-        self.send_joint_pos(names, pos)
-        return 
 
     def get_tool_pose_y(self, as_array=True):
             try:
-                print("Time: ", rclpy.time.Time())
                 current_time = rclpy.time.Time()
                 tf = self.tf_buffer.lookup_transform(
                     self.tool_frame, self.base_frame, current_time
@@ -274,9 +229,8 @@ class MoveArm(Node):
             if val == self.lowest_reading_tof2 and found == False:
                 lowest_x2 = idx
                 found = True
-            
-        plt.plot(t,self.tof1_readings)
-        plt.plot(t2, self.tof2_readings)
+        plt.plot(t,self.tof1_readings, label = 'TOF1 readings')
+        plt.plot(t2, self.tof2_readings, label = 'TOF2 readings')
         plt.plot([lowest_x, lowest_x], [self.lowest_reading_tof1-100,self.lowest_reading_tof1+100, ])
         plt.plot([lowest_x2, lowest_x2], [self.lowest_reading_tof2-100,self.lowest_reading_tof2+100, ])
         plt.show()
@@ -284,8 +238,6 @@ class MoveArm(Node):
     
     def get_tool_pose(self, time=None, as_array=True):
                 try:
-                    print("Time: ", rclpy.time.Time())
-                    current_time = rclpy.time.Time()
                     tf = self.tf_buffer.lookup_transform(
                         self.tool_frame, self.base_frame, time or rclpy.time.Time()
                     )
@@ -298,8 +250,8 @@ class MoveArm(Node):
                     o = pose.pose.orientation
                     return np.array([p.x, p.y, p.z, o.x, o.y, o.z, o.w])
                 else:
-                    print(pose)
                     return pose
+                
     def start_servo(self):
         print("in start")
         if self.servo_active:
@@ -355,14 +307,14 @@ class MoveArm(Node):
 def convert_tf_to_pose(tf: TransformStamped):
     pose = PoseStamped()
     pose.header = tf.header
-    #print("tf header: ",tf.header)
     tl = tf.transform.translation
     pose.pose.position = Point(x=tl.x, y=tl.y, z=tl.z)
     pose.pose.orientation = tf.transform.rotation
 
     return pose
 
-
+def parabola(x, a, b, c):
+    return a*x**2 + b*x + c
 
 def main(args=None):
     rclpy.init(args=args)
