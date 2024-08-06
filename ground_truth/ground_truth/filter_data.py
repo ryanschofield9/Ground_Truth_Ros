@@ -28,7 +28,7 @@ TODO: would be nice to be able to dynamically configure the number and placement
 
 
 class ToFNode(Node):
-    RANGING_ERR = -1
+    RANGING_ERR = 0.0
     def __init__(self) -> None:
         super().__init__(node_name="tof_node")
 
@@ -110,10 +110,10 @@ class ToFNode(Node):
                 self.tof_kalmans.predict()
                 self.tof_kalmans.update([dist])
                 self.tof_filtered_vals = self.tof_kalmans.x[0,0]
-            msg_tof_filtered = Float32()
-            msg_tof_filtered.data = self.tof_filtered_vals
-            self.publisher_.publish(msg=msg_tof_filtered)
-            self.get_logger().info(f"Recieved for tof1: raw: {dist} Sending: filtered: {msg_tof_filtered.data}")
+                msg_tof_filtered = Float32()
+                msg_tof_filtered.data = self.tof_filtered_vals
+                self.publisher_.publish(msg=msg_tof_filtered)
+                self.get_logger().info(f"Recieved for tof1: raw: {dist} Sending: filtered: {msg_tof_filtered.data}")
         except IndexError as e:
             self.get_logger().error(f"{e}: Please check ToF setup and confirm that the number of sensors connected to the microROS agent aligns with the specified configuration.")
         return

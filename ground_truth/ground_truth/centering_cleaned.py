@@ -91,10 +91,16 @@ class MoveArm(Node):
         self.tof2_filtered = []
         self.tool_readings = []
         self.tool2_readings = []
-        self.lowest_reading_tof1 = 500 #start with value that can not be saved 
-        self.lowest_reading_tof2 = 500 #start with value that can not be saved 
+        self.tool_filtered = []
+        self.tool2_filtered = []
+        self.lowest_reading_tof1 = 550 #start with value that can not be saved 
+        self.lowest_reading_tof2 = 550 #start with value that can not be saved 
+        self.lowest_filtered_tof1 = 550 #start with value that can not be saved 
+        self.lowest_filtered_tof2 = 550 #start with values that can not be saved
         self.lowest_pos_tof1 = None
         self.lowest_pos_tof2 = None
+        self.lowest_filtered_pos_tof1 = None
+        self.lowest_filtered_pos_tof2 = None
         self.tool_y = None
 
 
@@ -125,14 +131,19 @@ class MoveArm(Node):
             elif self.move_down == False: 
                 self.publish_twist([0.0, 0.05, 0.0], [0.0, 0.0, 0.0]) #move down slowly 
                 y_pose_want = (self.lowest_pos_tof1 + self.lowest_pos_tof2)/2
-                self.move_down_to_y(y_pose_want)
+                y_pose_want_filtered = (self.lowest_filtered_pos_tof1+self.lowest_filtered_pos_tof2)/2
+                print("calculated y_pose_want: ",y_pose_want)
+                print("calculated y_pose_want_filtered: ",y_pose_want_filtered)
+                self.move_down_to_y(y_pose_want_filtered)
             elif self.move_down == True:  
                 self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving 
                 y_pose= self.get_tool_pose_y()
                 print("final pose at", y_pose)
+                print("calculated angle needed to rotate filtered: ", self.branch_angle_filtered)
                 print("calculated angle needed to rotate: ", self.branch_angle)
+                print("calculated angle needed to rotate filtered: ", self.branch_angle_filtered)
                 self.switch_controller(self.joint_cntr, self.forward_cntr)
-                self.rotate_to_w(self.branch_angle)
+                self.rotate_to_w(self.branch_angle_filtered)
                 self.plot_tof()
                 self.done = True
         
@@ -165,7 +176,6 @@ class MoveArm(Node):
         if (now - self.start_time ) < self.move_up_collect:
             self.tof2_readings.append(msg.data)
             self.tool2_readings.append(self.tool_y)
-            #Add here if between 150 and 400 save the lowest joint pos 
             if 150 < msg.data < 500:
                 if msg.data < self.lowest_reading_tof2:
                     self.lowest_reading_tof2 = msg.data
@@ -175,11 +185,22 @@ class MoveArm(Node):
         now = time.time()
         if (now - self.start_time ) < self.move_up_collect:
             self.tof1_filtered.append(msg.data)
+            self.tool_filtered.append(self.tool_y)
+            if 150 < msg.data < 500:
+                if msg.data < self.lowest_filtered_tof1:
+                    self.lowest_filtered_tof1 = msg.data
+                    self.lowest_filtered_pos_tof1= self.tool_y
     
     def callback_tof2_filtered(self, msg):
         now = time.time()
         if (now - self.start_time ) < self.move_up_collect:
             self.tof2_filtered.append(msg.data)
+            self.tool2_filtered.append(self.tool_y)
+            if 150 < msg.data < 500:
+                if msg.data < self.lowest_filtered_tof2:
+                    self.lowest_filtered_tof2 = msg.data
+                    self.lowest_filtered_pos_tof2= self.tool_y
+
 
     def calculate_angle(self):
         print("tof1 readings: ", self.tof1_readings)
@@ -190,6 +211,9 @@ class MoveArm(Node):
         print("actual pose: ", self.get_tool_pose())
         distance_readings = self.lowest_pos_tof1 - self.lowest_pos_tof2
         self.branch_angle = np.arctan(distance_readings / self.dis_sensors)
+        #distance_readings_filtered = self.lowest_filtered_pos_tof1 - self.lowest_filtered_pos_tof2
+        distance_readings_filtered = self.lowest_filtered_pos_tof2 - self.lowest_filtered_pos_tof1
+        self.branch_angle_filtered = np.arctan(distance_readings_filtered / self.dis_sensors)
         self.calc_angle_done = True
 
 
