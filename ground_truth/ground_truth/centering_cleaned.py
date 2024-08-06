@@ -80,7 +80,7 @@ class MoveArm(Node):
         self.joint_cntr = 'scaled_joint_trajectory_controller'
         self.base_frame = 'base_link'
         self.tool_frame = 'tool0'
-        self.move_up_collect = 6 #seconds needed to move up and collect tof data 
+        self.move_up_collect = 8 #seconds needed to move up and collect tof data 
         self.dis_sensors = 0.0508 # meters 
         self.branch_angle = 0
 
@@ -211,8 +211,8 @@ class MoveArm(Node):
         print("actual pose: ", self.get_tool_pose())
         distance_readings = self.lowest_pos_tof1 - self.lowest_pos_tof2
         self.branch_angle = np.arctan(distance_readings / self.dis_sensors)
-        #distance_readings_filtered = self.lowest_filtered_pos_tof1 - self.lowest_filtered_pos_tof2
-        distance_readings_filtered = self.lowest_filtered_pos_tof2 - self.lowest_filtered_pos_tof1
+        distance_readings_filtered = self.lowest_filtered_pos_tof1 - self.lowest_filtered_pos_tof2
+        #distance_readings_filtered = self.lowest_filtered_pos_tof2 - self.lowest_filtered_pos_tof1
         self.branch_angle_filtered = np.arctan(distance_readings_filtered / self.dis_sensors)
         self.calc_angle_done = True
 
@@ -221,7 +221,7 @@ class MoveArm(Node):
     def move_down_to_y(self, y_pose_want):
         y_pose= self.tool_y
         print("y_pose: ", y_pose, " y_pose_want", y_pose_want)
-        if (y_pose - y_pose_want) < 0.016: #these seems to get closest to the middle consistently, assuming the get y_pose lags a little 
+        if (y_pose - y_pose_want) < 0.001: #these seems to get closest to the middle consistently, assuming the get y_pose lags a little 
             self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving 
             self.move_down = True
         return 

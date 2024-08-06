@@ -28,7 +28,9 @@ setup(
             'centering_cleaned = ground_truth.centering_cleaned:main',
             'tof1_fake_pub = ground_truth.tof1_fake_pub:main', 
             'tof2_fake_pub = ground_truth.tof2_fake_pub:main', 
-            'filter_tof =ground_truth.filter_data:main '
+            'filter_tof =ground_truth.filter_data:main ', 
+            'joystick =ground_truth.joystick:main ', 
+            
 
         ],
     },
