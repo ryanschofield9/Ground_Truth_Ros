@@ -9,7 +9,6 @@ from tf2_ros import TransformException
 
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
-from std_srvs.srv import Trigger
 from controller_manager_msgs.srv import SwitchController
 import numpy as np
 
@@ -28,7 +27,6 @@ from moveit_msgs.msg import (
 from rclpy.action import ActionClient
 import scipy.optimize
 
-from filterpy.kalman import KalmanFilter
 
 class MoveArm(Node):
     def __init__(self):
@@ -55,12 +53,7 @@ class MoveArm(Node):
         self.service_handler_group = ReentrantCallbackGroup()
         
         #Create clients 
-        self.enable_servo = self.create_client(
-            Trigger, "/servo_node/start_servo", callback_group=self.service_handler_group
-        )
-        self.disable_servo = self.create_client(
-            Trigger, "/servo_node/stop_servo", callback_group=self.service_handler_group
-        )
+        
         self.switch_ctrl = self.create_client(
             SwitchController, "/controller_manager/switch_controller", callback_group=self.service_handler_group
         )
@@ -68,12 +61,7 @@ class MoveArm(Node):
         self.moveit_planning_client = ActionClient(self, MoveGroup, "move_action")
 
         #inital states
-        self.servo_active = False #if the servos have been activated 
-        self.tof_collected = False #if the tof data has been collected 
-        self.calc_angle_done = False #if the angle of the branch has calculated 
-        self.move_down = False #if the system has reached the center of the branch 
-        self.done = False #if the system has gotten parallel with the branch 
-
+        self.at_y= False 
         self.rot_up_flag = False 
         self.rot_down_flag = False 
         self.move_up_flag = False 
@@ -91,25 +79,15 @@ class MoveArm(Node):
         self.base_frame = 'base_link' #base frame that doesn't move 
         self.tool_frame = 'tool0' #frame that the end effector is attached to 
         self.move_collect = 5 #alloted time in seconds for moving up and collecting tof data  
-        self.dis_sensors = 0.0508 # meters 
-        self.branch_angle = 0 #initial angle of branch
         self.rot_collect = 5 #alloted time in seconds for rotating and collecting tof data  
 
         #initialize variables 
         self.tof1_readings = [] #holds raw tof data during tof collection period for tof1 
         self.tof2_readings = [] #holds raw tof data during tof collection period for tof2
-        self.tof1_filtered = [] #holds tof data during tof collection period for tof1 
-        self.tof2_filtered = [] #holds tof data during tof collection period for tof2
         #anytime tof is used, it is filtered
-        #if the raw data is being used it will be mentioned 
-        self.lowest_tof1 = 550 #start with value that can not be saved 
-        self.lowest_tof2 = 550 #start with values that can not be saved
-        self.lowest_pos_tof1 = None #y tool position at the lowest raw tof1 reading 
-        self.lowest_pos_tof2 = None #y tool position at the lowest raw tof2 reading 
+        #if the raw data is being used it will be mentioned  
         self.tool_y = None #y position of the tool at the current moment 
-        self.orient_z = None #z orientation of the tool at the current moment 
-        self.count_tof1 = 0 # counts how many readings there have been for tof1 
-        self.count_tof2 = 0 #counts how many readings there have been for tof2 
+        self.orient_z = None #z orientation of the tool at the current moment  
         self.tool_orient_tof1 = [] # holds the tool orientation everytime a new tof reading comes in for tof1
         self.tool_orient_tof2 = [] # holds the tool orientation everytime a new tof reading comes in for tof2
         self.tof1_filtered_rot = [] #holds tof data during tof rotation collection period for tof1
@@ -119,12 +97,12 @@ class MoveArm(Node):
         self.tool_pos_tof1 = [] # holds the tool position everytime a new tof reading comes in for tof1
         self.tool_pos_tof2 = [] # holds the tool position everytime a new tof reading comes in for tof2
 
-        #start servoing and switch to forward position controller 
-        self.start_servo()
+        #switch to forward position controller 
         self.switch_controller(self.forward_cntr, self.joint_cntr)
         
         self.desired_angle = 0.0 #need a way to get this #maybe make this a service and call the service giving the starting angle
         self.desired_y = 0.0 # need to get this value  
+
         #set start_time 
         self.start_time = time.time() 
 
@@ -165,16 +143,22 @@ class MoveArm(Node):
                 else:
                     self.publish_twist([0.0, 0.1, 0.0], [0.0, 0.0, 0.0]) #move the tool in the y direction at 0.1m/s
                     self.move_down_to_y(self.desired_y)
-                    self.move_up_flag = True
-                    self.start_time = time.time()
+                    if self.at_y == True:
+                        self.move_up_flag = True
+                        self.at_y == False
+                        self.start_time = time.time()
+                        
             elif self.move_down_flag == False: 
                 if (self.start_time - now) <self.move_collect: 
                     self.publish_twist([0.0, 0.1, 0.0], [0.0, 0.0, 0.0]) #move the tool in the y direction at 0.1m/s
                 else:
                     self.publish_twist([0.0, -0.1, 0.0], [0.0, 0.0, 0.0]) #move the tool in the y direction at -0.1m/s
                     self.move_up_to_y(self.desired_y) # have to change this to move up 
-                    self.move_down_flag = True
-                    self.start_time = time.time()
+                    if self.at_y == True: 
+                        self.move_down_flag = True
+                        self.at_y == False
+                        self.start_time = time.time()
+                        
             else: 
                 #WRITE FUNCTION TO CALCULATE THE NEW DESIRED ANGLES AND NEW DESIRED Y 
                 new_desired_angle = self.calculate_desired_angle()
@@ -253,20 +237,6 @@ class MoveArm(Node):
                 self.tool_pos_tof2.append(self.tool_y)
                 self.tof2_filtered_up.append(msg.data)
 
-
-    def calculate_angle(self):
-        #calculate the angle the branch is at based on the tof readings 
-        print("tof1 readings: ", self.tof1_readings)
-        print("tof2 readings: ", self.tof2_readings)
-        print("lowest y pose for tof1: ", self.lowest_pos_tof1)
-        print("lowest y pose for tof2: ", self.lowest_pos_tof2)
-        print("actual pose y value: ", self.tool_y)
-        print("actual pose: ", self.get_tool_pose())
-        distance_readings = self.lowest_pos_tof1 - self.lowest_pos_tof2 #find the distance between the lowest tof readings 
-        self.branch_angle = np.arctan(distance_readings / self.dis_sensors) #using the distance between the sensors (known) and the lowest filtered tof readings (calculated), calculate the angle
-        self.calc_angle_done = True #set calculate angle done flag to true 
-
-
     
     def move_down_to_y(self, y_pose_want):
         #Using the given y pose that we want to go back to, move down until we reach that location 
@@ -274,8 +244,8 @@ class MoveArm(Node):
         print("y_pose: ", y_pose, " y_pose_want", y_pose_want)
         if (y_pose - y_pose_want) < 0.001: 
             #when within 1mm of wanted y pose 
-            self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving 
-            self.move_down = True #set move done flag to True 
+            self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving  
+            self.at_y = True
         return 
     
     def move_up_to_y(self, y_pose_want):
@@ -285,7 +255,7 @@ class MoveArm(Node):
         if (y_pose_want - y_pose) < 0.001: 
             #when within 1mm of wanted y pose 
             self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving 
-            self.move_down = True #set move done flag to True 
+            self.at_y = True
         return 
 
     def rotate_to_w(self, angle):
@@ -355,69 +325,6 @@ class MoveArm(Node):
         #save the current tool pose y 
         #there is a timer calling this function every 0.1 seconds 
         self.orient_z = self.get_tool_orient_z()
-
-    def plot_tof(self):
-        #plot the the tof readings 
-        # y axis is tof reading in mm
-        # x axis is number tof reading 
-        t = []
-        t_f = []
-        t2 = []
-        t2_f = []
-        found = False
-        for idx, val in enumerate(self.tof1_filtered): 
-            t_f.append(idx)
-            if val == min(self.tof1_filtered) and found == False:
-                lowest_x_f = idx
-                found = True
-        
-        found = False
-        for idx, val in enumerate(self.tof2_filtered): 
-            t2_f.append(idx)
-            if val == min(self.tof2_filtered) and found == False:
-                lowest_x2_f = idx
-                found = True
-
-        plt.plot(t,self.tof1_readings,'b', label = 'TOF1 raw readings')
-        plt.plot(t2, self.tof2_readings, 'r', label = 'TOF2 raw readings')
-        plt.plot(t_f, self.tof1_filtered, 'c', label = 'TOF1 filtered reading')
-        plt.plot(t2_f, self.tof2_filtered, 'k', label = 'TOF2 filtered reading')
-        plt.legend()
-        plt.show()
-        
-    
-    def get_tool_pose(self, time=None, as_array=True):
-                #Get the position (position and orientation) of the tool pose in respect to the base in m 
-                try:
-                    #try to get the transform of from the base frame to the tool frame
-                    tf = self.tf_buffer.lookup_transform(
-                        self.tool_frame, self.base_frame, time or rclpy.time.Time()
-                    )
-                except TransformException as ex:
-                    #if the tranform returns a TransformException error print the error
-                    self.get_logger().warn("Received TF Exception: {}".format(ex))
-                    return
-                pose = convert_tf_to_pose(tf)
-                if as_array:
-                    #if the pose is given as an array save the position and orientation as p and o respectively
-                    p = pose.pose.position
-                    o = pose.pose.orientation
-                    return np.array([p.x, p.y, p.z, o.x, o.y, o.z, o.w]) #return the tool position (position and orientation) with respect to the base in m 
-                else:
-                    return pose
-                
-    def start_servo(self):
-        #start the arms servos 
-        print("in start")
-        if self.servo_active:
-            #if the servo is already active 
-            print ("Servo is already active")
-        else:
-            #if the servo has not yet been activated 
-            self.enable_servo.call_async(Trigger.Request()) #make a service call to activate the servos 
-            self.active = True #set the servo active flag as true 
-            print("Servo has been activated") 
-        return
     
     def switch_controller(self, act, deact):
         #activate the act controllers given and deactivate the deact controllers given 
@@ -487,7 +394,17 @@ class MoveArm(Node):
         self.rot_down_flag = False
         self.move_up_flag = False
         self.move_down_flag = False 
-        self.joint_rot_flag = False 
+        self.joint_rot_flag = False
+        self.tof1_readings = [] 
+        self.tof2_readings = [] 
+        self.tool_orient_tof1 = [] 
+        self.tool_orient_tof2 = [] 
+        self.tof1_filtered_rot = [] 
+        self.tof2_filtered_rot = [] 
+        self.tof1_filtered_up = [] 
+        self.tof2_filtered_up = [] 
+        self.tool_pos_tof1 = [] 
+        self.tool_pos_tof2 = [] 
         self.start_time = time.time()
 
 def convert_tf_to_pose(tf: TransformStamped):
