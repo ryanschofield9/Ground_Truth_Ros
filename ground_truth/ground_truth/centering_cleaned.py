@@ -26,7 +26,7 @@ from moveit_msgs.msg import (
     JointConstraint,
 )
 from rclpy.action import ActionClient
-import scipy.optimize
+
 
 from filterpy.kalman import KalmanFilter
 
