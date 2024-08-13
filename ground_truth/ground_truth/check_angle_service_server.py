@@ -48,8 +48,8 @@ class AngleCheckClass(Node):
         self.pub_vel_commands = self.create_publisher(TwistStamped, '/servo_node/delta_twist_cmds', 10)
 
         #create timers 
-        self.pub_timer = self.create_timer(1/10, self.main_control)
-        self.tool_timer = self.create_timer(1/10, self.pub_tool_pose_y)
+        self.control_timer = self.create_timer(1/10, self.main_control)
+        self.tool_timer_pos_y = self.create_timer(1/10, self.pub_tool_pose_y)
         self.tool_timer_orient_z = self.create_timer(1/10,self.get_tool_orient_z )
 
         #Create tf buffer and listener 
@@ -64,7 +64,7 @@ class AngleCheckClass(Node):
         
         self.switch_ctrl = self.create_client(
             SwitchController, "/controller_manager/switch_controller", callback_group=self.service_handler_group
-        )
+        ) 
 
         self.moveit_planning_client = ActionClient(self, MoveGroup, "move_action")
 
@@ -76,7 +76,7 @@ class AngleCheckClass(Node):
         self.move_down_flag = False #a flag to determine if the move down step has been completed  
         self.joint_rot_flag = False #a flag to detemine if the joint controller has finished its rotation 
         self.done = False #a flag to determine if the check angle process has finished  
-        self.saved_request = False # a flag to determine if the request has been saved 
+        self.saved_request = False #a flag to determine if the request has been saved
 
         #Wait three seconds to let everything get up and running (may not need)
         time.sleep(3)
@@ -106,7 +106,7 @@ class AngleCheckClass(Node):
         self.orient_z = None #z orientation of the tool at the current moment  
         self.desired_angle = 0.0 #need a way to get this #maybe make this a service and call the service giving the starting angle
         self.desired_y = 0.0 # need to get this value
-        self.tries = 0 #counts the number of times the check angle process has been done 
+        self.tries = 0 #tracking how many times the check angle control has been attempted 
 
         #switch to forward position controller 
         self.switch_controller(self.forward_cntr, self.joint_cntr)
@@ -115,87 +115,114 @@ class AngleCheckClass(Node):
         self.start_time = time.time() 
 
 
-    def main_control (self, request, response): 
+    def main_control (self, request, response):
+        #TO DO: WRITE A SERVICE MSG TYPE  
+        #This function is called every 0.1 seconds and holds the main control structure for checking the angle
+        # Corrects the angle by continously collecting tof data and comparing where the low value was found until one angle and y are settled on  
         if self.saved_request == False: 
+            #if the request has not been saved yet, save the request 
             self.desired_angle = request.desired_angle
             self.dresired_y = request.desired_y 
             self.saved_request = True
-        #Correct the angle by continously collecting tof data and comparing where the low value was found until one angle and y are settled on 
+
         if self.done == False:
+            #if the check angle hasn't gotten into the correct range and hasn't attempted to more than 3 times 
             now = time.time()
             if self.rot_up_flag == False: 
-                if (self.start_time - now) <self.rot_collect: 
+                #if the rotation up step has not be completed 
+                if (self.start_time - now) <self.rot_collect:
+                    #if it hasn't been the alloted time for rotating and collecting tof data  
                     self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.5]) #rotate the tool in the z direction by 0.5 rads/s
                 else:
+                    #if the alloted time for rotating and collecting tof data has passed 
                     self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving 
-                    self.switch_controller(self.joint_cntr, self.forward_cntr)
+                    self.switch_controller(self.joint_cntr, self.forward_cntr) #switch from forward_position controller to scaled_joint_trajectory controller
                     self.rotate_to_w(self, self.desired_angle)
                     if self.joint_rot_flag == True:
-                        self.rot_up_flag = True
-                        self.joint_rot_flag = False
-                        self.switch_controller(self.forward_cntr, self.joint_cntr)
-                        self.start_time = time.time()
+                        #if the joint controller has finished its rotation 
+                        self.rot_up_flag = True #set the rotation up step as completed 
+                        self.joint_rot_flag = False #set the joint controller as NOT finished its rotation
+                        self.switch_controller(self.forward_cntr, self.joint_cntr) #switch from scaled_joint_trajectory controller to forward_position controller
+                        self.start_time = time.time() #reset the start time 
 
             elif self.rot_down_flag == False:
+                #if the rotation down step has not be completed 
                 if (self.start_time - now) <self.rot_collect:
+                    #if it hasn't been the alloted time for rotating and collecting tof data
                     self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, -0.5]) #rotate the tool in the z direction by -0.5 rads/s
                 else:
+                    #if the alloted time for rotating and collecting tof data has passed 
                     self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving
-                    self.switch_controller(self.joint_cntr, self.forward_cntr)
+                    self.switch_controller(self.joint_cntr, self.forward_cntr) #switch from forward_position controller to scaled_joint_trajectory controller
                     self.rotate_to_w(self, self.desired_angle)
                     if self.joint_rot_flag == True:
-                        self.rot_down_flag = True
-                        self.joint_rot_flag = False
-                        self.switch_controller(self.forward_cntr, self.joint_cntr)
-                        self.start_time = time.time()
+                        #if the joint controller has finished its rotation
+                        self.rot_down_flag = True #set the rotation down step as completed 
+                        self.joint_rot_flag = False #set the joint controller as NOT finished its rotation
+                        self.switch_controller(self.forward_cntr, self.joint_cntr) #switch from scaled_joint_trajectory controller to forward_position controller
+                        self.start_time = time.time() #reset the start time 
 
             elif self.move_up_flag == False: 
+                #if the move up step has not be completed
                 if (self.start_time - now) <self.move_collect: 
+                    #if it hasn't been the alloted time for moving and collecting tof data
                     self.publish_twist([0.0, -0.1, 0.0], [0.0, 0.0, 0.0]) #move the tool in the y direction at -0.1m/s
                 else:
+                    #if the alloted time for moving and collecting tof data has passed 
                     self.publish_twist([0.0, 0.1, 0.0], [0.0, 0.0, 0.0]) #move the tool in the y direction at 0.1m/s
                     self.move_down_to_y(self.desired_y)
                     if self.at_y == True:
-                        self.move_up_flag = True
-                        self.at_y == False
-                        self.start_time = time.time()
+                        #if the arm is at the wanted y position 
+                        self.move_up_flag = True #set the move up step as completed 
+                        self.at_y == False #set the arm as NOT at the wanted y position 
+                        self.start_time = time.time() #reset the start time 
                         
-            elif self.move_down_flag == False: 
+            elif self.move_down_flag == False:
+                #if the move down step has not be completed 
                 if (self.start_time - now) <self.move_collect: 
+                    #if it hasn't been the alloted time for moving and collecting tof data
                     self.publish_twist([0.0, 0.1, 0.0], [0.0, 0.0, 0.0]) #move the tool in the y direction at 0.1m/s
                 else:
+                    #if the alloted time for moving and collecting tof data has passed 
                     self.publish_twist([0.0, -0.1, 0.0], [0.0, 0.0, 0.0]) #move the tool in the y direction at -0.1m/s
                     self.move_up_to_y(self.desired_y) # have to change this to move up 
                     if self.at_y == True: 
-                        self.move_down_flag = True
-                        self.at_y == False
-                        self.start_time = time.time()
+                        #if the arm is at the wanted y position
+                        self.move_down_flag = True #set the move down step as completed 
+                        self.at_y == False #set the arm as NOT at the wanted y position
+                        self.start_time = time.time() #reset the start time 
                         
             else: 
-                #WRITE FUNCTION TO CALCULATE THE NEW DESIRED ANGLES AND NEW DESIRED Y 
+                #if all the steps have been completed 
                 new_desired_angle = self.calculate_desired_angle()
                 new_desired_y = self.calculate_desired_y()
-                dif_angle = abs(self.desired_angle -new_desired_angle)
+                dif_angle = abs(self.desired_angle -new_desired_angle) 
                 dif_y = abs(self.desired_y - new_desired_y)
                 if dif_angle <= 0.017 and dif_y <= 1:
                     #if the angles are within ~1 degree of each other and the y is within 1 mm of each other 
-                    self.done = True  
+                    self.done = True  #set the check angle step as done 
                 else: 
+                    #if the angles or y values are outside the given ranges 
                     if self.tries >3:
-                        self.tries = -1
-                        self.done = True 
+                        #if the check angles has tried more than 3 times 
+                        self.tries = -1 
+                        self.done = True #set the check angle step as done 
                     else: 
-                        self.tries += 1 
-                        self.desired_angle = new_desired_angle 
-                        self.desired_y = new_desired_y 
+                        #if the check angle hasn't tried more than 3 times 
+                        self.tries += 1 #increase tries by one 
+                        self.desired_angle = new_desired_angle #reset the desired_angle with the new_desired angle
+                        self.desired_y = new_desired_y #reset the desired_y with the new_desired_y 
                         self.reset()
                     
                         
         else: 
-            if self.tries == -1: 
+            #if the check angle has gotten into the correct range or failed 4 times 
+            if self.tries == -1:
+                #if tries is -1 meaning that the system has failed to get in the acceptable range after 4 tries 
                 print("Could not get a good location please restart")
                 response.position_found = False 
-            else: 
+            else:
+                #if the system has gotten into the acceptable range in 4 or less tries  
                 print("found a good location")
                 response.position_found = True
             

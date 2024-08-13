@@ -7,6 +7,7 @@ import time
 
 from collections import deque
 
+#create the serial connection 
 serialPort = serial.Serial(port = '/dev/ttyACM0', baudrate=115200,
                             bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
 
@@ -14,20 +15,22 @@ class ArduinoTOFPublisher(Node):
     
     def __init__(self): 
         super().__init__(node_name = 'tof_pub')
-        self.i = 0
-        self.avg = deque([0.0])
-        self.avg2 = deque([0.0])
+        
+        #Create publishers  
         self.publisher_ = self.create_publisher(Float32,'tof1',10)
         self.publisher_2 = self.create_publisher(Float32, 'tof2', 10)
-        time.sleep(3)
+        
+        #sleep to allow time for the serial connection to be made 
+        #time.sleep(3)
 
-        # Timer
+        # Create Timer
         timer_period=0.01
         self.timer = self.create_timer(timer_period, self.publish_data)
         
     
 
     def publish_data(self):
+        #Function that is called every 0.01 seconds to publish the TOF data from the Serial Port 
         msg = Float32()
         msg_2 = Float32()
         try:

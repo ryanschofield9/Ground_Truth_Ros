@@ -28,7 +28,7 @@ from moveit_msgs.msg import (
 from rclpy.action import ActionClient
 
 
-from filterpy.kalman import KalmanFilter
+#from filterpy.kalman import KalmanFilter
 
 class MoveArm(Node):
     def __init__(self):
@@ -143,7 +143,7 @@ class MoveArm(Node):
                 print("final pose at", y_pose)
                 print("calculated angle needed to rotate filtered: ", self.branch_angle)
                 print("calculated angle needed to rotate: ", self.branch_angle)
-                self.switch_controller(self.joint_cntr, self.forward_cntr) #switch from forward_position controller to scaled_joint_trajectory controller
+                self.switch_controller(self.joint_cntr, self.forward_cntr) #switch from forward_position controller to scaled_joint_trajectory controller 
                 self.rotate_to_w(self.branch_angle)
                 self.plot_tof()
                 self.done = True #the system has gotten parallel with the branch, set as True 
@@ -225,6 +225,7 @@ class MoveArm(Node):
             #when within 1mm of wanted y pose 
             self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving 
             self.move_down = True #set move done flag to True 
+            self.control_switch = False # set move control switch flag to False to get it reset  
         return 
     
     def rotate_to_w(self, angle):
