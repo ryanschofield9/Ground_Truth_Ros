@@ -1,6 +1,6 @@
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Float32, String, Int64
+from std_msgs.msg import Float32, Bool
 import serial
 
 import time 
@@ -19,6 +19,7 @@ class ArduinoTOFPublisher(Node):
         #Create publishers  
         self.publisher_ = self.create_publisher(Float32,'tof1',10)
         self.publisher_2 = self.create_publisher(Float32, 'tof2', 10)
+        self.publisher_bool = self.create_publisher(Bool, 'touching_tree_flag', 10)
         
         #sleep to allow time for the serial connection to be made 
         #time.sleep(3)
@@ -33,20 +34,26 @@ class ArduinoTOFPublisher(Node):
         #Function that is called every 0.01 seconds to publish the TOF data from the Serial Port 
         msg = Float32()
         msg_2 = Float32()
+        msg_bool = Bool()
         try:
             line = serialPort.readline() 
             string = line.decode()
-            newstring = string.split(';')
-            try:
-                tof1val = float(newstring[1])
-                tof2val = float(newstring[3])
-                msg.data = tof1val
-                msg_2.data = tof2val
-                self.publisher_.publish(msg)
-                self.publisher_2.publish(msg_2)
-            except: 
-                tof1val = 0
-                tof2val = 0
+            if string == 'TOUCH':
+                #if the system has touched the tree TOUCH Will be displayed 
+                msg_bool.data = True
+                self.publisher_bool.publish(msg_bool)
+            else:
+                newstring = string.split(';')
+                try:
+                    tof1val = float(newstring[1])
+                    tof2val = float(newstring[3])
+                    msg.data = tof1val
+                    msg_2.data = tof2val
+                    self.publisher_.publish(msg)
+                    self.publisher_2.publish(msg_2)
+                except: 
+                    tof1val = 0
+                    tof2val = 0
                 
         except ValueError as e:
             print(f"{e}: Could not convert msg type to float.")
