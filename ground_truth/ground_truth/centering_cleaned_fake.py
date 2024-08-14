@@ -13,7 +13,7 @@ from std_srvs.srv import Trigger
 from controller_manager_msgs.srv import SwitchController
 import numpy as np
 
-from std_msgs.msg import Float32
+from std_msgs.msg import Float32, Int64
 from sensor_msgs.msg import JointState
 import time 
 import matplotlib.pyplot as plt
@@ -36,8 +36,8 @@ class MoveArm(Node):
 
         super().__init__('center_cleaned')
         #Create publishers and subscripers (and timers as necessary )
-        self.sub_tof1 = self.create_subscription(Float32, 'tof1', self.callback_tof1, 10) 
-        self.sub_tof2 = self.create_subscription(Float32, 'tof2', self.callback_tof2, 10)
+        self.sub_tof1 = self.create_subscription(Int64, 'tof1', self.callback_tof1, 10) 
+        self.sub_tof2 = self.create_subscription(Int64, 'tof2', self.callback_tof2, 10)
         self.sub_tof1 = self.create_subscription(Float32, 'tof1_filter', self.callback_tof1_filtered, 10)
         self.sub_tof2 = self.create_subscription(Float32, 'tof2_filter', self.callback_tof2_filtered, 10)
         self.sub_joints = self.create_subscription(JointState, 'joint_states',self.callback_joints, 10 )

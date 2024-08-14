@@ -6,7 +6,7 @@ from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.parameter import Parameter
 
-from std_msgs.msg import Float32
+from std_msgs.msg import Float32, Int64
 
 
 #from kalman import Kalman
@@ -22,10 +22,9 @@ class ToFNode(Node):
     RANGING_ERR = 0.0
     def __init__(self) -> None:
         super().__init__(node_name="tof_node")
-
-        # Subscribers
-        self.sub_tof1 = self.create_subscription(Float32, 'tof1', self.callback_tof1, 10)
-        self.sub_tof2 = self.create_subscription(Float32, 'tof2', self.callback_tof2, 10)
+        # Subscribers 
+        self.sub_tof1 = self.create_subscription(Int64, 'tof1', self.callback_tof1, 10)
+        self.sub_tof2 = self.create_subscription(Int64, 'tof2', self.callback_tof2, 10)
         # Publishers
         self.publisher_ = self.create_publisher(Float32,'tof1_filter',10)
         self.publisher_2 = self.create_publisher(Float32, 'tof2_filter', 10)
