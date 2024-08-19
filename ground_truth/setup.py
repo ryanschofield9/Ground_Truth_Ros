@@ -32,6 +32,7 @@ setup(
             'filter_tof =ground_truth.filter_data:main ', 
             'filter_tof_fake =ground_truth.filter_data_fake:main ', 
             'joystick =ground_truth.joystick:main ', 
+            'angle_check_service =ground_truth.check_angle_service:main ', 
             
 
         ],

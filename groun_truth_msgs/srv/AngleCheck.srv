@@ -1,6 +1,6 @@
 #inputs
 float32 desired_angle
-float32 dresired_y
+float32 desired_y
 ---
 #outputs 
 bool position_found

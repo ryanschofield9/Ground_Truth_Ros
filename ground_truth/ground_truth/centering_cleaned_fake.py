@@ -26,6 +26,8 @@ from moveit_msgs.msg import (
     JointConstraint,
 )
 from rclpy.action import ActionClient
+from groun_truth_msgs.srv import AngleCheck
+
 
 
 #from filterpy.kalman import KalmanFilter
@@ -65,13 +67,17 @@ class MoveArm(Node):
         )
 
         self.moveit_planning_client = ActionClient(self, MoveGroup, "move_action")
+        self.angle_check_client = self.create_client(AngleCheck, 'angle_check')
+        while not self.angle_check_client.wait_for_service(timeout_sec=1):
+            self.get_logger().info('waiting for service to start')
 
         #inital states
         self.servo_active = False #if the servos have been activated 
         self.tof_collected = False #if the tof data has been collected 
         self.calc_angle_done = False #if the angle of the branch has calculated 
         self.move_down = False #if the system has reached the center of the branch 
-        self.done = False #if the system has gotten parallel with the branch 
+        self.done_step1= False #if the system has gotten parallel with the branch
+        self.done_step2= False #if the system has checked that the system is parallel wiuth the brnach   
 
         #Wait three seconds to let everything get up and running (may not need)
         time.sleep(3)
@@ -101,7 +107,6 @@ class MoveArm(Node):
         #start servoing and switch to forward position controller 
         self.start_servo()
         self.switch_controller(self.forward_cntr, self.joint_cntr)
-        print("switching controller")
         
         #set start_time 
         self.start_time = time.time() 
@@ -124,7 +129,7 @@ class MoveArm(Node):
                 self.tof_collected = True #set tof data collection to true 
                 self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving (move at 0 m/s) 
 
-        elif self.done == False: 
+        elif self.done_step1== False: 
             #if the system has not yet gotten parallel to the branch
             if self.calc_angle_done ==False:
                 #if the angle of the branch hasn't been calculated 
@@ -147,7 +152,25 @@ class MoveArm(Node):
                 self.switch_controller(self.joint_cntr, self.forward_cntr) #switch from forward_position controller to scaled_joint_trajectory controller 
                 self.rotate_to_w(self.branch_angle)
                 self.plot_tof()
-                self.done = True #the system has gotten parallel with the branch, set as True 
+                print("Done Plotting TOF ")
+                self.done_step1 = True #the system has gotten parallel with the branch, set as True 
+
+        elif self.done_step2 == False: 
+            print("Creating Request for Angle Check")
+            self.switch_controller(self.forward_cntr, self.joint_cntr) #switch from scaled_joint_trajectory controller to forward_position controller 
+            request = AngleCheck.Request()
+            request.desired_angle = self.branch_angle
+            request.desired_y = self.tool_y
+            future = self.angle_check_client.call_async(request)
+            print("Request Sent ")
+            while rclpy.ok():
+                if future.done ():
+                    print("future is done ")
+                    print("Response from client is: ", future)
+                    self.done_step2 == False
+                
+
+                
         
     
     def publish_twist(self, linear_speed, rot_speed):
@@ -208,6 +231,8 @@ class MoveArm(Node):
         #calculate the angle the branch is at based on the tof readings 
         print("tof1 readings: ", self.tof1_readings)
         print("tof2 readings: ", self.tof2_readings)
+        print("tof1 filtered readings: ", self.tof1_filtered)
+        print("tof2 filtered readings: ", self.tof2_filtered)
         print("lowest y pose for tof1: ", self.lowest_pos_tof1)
         print("lowest y pose for tof2: ", self.lowest_pos_tof2)
         print("actual pose y value: ", self.tool_y)
