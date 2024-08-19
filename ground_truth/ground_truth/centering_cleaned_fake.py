@@ -13,7 +13,7 @@ from std_srvs.srv import Trigger
 from controller_manager_msgs.srv import SwitchController
 import numpy as np
 
-from std_msgs.msg import Float32, Int64
+from std_msgs.msg import Float32, Int64, Bool
 from sensor_msgs.msg import JointState
 import time 
 import matplotlib.pyplot as plt
@@ -44,6 +44,7 @@ class MoveArm(Node):
         self.sub_tof2 = self.create_subscription(Float32, 'tof2_filter', self.callback_tof2_filtered, 10)
         self.sub_joints = self.create_subscription(JointState, 'joint_states',self.callback_joints, 10 )
         self.pub_vel_commands = self.create_publisher(TwistStamped, '/servo_node/delta_twist_cmds', 10)
+        self.pub_step2 = self.create_publisher(Bool, 'step2', 10)
         self.pub_timer = self.create_timer(1/10, self.main_control)
         self.tool_timer = self.create_timer(1/10, self.pub_tool_pose_y)
 
@@ -67,9 +68,9 @@ class MoveArm(Node):
         )
 
         self.moveit_planning_client = ActionClient(self, MoveGroup, "move_action")
-        self.angle_check_client = self.create_client(AngleCheck, 'angle_check')
-        while not self.angle_check_client.wait_for_service(timeout_sec=1):
-            self.get_logger().info('waiting for service to start')
+        #self.angle_check_client = self.create_client(AngleCheck, 'angle_check')
+        #while not self.angle_check_client.wait_for_service(timeout_sec=1):
+         #   self.get_logger().info('waiting for service to start')
 
         #inital states
         self.servo_active = False #if the servos have been activated 
@@ -118,19 +119,19 @@ class MoveArm(Node):
         #TO DO: GET RID OF ALL THE PRINT STATEMENTS 
         #TO DO: DETERMINE NEED OF ALL THE COMMENTS 
         #this function is called every 0.1 seconds and holds the main control structure for getting parallel to the branch 
-        if self.tof_collected == False: 
-            # if tof data has not been collected 
-            now = time.time()
-            if (now - self.start_time ) < self.move_up_collect:
-                #if it hasn't been the alloted time for moving up and collecting tof data 
-                self.publish_twist([0.0, -0.1, 0.0], [0.0, 0.0, 0.0]) #move up at 0.1 m/s (negative y is up )
-            else:
-                #if the alloted time for moving up and collected tof data has passed 
-                self.tof_collected = True #set tof data collection to true 
-                self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving (move at 0 m/s) 
+        if self.done_step1 == False: 
+             #if the system has not yet gotten parallel to the branch with a first guess 
+            if self.tof_collected == False: 
+                # if tof data has not been collected 
+                now = time.time()
+                if (now - self.start_time ) < self.move_up_collect:
+                    #if it hasn't been the alloted time for moving up and collecting tof data 
+                    self.publish_twist([0.0, -0.1, 0.0], [0.0, 0.0, 0.0]) #move up at 0.1 m/s (negative y is up )
+                else:
+                    #if the alloted time for moving up and collected tof data has passed 
+                    self.tof_collected = True #set tof data collection to true 
+                    self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving (move at 0 m/s) 
 
-        elif self.done_step1== False: 
-            #if the system has not yet gotten parallel to the branch
             if self.calc_angle_done ==False:
                 #if the angle of the branch hasn't been calculated 
                 self.calculate_angle() 
@@ -155,19 +156,15 @@ class MoveArm(Node):
                 print("Done Plotting TOF ")
                 self.done_step1 = True #the system has gotten parallel with the branch, set as True 
 
-        elif self.done_step2 == False: 
-            print("Creating Request for Angle Check")
-            self.switch_controller(self.forward_cntr, self.joint_cntr) #switch from scaled_joint_trajectory controller to forward_position controller 
-            request = AngleCheck.Request()
-            request.desired_angle = self.branch_angle
-            request.desired_y = self.tool_y
-            future = self.angle_check_client.call_async(request)
-            print("Request Sent ")
-            while rclpy.ok():
-                if future.done ():
-                    print("future is done ")
-                    print("Response from client is: ", future)
-                    self.done_step2 == False
+        elif self.done_step2 == False:
+            msg = Bool()
+            msg.data = True 
+            for i in range(0,3): 
+                self.pub_step2.publish(msg)
+            self.done_step2 = True 
+
+            
+
                 
 
                 

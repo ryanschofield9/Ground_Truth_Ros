@@ -14,7 +14,7 @@ from tf2_ros.transform_listener import TransformListener
 from controller_manager_msgs.srv import SwitchController
 import numpy as np
 
-from std_msgs.msg import Float32
+from std_msgs.msg import Float32, Bool
 from sensor_msgs.msg import JointState
 import time 
 import matplotlib.pyplot as plt
@@ -45,6 +45,7 @@ class AngleCheckClass(Node):
         self.sub_tof1 = self.create_subscription(Float32, 'tof1_filter', self.callback_tof1_filtered, 10)
         self.sub_tof2 = self.create_subscription(Float32, 'tof2_filter', self.callback_tof2_filtered, 10)
         self.sub_joints = self.create_subscription(JointState, 'joint_states',self.callback_joints, 10 )
+        self.sub_joints = self.create_subscription(Bool, 'step2',self.calback_step2_flag, 10 )
         self.pub_vel_commands = self.create_publisher(TwistStamped, '/servo_node/delta_twist_cmds', 10)
 
         #create timers 
@@ -126,7 +127,7 @@ class AngleCheckClass(Node):
             self.got_request = True 
 
         while self.done == "False":
-            prin("Waiting")
+            print("Waiting")
         
         return self.response
 
