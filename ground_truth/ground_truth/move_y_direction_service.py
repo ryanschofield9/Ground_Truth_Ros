@@ -2,35 +2,15 @@
 import rclpy
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
-from rclpy.callback_groups import ReentrantCallbackGroup
 
-from geometry_msgs.msg import PoseStamped, TransformStamped, Point, TwistStamped, Vector3
-from tf2_ros import TransformException
+from geometry_msgs.msg import  TwistStamped, Vector3
 
-from tf2_ros.buffer import Buffer
-from tf2_ros.transform_listener import TransformListener
-from std_srvs.srv import Trigger
-from controller_manager_msgs.srv import SwitchController
-import numpy as np
 
-from std_msgs.msg import Float32, Int64, Bool, Float32MultiArray
-from sensor_msgs.msg import JointState
-import time 
-import matplotlib.pyplot as plt
+from std_msgs.msg import Float32, Int64, Float32MultiArray
 
-from moveit_msgs.action import MoveGroup
-from moveit_msgs.msg import (
-    MotionPlanRequest,
-    PlanningOptions,
-    Constraints,
-    JointConstraint,
-)
-from rclpy.action import ActionClient
 from groun_truth_msgs.srv import MoveY
 
-
-
-#from filterpy.kalman import KalmanFilter
+import time 
 
 class MoveUpService(Node):
     def __init__(self):
@@ -38,7 +18,7 @@ class MoveUpService(Node):
 
         super().__init__('move_y_direction_service')
         #Create service 
-        self.service_moveup = self.create_service(MoveY, 'move_y_direction', self.service_func)
+        self.service_moveup = self.create_service(MoveY, 'move_y_direction', self.moving)
 
         #Create publishers and subscripers (and timers as necessary )
         self.sub_tof1 = self.create_subscription(Int64, 'tof1', self.callback_tof1, 10) 
@@ -63,7 +43,7 @@ class MoveUpService(Node):
 
 #TO DO, DON'T NEED TO DO MUCH WITH RAW DATA IN THIS ANYMORE 
 
-    def moving_up (self, request, response): 
+    def moving (self, request, response): 
         #TO DO: RESTRUCTURE FOR MORE ORGANIZATION 
         #TO DO: GET RID OF ALL THE PRINT STATEMENTS 
         #TO DO: DETERMINE NEED OF ALL THE COMMENTS 
@@ -77,14 +57,20 @@ class MoveUpService(Node):
         self.collecting = True
         self.start_time = time.time()
         now = time.time()
+        self.publish_twist([0.0, self.speed, 0.0], [0.0, 0.0, 0.0]) #move up at 0.1 m/s (negative y is up )
         while (now - self.start_time ) < self.time_collect:
             #if it hasn't been the alloted time for moving and collecting tof data 
-            self.publish_twist([0.0, self.speed, 0.0], [0.0, 0.0, 0.0]) #move up at 0.1 m/s (negative y is up )
+            now = time.time() 
         #if the alloted time for moving up and collected tof data has passed  
         self.collecting = False 
         self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving (move at 0 m/s) 
         response = MoveY.Response()
-        response.tof1 = self.tof1
+        response.tof1 = self.tof1_readings
+        response.tof2 = self.tof2_readings
+        response.tof1_filtered = self.tof1_filtered
+        response.tof2_filtered = self.tof2_filtered
+        return response 
+
 
     
     def publish_twist(self, linear_speed, rot_speed):
