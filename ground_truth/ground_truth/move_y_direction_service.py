@@ -35,6 +35,8 @@ class MoveUpService(Node):
         self.tof2_filtered = [] #holds tof data during tof collection period for tof2
         #anytime tof is used, it is filtered
         #if the raw data is being used it will be mentioned 
+        self.tof1_tool_pose = []
+        self.tof2_tool_pose = []
         self.lowest_tof1 = 550 #start with value that can not be saved 
         self.lowest_tof2 = 550 #start with values that can not be saved
         self.lowest_pos_tof1 = None #y tool position at the lowest raw tof1 reading 
@@ -69,6 +71,10 @@ class MoveUpService(Node):
         response.tof2 = self.tof2_readings
         response.tof1_filtered = self.tof1_filtered
         response.tof2_filtered = self.tof2_filtered
+        response.tof1_tool_pose = self.tof1_tool_pose
+        response.lowest_pose_tof1 = self.lowest_pos_tof1
+        response.tof2_tool_pose = self.tof2_tool_pose
+        response.lowest_pose_tof2 = self.lowest_pos_tof2
         return response 
 
 
@@ -103,6 +109,7 @@ class MoveUpService(Node):
         if self.collecting:
            #if moving and collecting data 
             self.tof1_filtered.append(msg.data) #add data reading to list of tof1 readings
+            self.tof1_tool_pose.append(self.tool_y)
             if 150 < msg.data < 500:
                 #if the tof1 reading is between 150 mm and 500mm (~5.9in to 20in)
                 if msg.data < self.lowest_tof1:
@@ -117,6 +124,7 @@ class MoveUpService(Node):
         if self.collecting:
             #if moving and collecting data 
             self.tof2_filtered.append(msg.data) #add data reading to list of tof2 readings
+            self.tof2_tool_pose.append(self.tool_y)
             if 150 < msg.data < 500:
                 #if the tof2 reading is between 150 mm and 500mm (~5.9in to 20in)
                 if msg.data < self.lowest_tof2:

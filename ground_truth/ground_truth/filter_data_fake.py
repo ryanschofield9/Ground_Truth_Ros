@@ -9,14 +9,13 @@ from rclpy.parameter import Parameter
 from std_msgs.msg import Float32, Int64
 
 
-#from kalman import Kalman
 
 from filterpy.kalman import KalmanFilter
 from filterpy.common import Q_discrete_white_noise
 
 import numpy as np
 
-
+#Luke gave me this code 
 
 class ToFNode(Node):
     RANGING_ERR = 0.0
