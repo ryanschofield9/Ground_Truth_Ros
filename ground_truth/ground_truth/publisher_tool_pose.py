@@ -34,16 +34,26 @@ class PubToolPose(Node):
         #publish the current tool pose 
         #there is a timer calling this function every 0.1 seconds 
         self.tool = self.get_tool_pose()
-        #print(f"tool = {self.tool}")
         msg= ToolPose()
-        msg.px = self.tool[0]
-        msg.py = self.tool[1]
-        msg.pz = self.tool[2]
-        msg.ox = self.tool[3]
-        msg.oy = self.tool[4]
-        msg.oz = self.tool[5]
-        msg.ow = self.tool[6]
-        #print(f"tool = {self.tool}  data= {msg}")
+        try:
+            #print(f"tool = {self.tool}")
+            msg.px = self.tool[0]
+            msg.py = self.tool[1]
+            msg.pz = self.tool[2]
+            msg.ox = self.tool[3]
+            msg.oy = self.tool[4]
+            msg.oz = self.tool[5]
+            msg.ow = self.tool[6]
+        except: 
+            msg.px = 0.0
+            msg.py = 0.0
+            msg.pz = 0.0
+            msg.ox = 0.0
+            msg.oy = 0.0
+            msg.oz = 0.0
+            msg.ow = 0.0
+
+        #print("message being published: ", msg)
         self.publish_tool_pose.publish(msg)
     
     def get_tool_pose(self, time=None, as_array=True):

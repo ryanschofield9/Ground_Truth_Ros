@@ -76,6 +76,7 @@ class MoveUpService(Node):
         self.collecting = False 
         self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving (move at 0 m/s) 
         response = MoveY.Response()
+        
         print(f"tof1 readings = {self.tof1_readings}")
         print(f"tof2 readings = {self.tof2_readings}")
         print(f"tof1 filtered = {self.tof1_filtered}")
@@ -84,6 +85,7 @@ class MoveUpService(Node):
         print(f'tof2 tool pose = {self.tof2_tool_pose}')
         print(f"tof1 lowest pose = {self.lowest_pos_tof1}")
         print(f"tof2 lowest pose = {self.lowest_pos_tof2}")
+        
         response.tof1 = self.tof1_readings
         response.tof2 = self.tof2_readings
         response.tof1_filtered = self.tof1_filtered

@@ -135,32 +135,23 @@ class MoveArm(Node):
             rclpy.spin_once(self)
             if future.done():
                 print("DONE!")
-                future = future.get()
+                future = future.result()
+                self.tof1_readings = future.tof1
+                self.tof2_readings = future.tof2  
+                self.tof1_filtered = future.tof1_filtered
+                self.tof2_filtered = future.tof2_filtered
+                self.tof1_tool_pose = future.tof1_tool_pose
+                self.lowest_pos_tof1 = future.lowest_pose_tof1 
+                self.tof2_tool_pose = future.tof2_tool_pose
+                self.lowest_pos_tof2 = future.lowest_pose_tof2 
+                print(f"tof1 lowest pose = {self.lowest_pos_tof1}")
+                print(f"tof2 lowest pose = {self.lowest_pos_tof2}")
+                self.lowest_pose_tof1_calc = self.tof1_tool_pose[np.argmin(self.tof1_filtered)]
+                self.lowest_pose_tof2_calc = self.tof2_tool_pose[np.argmin(self.tof2_filtered)]
+                print(f"tof1 lowest pose calc = {self.lowest_pose_tof1_calc}")
+                print(f"tof2 lowest pose calc = {self.lowest_pose_tof2_calc}")
                 break
-
-        #uture.add_done_callback(self.done_callback)
-        #self.waiting = True
-        #f self.waiting
-        print(future.tof1)
-        '''
-        self.tof1_readings = future.tof1
-        self.tof2_readings =  response.tof2  
-        self.tof1_filtered = response.tof1_filtered
-        self.tof2_filtered =  response.tof2_filtered
-        self.tof1_tool_pose =  response.tof1_tool_pose
-        self.lowest_pos_tof1 =   response.lowest_pose_tof1 
-        self.tof2_tool_pose = response.tof2_tool_pose
-        self.lowest_pos_tof2 = response.lowest_pose_tof2 
         
-        print(f"tof1 readings = {self.tof1_readings}")
-        print(f"tof2 readings = {self.tof2_readings}")
-        print(f"tof1 filtered = {self.tof1_filtered}")
-        print(f"tof2 filtered = {self.tof2_filtered}")
-        print(f'tof1 tool pose = {self.tof1_tool_pose}')
-        print(f'tof2 tool pose = {self.tof2_tool_pose}')
-        print(f"tof1 lowest pose = {self.lowest_pos_tof1}")
-        print(f"tof2 lowest pose = {self.lowest_pos_tof2}")
-        '''
         print("Done ")
             
 
