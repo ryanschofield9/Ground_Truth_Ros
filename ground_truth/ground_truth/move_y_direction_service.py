@@ -9,6 +9,10 @@ from geometry_msgs.msg import  TwistStamped, Vector3
 from std_msgs.msg import Float32, Int64, Float32MultiArray
 
 from groun_truth_msgs.srv import MoveY
+from groun_truth_msgs.msg import ToolPose 
+
+from rclpy.callback_groups import ReentrantCallbackGroup
+
 
 import time 
 
@@ -20,12 +24,15 @@ class MoveUpService(Node):
         #Create service 
         self.service_moveup = self.create_service(MoveY, 'move_y_direction', self.moving)
 
+        #Create Callback group
+        self.service_handler_group = ReentrantCallbackGroup()
+
         #Create publishers and subscripers (and timers as necessary )
-        self.sub_tof1 = self.create_subscription(Int64, 'tof1', self.callback_tof1, 10) 
-        self.sub_tof2 = self.create_subscription(Int64, 'tof2', self.callback_tof2, 10)
-        self.sub_tof1 = self.create_subscription(Float32, 'tof1_filter', self.callback_tof1_filtered, 10)
-        self.sub_tof2 = self.create_subscription(Float32, 'tof2_filter', self.callback_tof2_filtered, 10)
-        self.sub_tool_pose = self.create_subscription(Float32MultiArray,'tool_pose', self.call_back_tool_pose, 10)
+        self.sub_tof1 = self.create_subscription(Int64, 'tof1', self.callback_tof1, 10, callback_group=self.service_handler_group) 
+        self.sub_tof2 = self.create_subscription(Int64, 'tof2', self.callback_tof2, 10, callback_group=self.service_handler_group)
+        self.sub_tof1 = self.create_subscription(Float32, 'tof1_filter', self.callback_tof1_filtered, 10, callback_group=self.service_handler_group)
+        self.sub_tof2 = self.create_subscription(Float32, 'tof2_filter', self.callback_tof2_filtered, 10, callback_group=self.service_handler_group)
+        self.sub_tool_pose = self.create_subscription(ToolPose,'tool_pose', self.callback_tool_pose, 10, callback_group=self.service_handler_group)
         self.pub_vel_commands = self.create_publisher(TwistStamped, '/servo_node/delta_twist_cmds', 10)
 
         #initialize variables 
@@ -42,6 +49,7 @@ class MoveUpService(Node):
         self.lowest_pos_tof1 = None #y tool position at the lowest raw tof1 reading 
         self.lowest_pos_tof2 = None #y tool position at the lowest raw tof2 reading 
         self.tool_y = None #y position of the tool at the current moment 
+        self.collecting = False 
 
 #TO DO, DON'T NEED TO DO MUCH WITH RAW DATA IN THIS ANYMORE 
 
@@ -62,11 +70,20 @@ class MoveUpService(Node):
         self.publish_twist([0.0, self.speed, 0.0], [0.0, 0.0, 0.0]) #move up at 0.1 m/s (negative y is up )
         while (now - self.start_time ) < self.time_collect:
             #if it hasn't been the alloted time for moving and collecting tof data 
+            self.publish_twist([0.0, self.speed, 0.0], [0.0, 0.0, 0.0])
             now = time.time() 
         #if the alloted time for moving up and collected tof data has passed  
         self.collecting = False 
         self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving (move at 0 m/s) 
         response = MoveY.Response()
+        print(f"tof1 readings = {self.tof1_readings}")
+        print(f"tof2 readings = {self.tof2_readings}")
+        print(f"tof1 filtered = {self.tof1_filtered}")
+        print(f"tof2 filtered = {self.tof2_filtered}")
+        print(f'tof1 tool pose = {self.tof1_tool_pose}')
+        print(f'tof2 tool pose = {self.tof2_tool_pose}')
+        print(f"tof1 lowest pose = {self.lowest_pos_tof1}")
+        print(f"tof2 lowest pose = {self.lowest_pos_tof2}")
         response.tof1 = self.tof1_readings
         response.tof2 = self.tof2_readings
         response.tof1_filtered = self.tof1_filtered
@@ -75,6 +92,7 @@ class MoveUpService(Node):
         response.lowest_pose_tof1 = self.lowest_pos_tof1
         response.tof2_tool_pose = self.tof2_tool_pose
         response.lowest_pose_tof2 = self.lowest_pos_tof2
+        print("returning")
         return response 
 
 
@@ -89,7 +107,7 @@ class MoveUpService(Node):
         cmd.twist.linear = Vector3(x=my_twist_linear[0], y=my_twist_linear[1], z=my_twist_linear[2])
         cmd.header.stamp = self.get_clock().now().to_msg()
         self.pub_vel_commands.publish(cmd)
-        self.get_logger().info(f"Sending: linear: {cmd.twist.linear} angular: {cmd.twist.angular}")
+        #self.get_logger().info(f"Sending: linear: {cmd.twist.linear} angular: {cmd.twist.angular}")
 
     def callback_tof1 (self, msg):
         #collect raw tof1 data (in mm)
@@ -120,6 +138,7 @@ class MoveUpService(Node):
                         self.lowest_pos_tof1= self.tool_y #save the current tool position as the lowest tool position for tof1
     
     def callback_tof2_filtered(self, msg):
+        #print(f"here in tof2 filtered and collecting is {self.collecting}")
         #collect and use filtered tof2 data (in mm)
         if self.collecting:
             #if moving and collecting data 
@@ -135,14 +154,15 @@ class MoveUpService(Node):
                         self.lowest_pos_tof2= self.tool_y #save the current tool position as the lowest tool position for tof2
 
     def callback_tool_pose (self, msg):
-        pose = msg.data
-        self.tool_y = pose[1]
+        self.tool_y  = msg.py
+        #print(self.tool_y)
         #save the y pose which is in the second spot of the array 
 
 def main(args=None):
     rclpy.init(args=args)
     move = MoveUpService()
-    rclpy.spin(move)
+    executor = MultiThreadedExecutor()
+    rclpy.spin(move, executor)
     rclpy.shutdown ()
 
 if __name__ == '__main__':

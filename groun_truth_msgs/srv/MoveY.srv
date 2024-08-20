@@ -3,11 +3,11 @@ int64 time
 string direction  
 ---
 #outputs 
-float32[] tof1 
-float32[] tof2 
+int64[] tof1 
+int64[] tof2 
 float32[] tof1_filtered
 float32[] tof2_filtered
 float32[] tof1_tool_pose
-float32 lowest_pos_tof1
+float32 lowest_pose_tof1
 float32[] tof2_tool_pose
-float32 lowest_pos_tof2
+float32 lowest_pose_tof2

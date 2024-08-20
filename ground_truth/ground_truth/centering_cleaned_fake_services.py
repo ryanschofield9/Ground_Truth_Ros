@@ -27,6 +27,7 @@ from moveit_msgs.msg import (
 )
 from rclpy.action import ActionClient
 from groun_truth_msgs.srv import AngleCheck, MoveY
+from groun_truth_msgs.msg import ToolPose 
 
 
 
@@ -44,9 +45,10 @@ class MoveArm(Node):
         self.sub_tof2 = self.create_subscription(Float32, 'tof2_filter', self.callback_tof2_filtered, 10)
         self.sub_joints = self.create_subscription(JointState, 'joint_states',self.callback_joints, 10 )
         self.pub_vel_commands = self.create_publisher(TwistStamped, '/servo_node/delta_twist_cmds', 10)
+        self.sub_tool_pose = self.create_subscription(ToolPose,'tool_pose', self.callback_tool_pose, 10)
         self.pub_step2 = self.create_publisher(Bool, 'step2', 10)
         #self.pub_timer = self.create_timer(1/10, self.main_control)
-        self.tool_timer = self.create_timer(1/10, self.pub_tool_pose_y)
+        #self.tool_timer = self.create_timer(1/10, self.pub_tool_pose_y)
 
         #Create tf buffer and listener 
         self.tf_buffer = Buffer()
@@ -80,6 +82,7 @@ class MoveArm(Node):
         self.move_down = False #if the system has reached the center of the branch 
         self.done_step1= False #if the system has gotten parallel with the branch
         self.done_step2= False #if the system has checked that the system is parallel wiuth the brnach   
+        self.collecting = False 
 
         #Wait three seconds to let everything get up and running (may not need)
         time.sleep(3)
@@ -99,6 +102,8 @@ class MoveArm(Node):
         self.tof1_filtered = [] #holds tof data during tof collection period for tof1 
         self.tof2_filtered = [] #holds tof data during tof collection period for tof2
         #anytime tof is used, it is filtered
+        self.tof1_tool_pose = []
+        self.tof2_tool_pose = []
         #if the raw data is being used it will be mentioned 
         self.lowest_tof1 = 550 #start with value that can not be saved 
         self.lowest_tof2 = 550 #start with values that can not be saved
@@ -124,10 +129,41 @@ class MoveArm(Node):
         collect_tof_request =MoveY.Request()
         collect_tof_request.time = self.move_up_collect 
         collect_tof_request.direction = "Up" 
+        self.collecting = True 
         future = self.move_y_client.call_async(collect_tof_request)
-        print("Done ")
+        while rclpy.ok():
+            rclpy.spin_once(self)
+            if future.done():
+                print("DONE!")
+                future = future.get()
+                break
+
+        #uture.add_done_callback(self.done_callback)
+        #self.waiting = True
+        #f self.waiting
+        print(future.tof1)
+        '''
+        self.tof1_readings = future.tof1
+        self.tof2_readings =  response.tof2  
+        self.tof1_filtered = response.tof1_filtered
+        self.tof2_filtered =  response.tof2_filtered
+        self.tof1_tool_pose =  response.tof1_tool_pose
+        self.lowest_pos_tof1 =   response.lowest_pose_tof1 
+        self.tof2_tool_pose = response.tof2_tool_pose
+        self.lowest_pos_tof2 = response.lowest_pose_tof2 
         
-    
+        print(f"tof1 readings = {self.tof1_readings}")
+        print(f"tof2 readings = {self.tof2_readings}")
+        print(f"tof1 filtered = {self.tof1_filtered}")
+        print(f"tof2 filtered = {self.tof2_filtered}")
+        print(f'tof1 tool pose = {self.tof1_tool_pose}')
+        print(f'tof2 tool pose = {self.tof2_tool_pose}')
+        print(f"tof1 lowest pose = {self.lowest_pos_tof1}")
+        print(f"tof2 lowest pose = {self.lowest_pos_tof2}")
+        '''
+        print("Done ")
+            
+
     def publish_twist(self, linear_speed, rot_speed):
         #publish a velocity command with the specified linear speed and rotation speed 
         my_twist_linear = linear_speed 
@@ -142,45 +178,46 @@ class MoveArm(Node):
 
     def callback_tof1 (self, msg):
         #collect raw tof1 data (in mm)
-        now = time.time()
-        if (now - self.start_time ) < self.move_up_collect:
-             #if it hasn't been the alloted time for moving up and collecting tof data 
+        if self.collecting:
+             #if moving and collecting data 
              self.tof1_readings.append(msg.data) #add raw data reading to list of tof1 readings 
 
     
     def callback_tof2(self, msg):
         #collect raw tof2 data (in mm)
-        now = time.time()
-        if (now - self.start_time ) < self.move_up_collect:
-            #if it hasn't been the alloted time for moving up and collecting tof data
+        if self.collecting:
+            #if moving and collecting data 
             self.tof2_readings.append(msg.data) #add raw data reading to list of tof2 readings 
     
     def callback_tof1_filtered(self, msg):
         #collect and use filtered tof1 data (in mm)
-        now = time.time()
-        if (now - self.start_time ) < self.move_up_collect:
-            #if it hasn't been the alloted time for moving up and collecting tof data
+        if self.collecting:
+           #if moving and collecting data 
             self.tof1_filtered.append(msg.data) #add data reading to list of tof1 readings
+            self.tof1_tool_pose.append(self.tool_y)
             if 150 < msg.data < 500:
                 #if the tof1 reading is between 150 mm and 500mm (~5.9in to 20in)
                 if msg.data < self.lowest_tof1:
-                    #if the tof1 reading is lower that the previous lowest tof1 reading
-                    self.lowest_tof1 = msg.data #set the tof1 reading as the lowest tof1 reading
-                    self.lowest_pos_tof1= self.tool_y #save the current tool position as the lowest tool position for tof1
+                     #if the tof1 reading is lower that the previous lowest tof1 reading
+                    if self.tool_y != None:
+                        #if the tool y pose is not None 
+                        self.lowest_tof1 = msg.data #set the tof1 reading as the lowest tof1 reading
+                        self.lowest_pos_tof1= self.tool_y #save the current tool position as the lowest tool position for tof1
     
     def callback_tof2_filtered(self, msg):
         #collect and use filtered tof2 data (in mm)
-        now = time.time()
-        if (now - self.start_time ) < self.move_up_collect:
-            #if it hasn't been the alloted time for moving up and collecting tof data
+        if self.collecting:
+            #if moving and collecting data 
             self.tof2_filtered.append(msg.data) #add data reading to list of tof2 readings
+            self.tof2_tool_pose.append(self.tool_y)
             if 150 < msg.data < 500:
                 #if the tof2 reading is between 150 mm and 500mm (~5.9in to 20in)
                 if msg.data < self.lowest_tof2:
                     #if the tof2 reading is lower that the previous lowest tof2 reading
-                    self.lowest_tof2 = msg.data #set the tof2 reading as the lowest tof2 reading
-                    self.lowest_pos_tof2= self.tool_y #save the current tool position as the lowest tool position for tof2
-
+                    if self.tool_y != None:
+                        #if the tool y pose is not None 
+                        self.lowest_tof2 = msg.data #set the tof2 reading as the lowest tof2 reading
+                        self.lowest_pos_tof2= self.tool_y #save the current tool position as the lowest tool position for tof2
 
     def calculate_angle(self):
         #calculate the angle the branch is at based on the tof readings 
@@ -245,10 +282,10 @@ class MoveArm(Node):
             else:
                 return pose
             
-    def pub_tool_pose_y(self):
-        #save the current tool pose y 
-        #there is a timer calling this function every 0.1 seconds 
-        self.tool_y = self.get_tool_pose_y()
+    def callback_tool_pose (self, msg):
+        self.tool_y  = msg.py
+        #print(self.tool_y)
+        #save the y pose which is in the second spot of the array 
 
     def plot_tof(self):
         #plot the the tof readings 
@@ -346,13 +383,10 @@ class MoveArm(Node):
         future.add_done_callback(self.goal_complete) #set done callback
 
     def goal_complete(self, future):
-            #function that is called once a service call is made to moveit_planning 
-            rez = future.result()
-            if not rez.accepted:
-                print("Planning failed!")
-                return
-            else:
-                print("Plan succeeded!")
+        print("in done callback  ")
+        #function that is called once a service call is made to moveit_planning 
+        result = future.result()
+        self.future = future 
 
     def callback_joints(self,msg ):
         #function that saves the current joint names and positions 

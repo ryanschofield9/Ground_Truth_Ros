@@ -31,8 +31,9 @@ endif()
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "srv/AngleCheck.srv", 
-  "srv/MoveY.src"
+  "srv/AngleCheck.srv"
+  "srv/MoveY.srv"
+  "msg/ToolPose.msg"
 )
 
 ament_package()

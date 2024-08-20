@@ -10,7 +10,8 @@ from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
 import numpy as np
 
-from std_msgs.msg import Float32MultiArray
+from std_msgs.msg import Float32MultiArray, Float32
+from groun_truth_msgs.msg import ToolPose 
 
 class PubToolPose(Node):
     def __init__(self):
@@ -18,8 +19,8 @@ class PubToolPose(Node):
 
         super().__init__('pub_tool_pose')
         #Create publishers and subscripers (and timers as necessary )
-        self.pub_step2 = self.create_publisher(Float32MultiArray, 'tool_pose', 10)
-        self.tool_timer = self.create_timer(1/10, self.pub_tool_pose_y)
+        self.publish_tool_pose = self.create_publisher(ToolPose, 'tool_pose', 10)
+        self.tool_timer = self.create_timer(1/10, self.pub_tool_pose)
 
         #Create tf buffer and listener 
         self.tf_buffer = Buffer()
@@ -29,13 +30,21 @@ class PubToolPose(Node):
         self.base_frame = 'base_link' #base frame that doesn't move 
         self.tool_frame = 'tool0' #frame that the end effector is attached to 
 
-    def pub_tool_pose_y(self):
+    def pub_tool_pose(self):
         #publish the current tool pose 
         #there is a timer calling this function every 0.1 seconds 
-        self.tool_y = self.get_tool_pose_y()
-        msg= Float32MultiArray()
-        msg.data = self.tool_y
-        self.pub_tool_pose_y.publish(msg)
+        self.tool = self.get_tool_pose()
+        #print(f"tool = {self.tool}")
+        msg= ToolPose()
+        msg.px = self.tool[0]
+        msg.py = self.tool[1]
+        msg.pz = self.tool[2]
+        msg.ox = self.tool[3]
+        msg.oy = self.tool[4]
+        msg.oz = self.tool[5]
+        msg.ow = self.tool[6]
+        #print(f"tool = {self.tool}  data= {msg}")
+        self.publish_tool_pose.publish(msg)
     
     def get_tool_pose(self, time=None, as_array=True):
                 #Get the position (position and orientation) of the tool pose in respect to the base in m 

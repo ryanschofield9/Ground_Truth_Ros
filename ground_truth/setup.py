@@ -27,12 +27,17 @@ setup(
             'centering = ground_truth.centering:main',
             'centering_cleaned = ground_truth.centering_cleaned:main',
             'centering_cleaned_fake = ground_truth.centering_cleaned_fake:main',
+            'centering_cleaned_fake_service = ground_truth.centering_cleaned_fake_services:main',
             'tof1_fake_pub = ground_truth.tof1_fake_pub:main', 
             'tof2_fake_pub = ground_truth.tof2_fake_pub:main', 
             'filter_tof =ground_truth.filter_data:main ', 
             'filter_tof_fake =ground_truth.filter_data_fake:main ', 
             'joystick =ground_truth.joystick:main ', 
             'angle_check_service =ground_truth.check_angle_service:main ', 
+            'pub_tool_pose = ground_truth.publisher_tool_pose:main',
+            'move_y_service = ground_truth.move_y_direction_service:main',
+
+
             
 
         ],
