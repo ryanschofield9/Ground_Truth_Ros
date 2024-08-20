@@ -26,7 +26,7 @@ from moveit_msgs.msg import (
     JointConstraint,
 )
 from rclpy.action import ActionClient
-from groun_truth_msgs.srv import AngleCheck, MoveY
+from groun_truth_msgs.srv import AngleCheck, MoveY, MoveYUntil
 from groun_truth_msgs.msg import ToolPose 
 
 
@@ -73,8 +73,11 @@ class MoveArm(Node):
         #self.angle_check_client = self.create_client(AngleCheck, 'angle_check')
         self.move_y_client = self.create_client(MoveY, 'move_y_direction')
         while not self.move_y_client.wait_for_service(timeout_sec=1):
-            self.get_logger().info('waiting for service to start')
+            self.get_logger().info('waiting for move_y service to start')
 
+        self.move_y_until_client = self.create_client(MoveYUntil, 'move_y_until')
+        while not self.move_y_until_client.wait_for_service(timeout_sec=1):
+            self.get_logger().info('waiting for mnove_until service to start')
         #inital states
         self.servo_active = False #if the servos have been activated 
         self.tof_collected = False #if the tof data has been collected 
@@ -92,7 +95,7 @@ class MoveArm(Node):
         self.joint_cntr = 'scaled_joint_trajectory_controller' # name of controller that uses joint commands 
         self.base_frame = 'base_link' #base frame that doesn't move 
         self.tool_frame = 'tool0' #frame that the end effector is attached to 
-        self.move_up_collect = 8 #alloted time in seconds for moving up and collecting tof data  
+        self.move_up_collect = 5 #alloted time in seconds for moving up and collecting tof data  
         self.dis_sensors = 0.0508 # meters 
         self.branch_angle = 0 #initial angle of branch
 
@@ -151,8 +154,19 @@ class MoveArm(Node):
                 print(f"tof1 lowest pose calc = {self.lowest_pose_tof1_calc}")
                 print(f"tof2 lowest pose calc = {self.lowest_pose_tof2_calc}")
                 break
-        
-        print("Done ")
+        print("MOVING DOWN NOW")
+        y_want = (self.lowest_pose_tof1_calc+self.lowest_pose_tof2_calc)/2
+        move_back_to_center_request=MoveYUntil.Request()
+        move_back_to_center_request.y_want = y_want 
+        move_back_to_center_request.direction = "Down"
+        future = self.move_y_until_client.call_async(move_back_to_center_request)
+        while rclpy.ok():
+            rclpy.spin_once(self)
+            if future.done():
+                print("GOT BACK TO Y_POSE ")
+                break
+       self.switch_controller(self.joint_cntr, self.forward_cntr) 
+       
             
 
     def publish_twist(self, linear_speed, rot_speed):

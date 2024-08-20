@@ -1,0 +1,6 @@
+#inputs
+float32 y_want 
+string direction  
+---
+#outputs 
+bool result 

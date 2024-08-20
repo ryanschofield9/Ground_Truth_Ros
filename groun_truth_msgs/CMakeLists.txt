@@ -33,6 +33,7 @@ find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/AngleCheck.srv"
   "srv/MoveY.srv"
+  "srv/MoveYUntil.srv"
   "msg/ToolPose.msg"
 )
 
