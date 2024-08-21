@@ -38,10 +38,12 @@ class ArduinoTOFPublisher(Node):
         try:
             line = serialPort.readline() 
             string = line.decode()
-            if string == 'TOUCH':
+            self.get_logger().info(f"String:{string}")
+            if string == "TOUCH":
                 #if the system has touched the tree TOUCH Will be displayed 
-                msg_bool.data = True
-                self.publisher_bool.publish(msg_bool)
+                #msg_bool.data = True
+                self.get_logger().info("TOUCH!!")
+                #self.publisher_bool.publish(msg_bool)
             else:
                 newstring = string.split(';')
                 try:
