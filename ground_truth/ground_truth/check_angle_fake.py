@@ -508,6 +508,7 @@ class AngleCheckClass(Node):
         self.tool_pos_tof1 = [] 
         self.tool_pos_tof2 = [] 
         self.start_time = time.time()
+        self.send_request = False
         
 
     def calback_step2_flag(self,msg):
