@@ -14,7 +14,7 @@ from tf2_ros.transform_listener import TransformListener
 from controller_manager_msgs.srv import SwitchController
 import numpy as np
 
-from std_msgs.msg import Float32, Bool
+from std_msgs.msg import Float32, Bool, Int64
 from sensor_msgs.msg import JointState
 import time 
 import matplotlib.pyplot as plt
@@ -37,8 +37,8 @@ class AngleCheckClass(Node):
         super().__init__('angle_check_service')
     
         #Create publishers and subscripers 
-        self.sub_tof1 = self.create_subscription(Float32, 'tof1', self.callback_tof1, 10) 
-        self.sub_tof2 = self.create_subscription(Float32, 'tof2', self.callback_tof2, 10)
+        self.sub_tof1 = self.create_subscription(Int64, 'tof1', self.callback_tof1, 10) 
+        self.sub_tof2 = self.create_subscription(Int64, 'tof2', self.callback_tof2, 10)
         self.sub_tof1 = self.create_subscription(Float32, 'tof1_filter', self.callback_tof1_filtered, 10)
         self.sub_tof2 = self.create_subscription(Float32, 'tof2_filter', self.callback_tof2_filtered, 10)
         self.sub_joints = self.create_subscription(JointState, 'joint_states',self.callback_joints, 10 )
@@ -48,7 +48,7 @@ class AngleCheckClass(Node):
         #create timers 
         self.control_timer = self.create_timer(1/10, self.main_control)
         self.tool_timer_pos_y = self.create_timer(1/10, self.pub_tool_pose_y)
-        self.tool_timer_orient_z = self.create_timer(1/10,self.get_tool_orient_z )
+        self.tool_timer_orient_z = self.create_timer(1/10,self.pub_tool_orient_z )
 
         #Create tf buffer and listener 
         self.tf_buffer = Buffer()
@@ -76,6 +76,7 @@ class AngleCheckClass(Node):
         self.done = False #a flag to determine if the check angle process has finished  
         self.saved_request = False #a flag to determine if the request has been saved
         self.got_request = True 
+        self.send_request = False
 
         #Wait three seconds to let everything get up and running (may not need)
         time.sleep(3)
@@ -85,9 +86,10 @@ class AngleCheckClass(Node):
         self.joint_cntr = 'scaled_joint_trajectory_controller' # name of controller that uses joint commands 
         self.base_frame = 'base_link' #base frame that doesn't move 
         self.tool_frame = 'tool0' #frame that the end effector is attached to 
-        self.move_collect = 5 #alloted time in seconds for moving up and collecting tof data  
-        self.rot_collect = 5 #alloted time in seconds for rotating and collecting tof data
+        self.move_collect = 3 #alloted time in seconds for moving up and collecting tof data  
+        self.rot_collect = 3 #alloted time in seconds for rotating and collecting tof data
         self.step_2 = False 
+        self.first = True 
 
         #initialize variables 
         #anytime tof is used, it is filtered
@@ -114,68 +116,74 @@ class AngleCheckClass(Node):
         #set start_time 
         self.start_time = time.time() 
 
-    def service_func (self, request, response):
-        if self.saved_request == False: 
-            #if the request has not been saved yet, save the request 
-            self.desired_angle = request.desired_angle
-            self.dresired_y = request.desired_y 
-            self.saved_request = True
-            self.response = response 
-            print("Got Request: ", request)
-            self.got_request = True 
-
-        while self.done == "False":
-            print("Waiting")
-        
-        return self.response
-
-        
         
     def main_control (self):
         #TO DO: WRITE A SERVICE MSG TYPE  
         #This function is called every 0.1 seconds and holds the main control structure for checking the angle
         # Corrects the angle by continously collecting tof data and comparing where the low value was found until one angle and y are settled on  
+        now = time.time()
         if self.step_2:
+            if self.first:
+                names = self.joint_names 
+                pos = np.array(self.joints) 
+                for idx,vals in enumerate(names):
+                    if vals == "wrist_3_joint":
+                        self.desired_angle = pos[idx] 
+                self.start_time = time.time()
+                self.desired_y = self.tool_y
+
+                print(f"Desired Angle: {self.desired_angle}  Desired Y: {self.desired_y}")
+                
+                #print(f"pose: {self.get_tool_pose()}")
+                self.first = False 
+
             if self.done == False:
-                #if the check angle hasn't gotten into the correct range and hasn't attempted to more than 3 times 
-                now = time.time()
+                #if the check angle hasn't gotten into the correct range and hasn't attempted to more than 3 times
                 if self.rot_up_flag == False: 
                     #if the rotation up step has not be completed 
-                    if (self.start_time - now) <self.rot_collect:
+                    if (now - self.start_time ) <self.rot_collect:
                         #if it hasn't been the alloted time for rotating and collecting tof data  
                         self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.5]) #rotate the tool in the z direction by 0.5 rads/s
                     else:
                         #if the alloted time for rotating and collecting tof data has passed 
-                        self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving 
-                        self.switch_controller(self.joint_cntr, self.forward_cntr) #switch from forward_position controller to scaled_joint_trajectory controller
-                        self.rotate_to_w(self, self.desired_angle)
-                        if self.joint_rot_flag == True:
+                        if self.send_request == False: 
+                            self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving 
+                            self.switch_controller(self.joint_cntr, self.forward_cntr) #switch from forward_position controller to scaled_joint_trajectory controller
+                            self.rotate_to_w(self.desired_angle)
+                            self.send_request = True 
+                        
+                        if (self.orient_z == self.desired_angle):
+                            print("In function ")
                             #if the joint controller has finished its rotation 
                             self.rot_up_flag = True #set the rotation up step as completed 
                             self.joint_rot_flag = False #set the joint controller as NOT finished its rotation
                             self.switch_controller(self.forward_cntr, self.joint_cntr) #switch from scaled_joint_trajectory controller to forward_position controller
+                            print("Finished Rot Up moving to Rot Down  ")
+                            self.send_request = False
                             self.start_time = time.time() #reset the start time 
 
+                
                 elif self.rot_down_flag == False:
                     #if the rotation down step has not be completed 
-                    if (self.start_time - now) <self.rot_collect:
+                    if (now - self.start_time ) <self.rot_collect:
                         #if it hasn't been the alloted time for rotating and collecting tof data
                         self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, -0.5]) #rotate the tool in the z direction by -0.5 rads/s
                     else:
                         #if the alloted time for rotating and collecting tof data has passed 
                         self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving
                         self.switch_controller(self.joint_cntr, self.forward_cntr) #switch from forward_position controller to scaled_joint_trajectory controller
-                        self.rotate_to_w(self, self.desired_angle)
-                        if self.joint_rot_flag == True:
+                        self.rotate_to_w(self.desired_angle)
+                        if (self.orient_z == self.desired_angle):
                             #if the joint controller has finished its rotation
                             self.rot_down_flag = True #set the rotation down step as completed 
                             self.joint_rot_flag = False #set the joint controller as NOT finished its rotation
                             self.switch_controller(self.forward_cntr, self.joint_cntr) #switch from scaled_joint_trajectory controller to forward_position controller
                             self.start_time = time.time() #reset the start time 
-
+                
+                
                 elif self.move_up_flag == False: 
                     #if the move up step has not be completed
-                    if (self.start_time - now) <self.move_collect: 
+                    if (now - self.start_time ) <self.move_collect: 
                         #if it hasn't been the alloted time for moving and collecting tof data
                         self.publish_twist([0.0, -0.1, 0.0], [0.0, 0.0, 0.0]) #move the tool in the y direction at -0.1m/s
                     else:
@@ -190,7 +198,7 @@ class AngleCheckClass(Node):
                             
                 elif self.move_down_flag == False:
                     #if the move down step has not be completed 
-                    if (self.start_time - now) <self.move_collect: 
+                    if (now - self.start_time) <self.move_collect: 
                         #if it hasn't been the alloted time for moving and collecting tof data
                         self.publish_twist([0.0, 0.1, 0.0], [0.0, 0.0, 0.0]) #move the tool in the y direction at 0.1m/s
                     else:
@@ -226,7 +234,7 @@ class AngleCheckClass(Node):
                             self.desired_y = new_desired_y #reset the desired_y with the new_desired_y 
                             self.reset()
                         
-                            
+                 
             else: 
                 #if the check angle has gotten into the correct range or failed 4 times 
                 if self.tries == -1:
@@ -239,7 +247,7 @@ class AngleCheckClass(Node):
                     print("found a good location")
                     #self.response.position_found = True
                     self.step_2 = False
-            
+                 
         
     
     def publish_twist(self, linear_speed, rot_speed):
@@ -257,7 +265,7 @@ class AngleCheckClass(Node):
     def callback_tof1 (self, msg):
         #collect raw tof1 data (in mm)
         now = time.time()
-        if (now - self.start_time ) < self.move_up_collect:
+        if (now - self.start_time ) < self.move_collect:
              #if it hasn't been the alloted time for moving up and collecting tof data 
              self.tof1_readings.append(msg.data) #add raw data reading to list of tof1 readings 
 
@@ -265,7 +273,7 @@ class AngleCheckClass(Node):
     def callback_tof2(self, msg):
         #collect raw tof2 data (in mm)
         now = time.time()
-        if (now - self.start_time ) < self.move_up_collect:
+        if (now - self.start_time ) < self.move_collect:
             #if it hasn't been the alloted time for moving up and collecting tof data
             self.tof2_readings.append(msg.data) #add raw data reading to list of tof2 readings 
     
@@ -319,11 +327,14 @@ class AngleCheckClass(Node):
     def rotate_to_w(self, angle):
         #rotate the tool to the given angle  
         names = self.joint_names 
-        pos = self.joints 
+        pos = np.array(self.joints) 
+        print(f"Names {names}    Pos: {pos}")
 
         #for all the joints, use the current angle for all joints, but wrist 3. Set wrist 3 to the given angle  
-        for idx, vals in enumerate (names):
+        for idx, vals in enumerate(names):
+            print(idx)
             if vals == "wrist_3_joint":
+                print(pos)
                 pos[idx]= angle
 
         self.send_joint_pos(names, pos) 
@@ -352,6 +363,26 @@ class AngleCheckClass(Node):
             else:
                 return pose
     
+    def get_tool_pose(self, time=None, as_array=True):
+                #Get the position (position and orientation) of the tool pose in respect to the base in m 
+                try:
+                    #try to get the transform of from the base frame to the tool frame
+                    tf = self.tf_buffer.lookup_transform(
+                        self.tool_frame, self.base_frame, time or rclpy.time.Time()
+                    )
+                except TransformException as ex:
+                    #if the tranform returns a TransformException error print the error
+                    self.get_logger().warn("Received TF Exception: {}".format(ex))
+                    return
+                pose = convert_tf_to_pose(tf)
+                if as_array:
+                    #if the pose is given as an array save the position and orientation as p and o respectively
+                    p = pose.pose.position
+                    o = pose.pose.orientation
+                    return np.array([p.x, p.y, p.z, o.x, o.y, o.z, o.w]) #return the tool position (position and orientation) with respect to the base in m 
+                else:
+                    return pose
+
     def get_tool_orient_z(self, as_array=True):
             #Get the z orientation of the tool pose in respect to the base in m 
             try:
@@ -424,11 +455,11 @@ class AngleCheckClass(Node):
                 return
             else:
                 print("Plan succeeded!")
-            
-            if rez.SUCCEEDED:
+                
+            if future.done():
+                print("BACVK TO ORIGINAL ")
                 self.joint_rot_flag = True 
-            else: 
-                self.joint_rot_flag = False
+
 
     def callback_joints(self,msg ):
         #function that saves the current joint names and positions 

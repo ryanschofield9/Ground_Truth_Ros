@@ -1,0 +1,5 @@
+#inputs
+float32 angle 
+---
+#outputs 
+bool result 

@@ -34,6 +34,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/AngleCheck.srv"
   "srv/MoveY.srv"
   "srv/MoveYUntil.srv"
+  "srv/RotateTo.srv"
   "msg/ToolPose.msg"
 )
 

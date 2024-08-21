@@ -26,7 +26,7 @@ from moveit_msgs.msg import (
     JointConstraint,
 )
 from rclpy.action import ActionClient
-from groun_truth_msgs.srv import AngleCheck, MoveY, MoveYUntil
+from groun_truth_msgs.srv import AngleCheck, MoveY, MoveYUntil,RotateTo
 from groun_truth_msgs.msg import ToolPose 
 
 
@@ -78,6 +78,11 @@ class MoveArm(Node):
         self.move_y_until_client = self.create_client(MoveYUntil, 'move_y_until')
         while not self.move_y_until_client.wait_for_service(timeout_sec=1):
             self.get_logger().info('waiting for mnove_until service to start')
+
+        self.rotate_to_client = self.create_client(RotateTo, 'rotate_to')
+        while not self.rotate_to_client.wait_for_service(timeout_sec=1):
+            self.get_logger().info('waiting for rotate_to service to start')
+        
         #inital states
         self.servo_active = False #if the servos have been activated 
         self.tof_collected = False #if the tof data has been collected 
@@ -165,8 +170,16 @@ class MoveArm(Node):
             if future.done():
                 print("GOT BACK TO Y_POSE ")
                 break
-       self.switch_controller(self.joint_cntr, self.forward_cntr) 
-       
+        self.switch_controller(self.joint_cntr, self.forward_cntr) 
+        self.calculate_angle()
+        rotate_to_request = RotateTo.Request()
+        rotate_to_request.angle = self.branch_angle 
+        future = self.move_y_until_client.call_async(move_back_to_center_request)
+        while rclpy.ok():
+            rclpy.spin_once(self)
+            if future.done():
+                print("Rotating Done")
+                break
             
 
     def publish_twist(self, linear_speed, rot_speed):
@@ -226,17 +239,9 @@ class MoveArm(Node):
 
     def calculate_angle(self):
         #calculate the angle the branch is at based on the tof readings 
-        print("tof1 readings: ", self.tof1_readings)
-        print("tof2 readings: ", self.tof2_readings)
-        print("tof1 filtered readings: ", self.tof1_filtered)
-        print("tof2 filtered readings: ", self.tof2_filtered)
-        print("lowest y pose for tof1: ", self.lowest_pos_tof1)
-        print("lowest y pose for tof2: ", self.lowest_pos_tof2)
-        print("actual pose y value: ", self.tool_y)
-        print("actual pose: ", self.get_tool_pose())
-        distance_readings = self.lowest_pos_tof1 - self.lowest_pos_tof2 #find the distance between the lowest tof readings 
+        distance_readings = self.lowest_pose_tof1_calc - self.lowest_pose_tof2_calc #find the distance between the lowest tof readings 
         self.branch_angle = np.arctan(distance_readings / self.dis_sensors) #using the distance between the sensors (known) and the lowest filtered tof readings (calculated), calculate the angle
-        self.calc_angle_done = True #set calculate angle done flag to true 
+        #self.calc_angle_done = True #set calculate angle done flag to true 
 
 
     

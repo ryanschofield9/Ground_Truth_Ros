@@ -11,6 +11,8 @@ from std_msgs.msg import Float32, Int64, Float32MultiArray
 from groun_truth_msgs.srv import RotateTo
 from groun_truth_msgs.msg import ToolPose 
 
+from sensor_msgs.msg import JointState
+
 from rclpy.callback_groups import ReentrantCallbackGroup
 
 from moveit_msgs.action import MoveGroup
@@ -22,6 +24,7 @@ from moveit_msgs.msg import (
 )
 from rclpy.action import ActionClient
 
+
 import time 
 
 class MoveUpService(Node):
@@ -30,7 +33,7 @@ class MoveUpService(Node):
 
         super().__init__('move_y_direction_service')
         #Create service 
-        self.service_moveup = self.create_service(RotateTo, 'rotate_to', self.moving)
+        self.service_moveup = self.create_service(RotateTo, 'rotate_to', self.rotating)
 
         #Create Callback group
         self.service_handler_group = ReentrantCallbackGroup()
@@ -50,7 +53,10 @@ class MoveUpService(Node):
         #TO DO: GET RID OF ALL THE PRINT STATEMENTS 
         #TO DO: DETERMINE NEED OF ALL THE COMMENTS 
         #this function is called every 0.1 seconds and holds the main control structure for getting parallel to the branch 
-        
+        angle = request.angle 
+        self.rotate_to_w(angle)
+        response = RotateTo.Response()
+        response.result = True 
         return response 
 
     def rotate_to_w(self, angle):
@@ -92,6 +98,16 @@ class MoveUpService(Node):
         #function that saves the current joint names and positions 
         self.joint_names = msg.name
         self.joints= msg.position
+
+    def goal_complete(self, future):
+            #function that is called once a service call is made to moveit_planning 
+            rez = future.result()
+            if not rez.accepted:
+                print("Planning failed!")
+                return
+            else:
+                print("Plan succeeded!")
+
 
 def main(args=None):
     rclpy.init(args=args)

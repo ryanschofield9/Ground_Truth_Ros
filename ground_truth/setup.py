@@ -37,6 +37,10 @@ setup(
             'pub_tool_pose = ground_truth.publisher_tool_pose:main',
             'move_y_service = ground_truth.move_y_direction_service:main',
             'move_y_until_service = ground_truth.move_y_until_service:main',
+            'rotate_to_service = ground_truth.rotate_to_service:main',
+            'check_angle = ground_truth.check_angle:main',
+            'check_angle_fake = ground_truth.check_angle_fake:main',
+
 
 
             

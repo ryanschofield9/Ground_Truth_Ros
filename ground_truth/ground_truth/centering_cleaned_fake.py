@@ -88,7 +88,7 @@ class MoveArm(Node):
         self.joint_cntr = 'scaled_joint_trajectory_controller' # name of controller that uses joint commands 
         self.base_frame = 'base_link' #base frame that doesn't move 
         self.tool_frame = 'tool0' #frame that the end effector is attached to 
-        self.move_up_collect = 8 #alloted time in seconds for moving up and collecting tof data  
+        self.move_up_collect = 5 #alloted time in seconds for moving up and collecting tof data  
         self.dis_sensors = 0.0508 # meters 
         self.branch_angle = 0 #initial angle of branch
 
@@ -119,6 +119,7 @@ class MoveArm(Node):
         #TO DO: GET RID OF ALL THE PRINT STATEMENTS 
         #TO DO: DETERMINE NEED OF ALL THE COMMENTS 
         #this function is called every 0.1 seconds and holds the main control structure for getting parallel to the branch 
+      
         if self.done_step1 == False: 
              #if the system has not yet gotten parallel to the branch with a first guess 
             if self.tof_collected == False: 
@@ -132,7 +133,7 @@ class MoveArm(Node):
                     self.tof_collected = True #set tof data collection to true 
                     self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving (move at 0 m/s) 
 
-            if self.calc_angle_done ==False:
+            elif self.calc_angle_done ==False:
                 #if the angle of the branch hasn't been calculated 
                 self.calculate_angle() 
                 y_pose_want = (self.lowest_pos_tof1 + self.lowest_pos_tof2)/2 #find y_pose_want as the average of y tool position at the lowest raw tof readings
@@ -155,19 +156,12 @@ class MoveArm(Node):
                 self.plot_tof()
                 print("Done Plotting TOF ")
                 self.done_step1 = True #the system has gotten parallel with the branch, set as True 
+                msg= Bool()
+                msg.data = True
+                for x in range (0, 3):
+                    self.pub_step2.publish(msg)
+                self.switch_controller(self.forward_cntr, self.joint_cntr)
 
-        elif self.done_step2 == False:
-            msg = Bool()
-            msg.data = True 
-            for i in range(0,3): 
-                self.pub_step2.publish(msg)
-            self.done_step2 = True 
-
-            
-
-                
-
-                
         
     
     def publish_twist(self, linear_speed, rot_speed):
