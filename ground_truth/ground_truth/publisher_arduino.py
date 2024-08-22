@@ -38,8 +38,12 @@ class ArduinoTOFPublisher(Node):
         try:
             line = serialPort.readline() 
             string = line.decode()
-            self.get_logger().info(f"String:{string}")
-            if string == "TOUCH":
+            try: 
+                string_first = string[0]
+            except: 
+                string_first = 'N'
+            
+            if string_first == 'T':
                 #if the system has touched the tree TOUCH Will be displayed 
                 #msg_bool.data = True
                 self.get_logger().info("TOUCH!!")
@@ -56,14 +60,15 @@ class ArduinoTOFPublisher(Node):
                 except: 
                     tof1val = 0
                     tof2val = 0
+                try: 
+                    self.get_logger().info(f"TOF reading: {newstring[1]}, {newstring[3]}, Publishing: {msg.data}, {msg_2.data}")
+                except: 
+                    self.get_logger().info("No Reading")
                 
-        except ValueError as e:
-            print(f"{e}: Could not convert msg type to float.")
+        except:
+            print(f"{e}: Error, couldn't get message No Reading ")
 
-        try: 
-            self.get_logger().info(f"TOF reading: {newstring[1]}, {newstring[3]}, Publishing: {msg.data}, {msg_2.data}")
-        except: 
-            self.get_logger().info("No Reading")
+
 
         
     

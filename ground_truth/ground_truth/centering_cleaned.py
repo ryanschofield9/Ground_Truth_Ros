@@ -13,7 +13,7 @@ from std_srvs.srv import Trigger
 from controller_manager_msgs.srv import SwitchController
 import numpy as np
 
-from std_msgs.msg import Float32
+from std_msgs.msg import Float32, Int64, Bool
 from sensor_msgs.msg import JointState
 import time 
 import matplotlib.pyplot as plt
@@ -26,6 +26,8 @@ from moveit_msgs.msg import (
     JointConstraint,
 )
 from rclpy.action import ActionClient
+from groun_truth_msgs.srv import AngleCheck
+
 
 
 #from filterpy.kalman import KalmanFilter
@@ -42,6 +44,7 @@ class MoveArm(Node):
         self.sub_tof2 = self.create_subscription(Float32, 'tof2_filter', self.callback_tof2_filtered, 10)
         self.sub_joints = self.create_subscription(JointState, 'joint_states',self.callback_joints, 10 )
         self.pub_vel_commands = self.create_publisher(TwistStamped, '/servo_node/delta_twist_cmds', 10)
+        self.pub_step2 = self.create_publisher(Bool, 'step2', 10)
         self.pub_timer = self.create_timer(1/10, self.main_control)
         self.tool_timer = self.create_timer(1/10, self.pub_tool_pose_y)
 
@@ -65,13 +68,17 @@ class MoveArm(Node):
         )
 
         self.moveit_planning_client = ActionClient(self, MoveGroup, "move_action")
+        #self.angle_check_client = self.create_client(AngleCheck, 'angle_check')
+        #while not self.angle_check_client.wait_for_service(timeout_sec=1):
+         #   self.get_logger().info('waiting for service to start')
 
         #inital states
         self.servo_active = False #if the servos have been activated 
         self.tof_collected = False #if the tof data has been collected 
         self.calc_angle_done = False #if the angle of the branch has calculated 
         self.move_down = False #if the system has reached the center of the branch 
-        self.done = False #if the system has gotten parallel with the branch 
+        self.done_step1= False #if the system has gotten parallel with the branch
+        self.done_step2= False #if the system has checked that the system is parallel wiuth the brnach   
 
         #Wait three seconds to let everything get up and running (may not need)
         time.sleep(3)
@@ -81,7 +88,7 @@ class MoveArm(Node):
         self.joint_cntr = 'scaled_joint_trajectory_controller' # name of controller that uses joint commands 
         self.base_frame = 'base_link' #base frame that doesn't move 
         self.tool_frame = 'tool0' #frame that the end effector is attached to 
-        self.move_up_collect = 8 #alloted time in seconds for moving up and collecting tof data  
+        self.move_up_collect = 5 #alloted time in seconds for moving up and collecting tof data  
         self.dis_sensors = 0.0508 # meters 
         self.branch_angle = 0 #initial angle of branch
 
@@ -101,7 +108,6 @@ class MoveArm(Node):
         #start servoing and switch to forward position controller 
         self.start_servo()
         self.switch_controller(self.forward_cntr, self.joint_cntr)
-        print("switching controller")
         
         #set start_time 
         self.start_time = time.time() 
@@ -113,20 +119,21 @@ class MoveArm(Node):
         #TO DO: GET RID OF ALL THE PRINT STATEMENTS 
         #TO DO: DETERMINE NEED OF ALL THE COMMENTS 
         #this function is called every 0.1 seconds and holds the main control structure for getting parallel to the branch 
-        if self.tof_collected == False: 
-            # if tof data has not been collected 
-            now = time.time()
-            if (now - self.start_time ) < self.move_up_collect:
-                #if it hasn't been the alloted time for moving up and collecting tof data 
-                self.publish_twist([0.0, -0.1, 0.0], [0.0, 0.0, 0.0]) #move up at 0.1 m/s (negative y is up )
-            else:
-                #if the alloted time for moving up and collected tof data has passed 
-                self.tof_collected = True #set tof data collection to true 
-                self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving (move at 0 m/s) 
+      
+        if self.done_step1 == False: 
+             #if the system has not yet gotten parallel to the branch with a first guess 
+            if self.tof_collected == False: 
+                # if tof data has not been collected 
+                now = time.time()
+                if (now - self.start_time ) < self.move_up_collect:
+                    #if it hasn't been the alloted time for moving up and collecting tof data 
+                    self.publish_twist([0.0, -0.1, 0.0], [0.0, 0.0, 0.0]) #move up at 0.1 m/s (negative y is up )
+                else:
+                    #if the alloted time for moving up and collected tof data has passed 
+                    self.tof_collected = True #set tof data collection to true 
+                    self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving (move at 0 m/s) 
 
-        elif self.done == False: 
-            #if the system has not yet gotten parallel to the branch
-            if self.calc_angle_done ==False:
+            elif self.calc_angle_done ==False:
                 #if the angle of the branch hasn't been calculated 
                 self.calculate_angle() 
                 y_pose_want = (self.lowest_pos_tof1 + self.lowest_pos_tof2)/2 #find y_pose_want as the average of y tool position at the lowest raw tof readings
@@ -147,7 +154,14 @@ class MoveArm(Node):
                 self.switch_controller(self.joint_cntr, self.forward_cntr) #switch from forward_position controller to scaled_joint_trajectory controller 
                 self.rotate_to_w(self.branch_angle)
                 self.plot_tof()
-                self.done = True #the system has gotten parallel with the branch, set as True 
+                print("Done Plotting TOF ")
+                self.done_step1 = True #the system has gotten parallel with the branch, set as True 
+                msg= Bool()
+                msg.data = True
+                for x in range (0, 3):
+                    self.pub_step2.publish(msg)
+                self.switch_controller(self.forward_cntr, self.joint_cntr)
+
         
     
     def publish_twist(self, linear_speed, rot_speed):
@@ -208,6 +222,8 @@ class MoveArm(Node):
         #calculate the angle the branch is at based on the tof readings 
         print("tof1 readings: ", self.tof1_readings)
         print("tof2 readings: ", self.tof2_readings)
+        print("tof1 filtered readings: ", self.tof1_filtered)
+        print("tof2 filtered readings: ", self.tof2_filtered)
         print("lowest y pose for tof1: ", self.lowest_pos_tof1)
         print("lowest y pose for tof2: ", self.lowest_pos_tof2)
         print("actual pose y value: ", self.tool_y)

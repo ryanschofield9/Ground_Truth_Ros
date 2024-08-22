@@ -141,6 +141,7 @@ class AngleCheckClass(Node):
 
             if self.done == False:
                 #if the check angle hasn't gotten into the correct range and hasn't attempted to more than 3 times
+                '''
                 if self.rot_up_flag == False: 
                     #if the rotation up step has not be completed 
                     if (now - self.start_time ) <self.rot_collect:
@@ -185,8 +186,8 @@ class AngleCheckClass(Node):
                             self.switch_controller(self.forward_cntr, self.joint_cntr) #switch from scaled_joint_trajectory controller to forward_position controller
                             self.start_time = time.time() #reset the start time 
                 
-                
-                elif self.move_up_flag == False: 
+                '''
+                if self.move_up_flag == False: 
                     #if the move up step has not be completed
                     if (now - self.start_time ) <self.move_collect: 
                         #if it hasn't been the alloted time for moving and collecting tof data
@@ -227,7 +228,7 @@ class AngleCheckClass(Node):
                         print(f"OLD desired_angle: {self.desired_angle} NEW desired_angle: {self.new_desired_angle}")
                         print(f"OLD desired_y: {self.desired_y} NEW desired_angle: {self.new_desired_y}")
                         print(f"Tries: {self.tries}")
-                        self.calc_first_time = True 
+                        self.calc_first_time = True
                     if self.dif_angle <= 0.02 and abs(self.dif_y) <= 0.001:
                         #if the angles are within ~1 degree of each other and the y is within 1 mm of each other 
                         self.done = True  #set the check angle step as done 
@@ -316,30 +317,33 @@ class AngleCheckClass(Node):
     def callback_tof1_filtered(self, msg):
         #collect filtered tof1 data (in mm) and tool z orientation 
         now = time.time()
-        if self.rot_up_flag == False or self.rot_down_flag == False: 
+        '''if self.rot_up_flag == False or self.rot_down_flag == False: 
             #print("in orient collect ")
             if (self.start_time-now) < self.rot_collect:  
                 self.tool_orient_tof1.append(self.orient_z)
                 self.tof1_filtered_rot.append(msg.data)
         else: 
+        '''
             #print("in orient collect ")
-            if (self.start_time-now) < self.move_collect:  
-                self.tool_pos_tof1.append(self.tool_y)
-                self.tof1_filtered_up.append(msg.data)
+        if (self.start_time-now) < self.move_collect:  
+            self.tool_pos_tof1.append(self.tool_y)
+            self.tof1_filtered_up.append(msg.data)
 
 
     
     def callback_tof2_filtered(self, msg):
         #collect filtered tof2 data (in mm) and tool z orientation 
         now = time.time()
+        '''
         if self.rot_up_flag == False or self.rot_down_flag == False:
             if (self.start_time-now) < self.rot_collect:  
                 self.tool_orient_tof2.append(self.orient_z)
                 self.tof2_filtered_rot.append(msg.data)
         else:
-            if (self.start_time-now) < self.move_collect:  
-                self.tool_pos_tof2.append(self.tool_y)
-                self.tof2_filtered_up.append(msg.data)
+            '''
+        if (self.start_time-now) < self.move_collect:  
+            self.tool_pos_tof2.append(self.tool_y)
+            self.tof2_filtered_up.append(msg.data)
 
     
     def move_down_to_y(self, y_pose_want):
@@ -503,8 +507,8 @@ class AngleCheckClass(Node):
 
     def calculate_desired_angle(self):
         # find the new desired angle by finding the average of the tool z orientation at the lowest tof readings 
-        low_tof1 = self.tool_orient_tof1[np.argmin(self.tof1_filtered_rot)]
-        low_tof2 = self.tool_orient_tof2[np.argmin(self.tof2_filtered_rot)]
+        low_tof1 = self.tool_pos_tof1[np.argmin(self.tof1_filtered_up)]
+        low_tof2 = self.tool_pos_tof2[np.argmin(self.tof2_filtered_up)]
         distance_readings = low_tof1 - low_tof2 #find the distance between the lowest tof readings 
         new_desired_angle = np.arctan(distance_readings / self.dis_sensors)
         return new_desired_angle
@@ -562,10 +566,10 @@ class AngleCheckClass(Node):
         t2 = []
         t2_f = []
         
-        for idx, val in enumerate(self.tof1_filtered_rot): 
+        for idx, val in enumerate(self.tof1_readings): 
             t.append(idx)
         
-        for idx, val in enumerate(self.tof2_filtered_rot): 
+        for idx, val in enumerate(self.tof2_readings): 
             t2.append(idx)
 
         for idx, val in enumerate(self.tof1_filtered_up): 
@@ -575,8 +579,8 @@ class AngleCheckClass(Node):
             t2_f.append(idx)
     
        
-        plt.plot(t,self.tof1_filtered_rot,'b', label = 'TOF1 filtered rot ')
-        plt.plot(t2, self.tof2_filtered_rot, 'r', label = 'TOF2 filtered rot ')
+        plt.plot(t,self.tof1_readings,'b', label = 'TOF1 raw ')
+        plt.plot(t2, self.tof2_readings, 'r', label = 'TOF2 raw')
         plt.plot(t_f, self.tof1_filtered_up, 'c', label = 'TOF1 filtered up')
         plt.plot(t2_f, self.tof2_filtered_up, 'k', label = 'TOF2 filtered up')
         plt.legend()

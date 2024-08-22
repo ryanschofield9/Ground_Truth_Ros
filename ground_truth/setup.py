@@ -40,6 +40,7 @@ setup(
             'rotate_to_service = ground_truth.rotate_to_service:main',
             'check_angle = ground_truth.check_angle:main',
             'check_angle_fake = ground_truth.check_angle_fake:main',
+            'check_angle_no_rot = ground_truth.check_angle_no_rot:main',
 
 
 
