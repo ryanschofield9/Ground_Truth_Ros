@@ -220,6 +220,7 @@ class AngleCheckClass(Node):
                 else: 
                     if self.calc_first_time == False: 
                         #if all the steps have been completed 
+                        print(f"Calculate desired angle: {self.calculate_desired_angle()}")
                         self.new_desired_angle = self.calculate_desired_angle() + self.desired_angle
                         self.new_desired_y = self.calculate_desired_y()
                         self.dif_angle = abs(self.desired_angle -self.new_desired_angle) 
@@ -325,9 +326,10 @@ class AngleCheckClass(Node):
         else: 
         '''
             #print("in orient collect ")
-        if (self.start_time-now) < self.move_collect:  
-            self.tool_pos_tof1.append(self.tool_y)
-            self.tof1_filtered_up.append(msg.data)
+        if (self.start_time-now) < self.move_collect:
+            if 150 < msg.data < 500:    
+                self.tool_pos_tof1.append(self.tool_y)
+                self.tof1_filtered_up.append(msg.data)
 
 
     
@@ -341,15 +343,16 @@ class AngleCheckClass(Node):
                 self.tof2_filtered_rot.append(msg.data)
         else:
             '''
-        if (self.start_time-now) < self.move_collect:  
-            self.tool_pos_tof2.append(self.tool_y)
-            self.tof2_filtered_up.append(msg.data)
+        if (self.start_time-now) < self.move_collect:
+            if 150 < msg.data < 500:  
+                self.tool_pos_tof2.append(self.tool_y)
+                self.tof2_filtered_up.append(msg.data)
 
     
     def move_down_to_y(self, y_pose_want):
         #Using the given y pose that we want to go back to, move down until we reach that location 
         y_pose= self.tool_y #get the current tool y pose 
-        print("y_pose: ", y_pose, " y_pose_want", y_pose_want)
+        #print("y_pose: ", y_pose, " y_pose_want", y_pose_want)
         if (y_pose - y_pose_want) < 0.001: 
             #when within 1mm of wanted y pose 
             self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving  
@@ -359,7 +362,7 @@ class AngleCheckClass(Node):
     def move_up_to_y(self, y_pose_want):
         #Using the given y pose that we want to go back to, move down until we reach that location 
         y_pose= self.tool_y #get the current tool y pose 
-        print("y_pose: ", y_pose, " y_pose_want", y_pose_want)
+        #print("y_pose: ", y_pose, " y_pose_want", y_pose_want)
         if (y_pose_want - y_pose) < 0.001: 
             #when within 1mm of wanted y pose 
             self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving 
@@ -516,7 +519,9 @@ class AngleCheckClass(Node):
     def calculate_desired_y(self):
         # find the new desired y by finding the average of the tool y pos at the lowest tof readings 
         low_y_tof1 = self.tool_pos_tof1[np.argmin(self.tof1_filtered_up)]
+        print(f"Idx of tof1 low: {np.argmin(self.tof1_filtered_up)}")
         low_y_tof2 = self.tool_pos_tof2[np.argmin(self.tof2_filtered_up)]
+        print(f"Idx of tof2 low: {np.argmin(self.tof2_filtered_up)}")
         new_desired_y = (low_y_tof1+low_y_tof2)/2
         return new_desired_y
     
