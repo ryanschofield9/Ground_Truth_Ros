@@ -45,9 +45,9 @@ class ArduinoTOFPublisher(Node):
             
             if string_first == 'T':
                 #if the system has touched the tree TOUCH Will be displayed 
-                #msg_bool.data = True
+                msg_bool.data = True
                 self.get_logger().info("TOUCH!!")
-                #self.publisher_bool.publish(msg_bool)
+                self.publisher_bool.publish(msg_bool)
             else:
                 newstring = string.split(';')
                 try:

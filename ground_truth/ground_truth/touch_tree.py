@@ -37,15 +37,22 @@ class AngleCheckClass(Node):
         super().__init__('angle_check_service')
 
         #Create Service 
-        self.srv = self.create_service(TouchTree, 'touching_tree', self.main_control)
+        #self.srv = self.create_service(TouchTree, 'touching_tree', self.main_control)
     
         #Create publishers and subscripers 
-        self.sub = self.create_subscription(Bool, 'tof1', self.callback_tree, 10) 
+        self.sub = self.create_subscription(Bool, 'touching_tree_flag', self.callback_tree, 10) 
         self.pub_vel_commands = self.create_publisher(TwistStamped, '/servo_node/delta_twist_cmds', 10)
+
+
+        #Create timer 
+        self.control_timer = self.create_timer(1/10, self.main_control)
 
         #Create tf buffer and listener 
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
+
+        #Flags initialize 
+        self.step_3 = False 
 
         #Create Callback group
         self.service_handler_group = ReentrantCallbackGroup()
@@ -60,12 +67,11 @@ class AngleCheckClass(Node):
     def main_control (self, request, response):
         #This function is called every 0.1 seconds and holds the main control structure for touching the tree 
         #The arm will move forward until the tree is touched 
-        if self.tree_touch == True: 
-            self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving 
-            response.six_z_pose = self.get_tool_pose_z()
-            return response
-        else: 
-           self.publish_twist([0.0, 0.0, 0.1], [0.0, 0.0, 0.0]) #move forward in the z position at 0.1 m/s
+        if self.step_3: 
+            if self.tree_touch == True: 
+                self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving 
+            else: 
+                self.publish_twist([0.0, 0.0, 0.1], [0.0, 0.0, 0.0]) #move forward in the z position at 0.1 m/s
         
     
     def publish_twist(self, linear_speed, rot_speed):
@@ -81,7 +87,8 @@ class AngleCheckClass(Node):
         self.get_logger().info(f"Sending: linear: {cmd.twist.linear} angular: {cmd.twist.angular}")
 
     def callback_tree (self, msg):
-        self.tree_touch = msg.data 
+        if self.step_3: 
+            self.tree_touch = msg.data 
 
     def get_tool_pose_z(self, as_array=True):
             #Get the z position of the tool pose in respect to the base in m 

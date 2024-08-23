@@ -47,7 +47,7 @@ class AngleCheckClass(Node):
 
         #create timers 
         self.control_timer = self.create_timer(1/10, self.main_control)
-        self.tool_timer_pos_y = self.create_timer(1/10, self.pub_tool_pose_y)
+        self.tool_timer_pos_y = self.create_timer(1/50, self.pub_tool_pose_y)
         self.tool_timer_orient_z = self.create_timer(1/10,self.pub_tool_orient_z )
         self.tool_timer_angle = self.create_timer(1/10,self.pub_tool_angle)
 
