@@ -503,10 +503,17 @@ class AngleCheckClass(Node):
 
     def calculate_desired_angle(self):
         # find the new desired angle by finding the average of the tool z orientation at the lowest tof readings 
-        low_tof1 = self.tool_orient_tof1[np.argmin(self.tof1_filtered_rot)]
-        low_tof2 = self.tool_orient_tof2[np.argmin(self.tof2_filtered_rot)]
-        distance_readings = low_tof1 - low_tof2 #find the distance between the lowest tof readings 
-        new_desired_angle = np.arctan(distance_readings / self.dis_sensors)
+        low_angle_tof1 = self.tool_orient_tof1[np.argmin(self.tof1_filtered_rot)]
+        low_angle_tof2 = self.tool_orient_tof2[np.argmin(self.tof2_filtered_rot)]
+        low_tof1_reading = np.min(self.tof1_filtered_rot)
+        low_tof2_reading = np.min(self.tof2_filtered_rot)
+        high_tof1_reading = np.max(self.tof1_filtered_rot)
+        high_tof2_reading = np.max(self.tof2_filtered_rot)
+
+        if abs (low_tof1_reading - high_tof1_reading)<50 and abs (low_tof2_reading - high_tof2_reading)<50: 
+            new_desired_angle = (low_angle_tof1 + low_angle_tof2)/2
+        else: 
+            new_desired_angle = self.desired_angle
         return new_desired_angle
 
     def calculate_desired_y(self):
