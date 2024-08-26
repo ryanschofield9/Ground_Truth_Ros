@@ -510,6 +510,9 @@ class AngleCheckClass(Node):
         high_tof1_reading = np.max(self.tof1_filtered_rot)
         high_tof2_reading = np.max(self.tof2_filtered_rot)
 
+        print(f"Dif TOF1 is {abs (low_tof1_reading - high_tof1_reading)}")
+        print(f"Dif TOF2 is {abs (low_tof2_reading - high_tof2_reading)}")
+
         if abs (low_tof1_reading - high_tof1_reading)<50 and abs (low_tof2_reading - high_tof2_reading)<50: 
             new_desired_angle = (low_angle_tof1 + low_angle_tof2)/2
         else: 
