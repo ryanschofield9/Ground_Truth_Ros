@@ -44,6 +44,7 @@ class AngleCheckClass(Node):
         self.sub_joints = self.create_subscription(JointState, 'joint_states',self.callback_joints, 10 )
         self.sub_flag = self.create_subscription(Bool, 'step2',self.calback_step2_flag, 10 )
         self.pub_vel_commands = self.create_publisher(TwistStamped, '/servo_node/delta_twist_cmds', 10)
+        self.pub_step3 = self.create_publisher(Bool, 'step3', 10)
 
         #create timers 
         self.control_timer = self.create_timer(1/10, self.main_control)
@@ -210,6 +211,7 @@ class AngleCheckClass(Node):
                             
                 elif self.move_down_flag == False:
                     #if the move down step has not be completed 
+                    print("IN MOVE DOWN FLAG")
                     if (now - self.start_time) <self.move_collect: 
                         #if it hasn't been the alloted time for moving and collecting tof data
                         self.publish_twist([0.0, 0.1, 0.0], [0.0, 0.0, 0.0]) #move the tool in the y direction at 0.1m/s
@@ -220,7 +222,7 @@ class AngleCheckClass(Node):
                         if self.at_y == True: 
                             #if the arm is at the wanted y position
                             self.move_down_flag = True #set the move down step as completed 
-                            self.at_y == False #set the arm as NOT at the wanted y position
+                            self.at_y = False #set the arm as NOT at the wanted y position
                             #print("TOF1 filtered up 0 to 10: ",self.tof1_filtered_up[0:10])
                             #print("TOF2 filtered up 0 to 10: ",self.tof2_filtered_up[0:10])
                             #self.start_time = time.time() #reset the start time 
@@ -258,7 +260,7 @@ class AngleCheckClass(Node):
                                     self.switch_controller(self.joint_cntr, self.forward_cntr) #switch from forward_position controller to scaled_joint_trajectory controller
                                     self.rotate_to_w(self.desired_angle)
                                     self.send_request = True 
-                                if (abs(self.desired_angle- self.tool_angle) < 0.0001):
+                                if (abs(self.desired_angle- self.tool_angle) < 0.001):
                                     self.switch_controller(self.forward_cntr, self.joint_cntr) #switch from scaled_joint_trajectory controller to forward_position controller
                                     self.rotated_to_new = True 
                 
@@ -290,8 +292,15 @@ class AngleCheckClass(Node):
                 else:
                     #if the system has gotten into the acceptable range in 4 or less tries  
                     print("found a good location")
+                    plt.plot([1,2], [1,2])
+                    plt.show()
                     #self.response.position_found = True
                     self.step_2 = False
+                    self.switch_controller(self.forward_cntr, self.joint_cntr) #switch from scaled_joint_trajectory controller to forward_position controller
+                    msg = Bool()
+                    msg.data = True 
+                    self.pub_step3.publish(msg)
+                    
                  
         
     
@@ -549,6 +558,7 @@ class AngleCheckClass(Node):
         self.move_up_flag = False
         self.move_down_flag = False 
         self.joint_rot_flag = False
+        self.at_y= False
         self.tof1_readings = [] 
         self.tof2_readings = [] 
         self.tool_orient_tof1 = [] 
