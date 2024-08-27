@@ -3,9 +3,9 @@ from rclpy.node import Node
 
 from std_msgs.msg import Int64, Float32
 
-class TOFData(Node): 
+class TOF1FakePub(Node): 
     def __init__(self):
-        super().__init__('tof1')
+        super().__init__('tof1_fake')
         self.pub = self.create_publisher(Int64, 'tof1',10)
         
         self.timer=self.create_timer(0.1, self.publish_tof)
@@ -41,7 +41,7 @@ class TOFData(Node):
         
 def main(args=None):
    rclpy.init(args=args)
-   tof = TOFData()
+   tof = TOF1FakePub()
    rclpy.spin(tof)
    rclpy.shutdown()
 

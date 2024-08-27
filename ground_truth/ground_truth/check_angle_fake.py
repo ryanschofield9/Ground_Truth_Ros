@@ -31,10 +31,10 @@ from rclpy.action import ActionClient
 
 
 # TO DO: CREATE THE MESSAGE PACKAGE AND ADD THE SERVICE INTO IT SEE GITHUB FROM ROB599 HW3 FOR EXPLANATION
-class AngleCheckClass(Node):
+class AngleCheckFake(Node):
 
     def __init__(self):
-        super().__init__('angle_check_service')
+        super().__init__('angle_check_fake')
     
         #Create publishers and subscripers 
         self.sub_tof1 = self.create_subscription(Int64, 'tof1', self.callback_tof1, 10) 
@@ -540,7 +540,7 @@ def convert_tf_to_pose(tf: TransformStamped):
 def main(args=None):
     rclpy.init(args=args)
 
-    ang_check = AngleCheckClass()
+    ang_check = AngleCheckFake()
 
     rclpy.spin(ang_check)
 

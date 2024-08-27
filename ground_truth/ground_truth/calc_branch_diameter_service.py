@@ -11,10 +11,10 @@ import math
 class CalcDiameterService(Node):
 
     def __init__(self):
-        super().__init__('angle_check_service')
+        super().__init__('calc_diameter_service')
 
         #Create Service 
-        self.service_pixel = self.create_service(PixelWidth, 'pixel_width', self.pixel_service)
+        self.service_pixel = self.create_service(PixelWidth, 'pixel_width', self.pixel_service) 
         self.service_calc = self.create_service(CalcDiameter, 'calc_diameter', self.calc_diameter)
 
         #initialize variables
@@ -23,6 +23,7 @@ class CalcDiameterService(Node):
         self.angle = 24 #in degrees 
         
     def pixel_service (self, request, response):
+        #Service function that saves the width of a branch in pixels when a request sent 
         self.diameter_pix = request.diameter_pix 
         response = PixelWidth.Response()
         response.saved = True
@@ -30,10 +31,11 @@ class CalcDiameterService(Node):
     
 
     def calc_diameter(self, request,response):
+        #Service function that calculates the diameter of a branch in inches when a request is sent 
         print(f"GOT REQUEST: {request}")
-        dis_video = request.dis_video 
-        angle_in_rad = math.radians(self.angle)
-        img_w_inch = 2*dis_video*math.tan(angle_in_rad)
+        video_dis = request.video_dis 
+        angle_in_rad = math.radians(self.angle) #have to turn the angle into radians to get correct tan value
+        img_w_inch = 2*video_dis*math.tan(angle_in_rad) 
         pix_w_inch = img_w_inch / self.img_width_pix
         diameter_inch = self.diameter_pix * pix_w_inch
         print(f"The diamter in inches is {diameter_inch}")

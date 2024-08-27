@@ -32,9 +32,10 @@ from groun_truth_msgs.srv import AngleCheck
 
 #from filterpy.kalman import KalmanFilter
 
-class MoveArm(Node):
+class CenteringCleaned(Node):
     def __init__(self):
         # TO DO: CHECK WHAT CAN BE DELETED
+        #TO DO: CAN GET RID OF TOF1 and TOF2 unfiltered data because we don't need it 
 
         super().__init__('center_cleaned')
         #Create publishers and subscripers (and timers as necessary )
@@ -408,8 +409,8 @@ def convert_tf_to_pose(tf: TransformStamped):
 
 def main(args=None):
     rclpy.init(args=args)
-    move = MoveArm()
-    rclpy.spin(move)
+    center = CenteringCleaned()
+    rclpy.spin(center)
     rclpy.shutdown ()
 
 if __name__ == '__main__':

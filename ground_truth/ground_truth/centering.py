@@ -32,7 +32,7 @@ import scipy.optimize
 
 from filterpy.kalman import KalmanFilter
 
-class MoveArm(Node):
+class Centering(Node):
     def __init__(self):
         # TO DO: CHECK WHAT CAN BE DELETED
 
@@ -456,8 +456,8 @@ def convert_tf_to_pose(tf: TransformStamped):
 
 def main(args=None):
     rclpy.init(args=args)
-    move = MoveArm()
-    rclpy.spin(move)
+    center = Centering()
+    rclpy.spin(center)
     rclpy.shutdown ()
 
 if __name__ == '__main__':

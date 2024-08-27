@@ -18,10 +18,10 @@ import numpy as np
 
 
 
-class ToFNode(Node):
+class Filter(Node):
     RANGING_ERR = 0.0
     def __init__(self) -> None:
-        super().__init__(node_name="tof_node")
+        super().__init__("filter")
 
         # Subscribers
         self.sub_tof1 = self.create_subscription(Float32, 'tof1', self.callback_tof1, 10)
@@ -107,7 +107,7 @@ class ToFNode(Node):
  
 def main():
     rclpy.init()
-    tof_node = ToFNode()
+    tof_node = Filter()
     executor = MultiThreadedExecutor()
     rclpy.spin(node=tof_node, executor=executor)
     tof_node.destroy_node()

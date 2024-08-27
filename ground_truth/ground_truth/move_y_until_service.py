@@ -16,11 +16,11 @@ from rclpy.callback_groups import ReentrantCallbackGroup
 
 import time 
 
-class MoveUpService(Node):
+class MoveYUntilService(Node):
     def __init__(self):
         # TO DO: CHECK WHAT CAN BE DELETED
 
-        super().__init__('move_y_direction_service')
+        super().__init__('move_y_direction_until_service')
         #Create service 
         self.service_moveup = self.create_service(MoveYUntil, 'move_y_until', self.moving)
 
@@ -95,7 +95,7 @@ class MoveUpService(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    move = MoveUpService()
+    move = MoveYUntilService()
     executor = MultiThreadedExecutor()
     rclpy.spin(move, executor)
     rclpy.shutdown ()

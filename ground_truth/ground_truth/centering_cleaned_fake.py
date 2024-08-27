@@ -32,7 +32,7 @@ from groun_truth_msgs.srv import AngleCheck
 
 #from filterpy.kalman import KalmanFilter
 
-class MoveArm(Node):
+class CenteringCleanedFake(Node):
     def __init__(self):
         # TO DO: CHECK WHAT CAN BE DELETED
 
@@ -408,8 +408,8 @@ def convert_tf_to_pose(tf: TransformStamped):
 
 def main(args=None):
     rclpy.init(args=args)
-    move = MoveArm()
-    rclpy.spin(move)
+    centered = CenteringCleanedFake()
+    rclpy.spin(centered)
     rclpy.shutdown ()
 
 if __name__ == '__main__':

@@ -33,7 +33,7 @@ from groun_truth_msgs.msg import ToolPose
 
 #from filterpy.kalman import KalmanFilter
 
-class MoveArm(Node):
+class CenterCleandedFakeServices(Node):
     def __init__(self):
         # TO DO: CHECK WHAT CAN BE DELETED
 
@@ -47,8 +47,7 @@ class MoveArm(Node):
         self.pub_vel_commands = self.create_publisher(TwistStamped, '/servo_node/delta_twist_cmds', 10)
         self.sub_tool_pose = self.create_subscription(ToolPose,'tool_pose', self.callback_tool_pose, 10)
         self.pub_step2 = self.create_publisher(Bool, 'step2', 10)
-        #self.pub_timer = self.create_timer(1/10, self.main_control)
-        #self.tool_timer = self.create_timer(1/10, self.pub_tool_pose_y)
+        
 
         #Create tf buffer and listener 
         self.tf_buffer = Buffer()
@@ -416,8 +415,8 @@ def convert_tf_to_pose(tf: TransformStamped):
 
 def main(args=None):
     rclpy.init(args=args)
-    move = MoveArm()
-    rclpy.spin(move)
+    center = CenterCleandedFakeServices()
+    rclpy.spin(center)
     rclpy.shutdown ()
 
 if __name__ == '__main__':

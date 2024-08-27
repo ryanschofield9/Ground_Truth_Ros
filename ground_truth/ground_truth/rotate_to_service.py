@@ -27,11 +27,11 @@ from rclpy.action import ActionClient
 
 import time 
 
-class MoveUpService(Node):
+class RotateToService(Node):
     def __init__(self):
         # TO DO: CHECK WHAT CAN BE DELETED
 
-        super().__init__('move_y_direction_service')
+        super().__init__('rotate_to_service')
         #Create service 
         self.service_moveup = self.create_service(RotateTo, 'rotate_to', self.rotating)
 
@@ -111,7 +111,7 @@ class MoveUpService(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    move = MoveUpService()
+    move = RotateToService()
     executor = MultiThreadedExecutor()
     rclpy.spin(move, executor)
     rclpy.shutdown ()

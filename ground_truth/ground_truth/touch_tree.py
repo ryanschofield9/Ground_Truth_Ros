@@ -33,7 +33,7 @@ import time
 
 
 # TO DO: CREATE THE MESSAGE PACKAGE AND ADD THE SERVICE INTO IT SEE GITHUB FROM ROB599 HW3 FOR EXPLANATION
-class AngleCheckClass(Node):
+class TouchTree(Node):
 
     def __init__(self):
         super().__init__('tree_touch')
@@ -85,13 +85,13 @@ class AngleCheckClass(Node):
                 if self.count == 3:
                     self.final_z = self.get_tool_pose_z()
                     dif_z = abs(self.initial_z - self.final_z) * 39.37 #have to conver from meters to inches 
-                    self.dis_video = 6 + dif_z
+                    self.video_dis = 6 + dif_z
                     print(f"Initial Z position: {self.initial_z}")
                     print(f"Final Z position: {self.final_z}")
                     print(f"change in Z position: {dif_z}")
                     print(f"Original distance: {self.dis_video}")
                     request = CalcDiameter.Request()
-                    request.dis_video = self.dis_video
+                    request.video_dis = self.video_dis
                     future = self.calc_diameter_client.call_async(request)
                     while rclpy.ok():
                         rclpy.spin_once(self)
@@ -165,7 +165,7 @@ def convert_tf_to_pose(tf: TransformStamped):
 def main(args=None):
     rclpy.init(args=args)
 
-    ang_check = AngleCheckClass()
+    ang_check = TouchTree()
     executor = MultiThreadedExecutor()
 
     rclpy.spin(ang_check, executor)

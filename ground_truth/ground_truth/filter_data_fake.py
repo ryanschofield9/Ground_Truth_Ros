@@ -17,10 +17,10 @@ import numpy as np
 
 #Luke gave me this code 
 
-class ToFNode(Node):
+class FilterFake(Node):
     RANGING_ERR = 0.0
     def __init__(self) -> None:
-        super().__init__(node_name="tof_node")
+        super().__init__("filter_fake")
         # Subscribers 
         self.sub_tof1 = self.create_subscription(Int64, 'tof1', self.callback_tof1, 10)
         self.sub_tof2 = self.create_subscription(Int64, 'tof2', self.callback_tof2, 10)
@@ -105,7 +105,7 @@ class ToFNode(Node):
  
 def main():
     rclpy.init()
-    tof_node = ToFNode()
+    tof_node = FilterFake()
     executor = MultiThreadedExecutor()
     rclpy.spin(node=tof_node, executor=executor)
     tof_node.destroy_node()

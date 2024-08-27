@@ -1,5 +1,5 @@
 #inputs
-float32 dis_video 
+float32 video_dis
 ---
 #outputs 
 float32 diameter 

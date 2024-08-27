@@ -16,7 +16,7 @@ from rclpy.callback_groups import ReentrantCallbackGroup
 
 import time 
 
-class MoveUpService(Node):
+class MoveYService(Node):
     def __init__(self):
         # TO DO: CHECK WHAT CAN BE DELETED
 
@@ -179,7 +179,7 @@ class MoveUpService(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    move = MoveUpService()
+    move = MoveYService()
     executor = MultiThreadedExecutor()
     rclpy.spin(move, executor)
     rclpy.shutdown ()
