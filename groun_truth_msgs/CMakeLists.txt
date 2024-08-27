@@ -35,6 +35,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/MoveY.srv"
   "srv/MoveYUntil.srv"
   "srv/RotateTo.srv"
+  "srv/CalcDiameter.srv"
+  "srv/PixelWidth.srv"
   "msg/ToolPose.msg"
 )
 

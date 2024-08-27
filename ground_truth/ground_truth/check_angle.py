@@ -91,7 +91,7 @@ class AngleCheckClass(Node):
         self.joint_cntr = 'scaled_joint_trajectory_controller' # name of controller that uses joint commands 
         self.base_frame = 'base_link' #base frame that doesn't move 
         self.tool_frame = 'tool0' #frame that the end effector is attached to 
-        self.move_collect = 2 #alloted time in seconds for moving up and collecting tof data  
+        self.move_collect = 3 #alloted time in seconds for moving up and collecting tof data  
         self.rot_collect = 3 #alloted time in seconds for rotating and collecting tof data
         self.dis_sensors = 0.0508 # meters 
         self.step_2 = False 

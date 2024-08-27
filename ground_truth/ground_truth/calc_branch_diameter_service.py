@@ -8,7 +8,7 @@ import math
 
 
 # TO DO: CREATE THE MESSAGE PACKAGE AND ADD THE SERVICE INTO IT SEE GITHUB FROM ROB599 HW3 FOR EXPLANATION
-class AngleCheckClass(Node):
+class CalcDiameterService(Node):
 
     def __init__(self):
         super().__init__('angle_check_service')
@@ -18,8 +18,9 @@ class AngleCheckClass(Node):
         self.service_calc = self.create_service(CalcDiameter, 'calc_diameter', self.calc_diameter)
 
         #initialize variables
-        self.pixel_width = 0 
+        self.diameter_pix = 157 #Change this to start with 0
         self.img_width_pix = 640 # NEED TO CHECK THIS VALUE 
+        self.angle = 24 #in degrees 
         
     def pixel_service (self, request, response):
         self.diameter_pix = request.diameter_pix 
@@ -29,23 +30,24 @@ class AngleCheckClass(Node):
     
 
     def calc_diameter(self, request,response):
+        print(f"GOT REQUEST: {request}")
         dis_video = request.dis_video 
-        img_w_inch = 2*dis_video*math.tan(24)
+        angle_in_rad = math.radians(self.angle)
+        img_w_inch = 2*dis_video*math.tan(angle_in_rad)
         pix_w_inch = img_w_inch / self.img_width_pix
         diameter_inch = self.diameter_pix * pix_w_inch
+        print(f"The diamter in inches is {diameter_inch}")
         response = CalcDiameter.Response()
         response.diameter = diameter_inch
+        print(f"RETURNING RESPONSE: {response}")
         return response 
     
 
 
 def main(args=None):
     rclpy.init(args=args)
-
-    ang_check = AngleCheckClass()
-
-    rclpy.spin(ang_check)
-
+    calc_diameter = CalcDiameterService()
+    rclpy.spin(calc_diameter)
     rclpy.shutdown()
 
 

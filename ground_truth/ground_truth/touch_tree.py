@@ -1,4 +1,5 @@
-#from rob599_hw3_msgs.srv import TouchTree
+
+from groun_truth_msgs.srv import CalcDiameter
 
 import rclpy
 from rclpy.node import Node
@@ -37,8 +38,10 @@ class AngleCheckClass(Node):
     def __init__(self):
         super().__init__('tree_touch')
 
-        #Create Service 
-        #self.srv = self.create_service(TouchTree, 'touching_tree', self.main_control)
+        #Create clients 
+        self.calc_diameter_client = self.create_client(CalcDiameter, 'calc_diameter')
+        while not self.calc_diameter_client.wait_for_service(timeout_sec=1):
+            self.get_logger().info('waiting for calc_diameter service to start')
     
         #Create publishers and subscripers 
         self.sub = self.create_subscription(Bool, 'touching_tree_flag', self.callback_tree, 10) 
@@ -55,15 +58,16 @@ class AngleCheckClass(Node):
         
         #create timers 
         self.control_timer = self.create_timer(1/10, self.main_control)
-        time.sleep(3) # wait 3 seconds 
 
         #set inital states 
-        self.tree_touch = False 
+        self.tree_touch = False
         self.count = 0
         self.first = True 
         self.base_frame = 'base_link' #base frame that doesn't move 
         self.tool_frame = 'tool0' #frame that the end effector is attached to
-        self.initial_z = self.get_tool_pose_z() 
+        self.initial_z = self.get_tool_pose_z()
+        time.sleep(3) # wait 3 seconds 
+
         
 
 
@@ -73,25 +77,36 @@ class AngleCheckClass(Node):
         
         if self.step_3:
             if self.first: 
-                self.initial_z = self.get_tool_pose_z() 
+                self.initial_z = self.get_tool_pose_z()
                 self.first = False 
             if self.tree_touch == True: 
                 self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving
                 self.count += 1
                 if self.count == 3:
-                    self.step_3 = False 
                     self.final_z = self.get_tool_pose_z()
                     dif_z = abs(self.initial_z - self.final_z) * 39.37 #have to conver from meters to inches 
+                    self.dis_video = 6 + dif_z
                     print(f"Initial Z position: {self.initial_z}")
                     print(f"Final Z position: {self.final_z}")
                     print(f"change in Z position: {dif_z}")
-                    print(f"Original distance: {6 + dif_z}")
+                    print(f"Original distance: {self.dis_video}")
+                    request = CalcDiameter.Request()
+                    request.dis_video = self.dis_video
+                    future = self.calc_diameter_client.call_async(request)
+                    while rclpy.ok():
+                        rclpy.spin_once(self)
+                        print("waiting")
+
+                        if future.done():
+                            print("DONE")
+                            print(future.result())
+                            self.step_3 = False 
+                            break 
 
             else: 
                 self.publish_twist([0.0, 0.0, 0.1], [0.0, 0.0, 0.0]) #move forward in the z position at 0.1 m/s
+                
 
-        
-    
     def publish_twist(self, linear_speed, rot_speed):
         #publish a velocity command with the specified linear speed and rotation speed 
         my_twist_linear = linear_speed 
@@ -151,8 +166,9 @@ def main(args=None):
     rclpy.init(args=args)
 
     ang_check = AngleCheckClass()
+    executor = MultiThreadedExecutor()
 
-    rclpy.spin(ang_check)
+    rclpy.spin(ang_check, executor)
 
     rclpy.shutdown()
 
