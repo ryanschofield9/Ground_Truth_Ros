@@ -91,7 +91,7 @@ class AngleCheckClass(Node):
         self.joint_cntr = 'scaled_joint_trajectory_controller' # name of controller that uses joint commands 
         self.base_frame = 'base_link' #base frame that doesn't move 
         self.tool_frame = 'tool0' #frame that the end effector is attached to 
-        self.move_collect = 3 #alloted time in seconds for moving up and collecting tof data  
+        self.move_collect = 2 #alloted time in seconds for moving up and collecting tof data  
         self.rot_collect = 3 #alloted time in seconds for rotating and collecting tof data
         self.dis_sensors = 0.0508 # meters 
         self.step_2 = False 
@@ -239,8 +239,8 @@ class AngleCheckClass(Node):
                         print(f"OLD desired_y: {self.desired_y} NEW desired_angle: {self.new_desired_y}")
                         print(f"Tries: {self.tries}")
                         self.calc_first_time = True 
-                    if self.dif_angle <= 0.02 and abs(self.dif_y) <= 0.001:
-                        #if the angles are within ~1 degree of each other and the y is within 1 mm of each other 
+                    if self.dif_angle <= 0.02 and abs(self.dif_y) <= 0.00254:
+                        #if the angles are within ~1 degree of each other and the y is within 2.54 mm (0.1in) of each other 
                         self.done = True  #set the check angle step as done 
                     else: 
                         #if the angles or y values are outside the given ranges 
