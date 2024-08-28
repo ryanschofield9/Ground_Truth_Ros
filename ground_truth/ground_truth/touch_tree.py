@@ -20,6 +20,7 @@ from sensor_msgs.msg import JointState
 import time 
 import matplotlib.pyplot as plt
 
+'''
 from moveit_msgs.action import MoveGroup
 from moveit_msgs.msg import (
     MotionPlanRequest,
@@ -28,6 +29,7 @@ from moveit_msgs.msg import (
     JointConstraint,
 )
 from rclpy.action import ActionClient
+'''
 import time 
 
 
@@ -55,6 +57,10 @@ class TouchTree(Node):
 
         #Flags initialize 
         self.step_3 = False
+        self.step_4 = False
+        
+        #set future 
+        self.future = None
         
         #create timers 
         self.control_timer = self.create_timer(1/10, self.main_control)
@@ -83,7 +89,12 @@ class TouchTree(Node):
                 self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving
                 self.count += 1
                 if self.count == 3:
-                    self.control_timer.cancel()
+                     self.step_3 = False 
+                     self.step_4 = True
+            else: 
+                self.publish_twist([0.0, 0.0, 0.1], [0.0, 0.0, 0.0]) #move forward in the z position at 0.1 m/s
+        elif self.step_4: 
+                if not self.future: # A call is not pending
                     self.final_z = self.get_tool_pose_z()
                     dif_z = abs(self.initial_z - self.final_z) * 39.37 #have to conver from meters to inches 
                     self.video_dis = 6 + dif_z
@@ -92,20 +103,16 @@ class TouchTree(Node):
                     print(f"change in Z position: {dif_z}")
                     print(f"Original distance: {self.video_dis}")
                     request = CalcDiameter.Request()
-                    request.video_dis = self.video_dis
-                    future = self.calc_diameter_client.call_async(request)
-                    while rclpy.ok():
-                        rclpy.spin_once(self)
-                        print("waiting")
+                    request.video_dis = 7.0
+                    self.future = self.calc_diameter_client.call_async(request)
 
-                        if future.done():
-                            print("DONE")
-                            print(future.result())
-                            self.step_3 = False 
-                            break 
+                if self.future.done(): # a call just completed
+                    self.get_logger().info("Done")
+                    print(self.future.result())
+                    self.step_4 = False 
+                    self.future = None
+            
 
-            else: 
-                self.publish_twist([0.0, 0.0, 0.1], [0.0, 0.0, 0.0]) #move forward in the z position at 0.1 m/s
                 
 
     def publish_twist(self, linear_speed, rot_speed):

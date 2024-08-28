@@ -43,6 +43,7 @@ setup(
             'check_angle_no_rot = ground_truth.check_angle_no_rot:main',
             'touch_tree = ground_truth.touch_tree:main',
             'calc_diameter_service = ground_truth.calc_branch_diameter_service:main',
+            'tree_test= ground_truth.test_tree:main',
 
 
             
