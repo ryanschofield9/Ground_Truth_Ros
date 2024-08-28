@@ -33,8 +33,6 @@ from rclpy.action import ActionClient
 import time 
 
 
-
-# TO DO: CREATE THE MESSAGE PACKAGE AND ADD THE SERVICE INTO IT SEE GITHUB FROM ROB599 HW3 FOR EXPLANATION
 class TouchTree(Node):
 
     def __init__(self):
@@ -48,7 +46,7 @@ class TouchTree(Node):
         #Create publishers and subscripers 
         self.sub = self.create_subscription(Bool, 'touching_tree_flag', self.callback_tree, 10) 
         self.pub_vel_commands = self.create_publisher(TwistStamped, '/servo_node/delta_twist_cmds', 10)
-        self.sub_flag = self.create_subscription(Bool, 'step3',self.calback_step3_flag, 10 )
+        self.sub_flag = self.create_subscription(Bool, 'step5',self.calback_step5_flag, 10 )
 
 
         #Create tf buffer and listener 
@@ -56,8 +54,8 @@ class TouchTree(Node):
         self.tf_listener = TransformListener(self.tf_buffer, self)
 
         #Flags initialize 
-        self.step_3 = False
-        self.step_4 = False
+        self.step_5 = False
+        self.step_6 = False
         
         #set future 
         self.future = None
@@ -81,7 +79,7 @@ class TouchTree(Node):
         #This function is called every 0.1 seconds and holds the main control structure for touching the tree 
         #The arm will move forward until the tree is touched 
         
-        if self.step_3:
+        if self.step_5:
             if self.first: 
                 self.initial_z = self.get_tool_pose_z()
                 self.first = False 
@@ -89,11 +87,11 @@ class TouchTree(Node):
                 self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving
                 self.count += 1
                 if self.count == 3:
-                     self.step_3 = False 
-                     self.step_4 = True
+                     self.step_5 = False 
+                     self.step_6 = True
             else: 
                 self.publish_twist([0.0, 0.0, 0.1], [0.0, 0.0, 0.0]) #move forward in the z position at 0.1 m/s
-        elif self.step_4: 
+        elif self.step_6: 
                 if not self.future: # A call is not pending
                     self.final_z = self.get_tool_pose_z()
                     dif_z = abs(self.initial_z - self.final_z) * 39.37 #have to conver from meters to inches 
@@ -129,11 +127,11 @@ class TouchTree(Node):
 
     def callback_tree (self, msg):
         #self.get_logger().info(f"GOT msg and setting self.touch_tree to: {msg.data}")
-        if self.step_3: 
+        if self.step_5: 
             self.tree_touch = msg.data 
     
-    def calback_step3_flag(self, msg): 
-        self.step_3 = msg.data 
+    def calback_step5_flag(self, msg): 
+        self.step_5 = msg.data 
 
     def get_tool_pose_z(self, as_array=True):
             #Get the z position of the tool pose in respect to the base in m 

@@ -13,7 +13,7 @@ from std_srvs.srv import Trigger
 from controller_manager_msgs.srv import SwitchController
 import numpy as np
 
-from std_msgs.msg import Int64, Float32
+from std_msgs.msg import Float32, Int64, Bool
 from sensor_msgs.msg import JointState
 import time 
 import matplotlib.pyplot as plt
@@ -24,17 +24,18 @@ from moveit_msgs.msg import (
     PlanningOptions,
     Constraints,
     JointConstraint,
-    PositionConstraint,
-    OrientationConstraint,
 )
 from rclpy.action import ActionClient
-import scipy.optimize
+from groun_truth_msgs.srv import AngleCheck
 
-from filterpy.kalman import KalmanFilter
 
-class Centering(Node):
+
+#from filterpy.kalman import KalmanFilter
+
+class CenteringCleaned(Node):
     def __init__(self):
         # TO DO: CHECK WHAT CAN BE DELETED
+        #TO DO: CAN GET RID OF TOF1 and TOF2 unfiltered data because we don't need it 
 
         super().__init__('center_cleaned')
         #Create publishers and subscripers (and timers as necessary )
@@ -44,6 +45,7 @@ class Centering(Node):
         self.sub_tof2 = self.create_subscription(Float32, 'tof2_filter', self.callback_tof2_filtered, 10)
         self.sub_joints = self.create_subscription(JointState, 'joint_states',self.callback_joints, 10 )
         self.pub_vel_commands = self.create_publisher(TwistStamped, '/servo_node/delta_twist_cmds', 10)
+        self.pub_step2 = self.create_publisher(Bool, 'step2', 10)
         self.pub_timer = self.create_timer(1/10, self.main_control)
         self.tool_timer = self.create_timer(1/10, self.pub_tool_pose_y)
 
@@ -67,13 +69,17 @@ class Centering(Node):
         )
 
         self.moveit_planning_client = ActionClient(self, MoveGroup, "move_action")
+        #self.angle_check_client = self.create_client(AngleCheck, 'angle_check')
+        #while not self.angle_check_client.wait_for_service(timeout_sec=1):
+         #   self.get_logger().info('waiting for service to start')
 
         #inital states
         self.servo_active = False #if the servos have been activated 
         self.tof_collected = False #if the tof data has been collected 
         self.calc_angle_done = False #if the angle of the branch has calculated 
         self.move_down = False #if the system has reached the center of the branch 
-        self.done = False #if the system has gotten parallel with the branch 
+        self.done_step1= False #if the system has gotten parallel with the branch
+        self.done_step2= False #if the system has checked that the system is parallel wiuth the brnach   
 
         #Wait three seconds to let everything get up and running (may not need)
         time.sleep(3)
@@ -83,30 +89,22 @@ class Centering(Node):
         self.joint_cntr = 'scaled_joint_trajectory_controller' # name of controller that uses joint commands 
         self.base_frame = 'base_link' #base frame that doesn't move 
         self.tool_frame = 'tool0' #frame that the end effector is attached to 
-        self.move_up_collect = 8 #alloted time in seconds for moving up and collecting tof data  
+        self.move_up_collect = 5 #alloted time in seconds for moving up and collecting tof data  
         self.dis_sensors = 0.0508 # meters 
         self.branch_angle = 0 #initial angle of branch
 
         #initialize variables 
         self.tof1_readings = [] #holds raw tof data during tof collection period for tof1 
         self.tof2_readings = [] #holds raw tof data during tof collection period for tof2
-        self.tof1_filtered = [] #holds filtered tof data during tof collection period for tof1 
-        self.tof2_filtered = [] #holds filtered tof data during tof collection period for tof2
-        self.tool_readings = [] #holds the tool positions during the raw tof collection period for tof1 
-        self.tool2_readings = [] #holds the tool positions during the raw tof collection period for tof2 
-        self.tool_filtered = [] #holds the tool positions during the filtered tof collection period for tof1 
-        self.tool2_filtered = [] #holds the tool positions during the filtered tof collection period for tof2 
-        self.lowest_reading_tof1 = 550 #start with value that can not be saved 
-        self.lowest_reading_tof2 = 550 #start with value that can not be saved 
-        self.lowest_filtered_tof1 = 550 #start with value that can not be saved 
-        self.lowest_filtered_tof2 = 550 #start with values that can not be saved
+        self.tof1_filtered = [] #holds tof data during tof collection period for tof1 
+        self.tof2_filtered = [] #holds tof data during tof collection period for tof2
+        #anytime tof is used, it is filtered
+        #if the raw data is being used it will be mentioned 
+        self.lowest_tof1 = 550 #start with value that can not be saved 
+        self.lowest_tof2 = 550 #start with values that can not be saved
         self.lowest_pos_tof1 = None #y tool position at the lowest raw tof1 reading 
         self.lowest_pos_tof2 = None #y tool position at the lowest raw tof2 reading 
-        self.lowest_filtered_pos_tof1 = None #y tool position at the lowest filtered tof1 reading
-        self.lowest_filtered_pos_tof2 = None #y tool position at the lowest filtered tof2 reading 
         self.tool_y = None #y position of the tool at the current moment 
-
-
 
         #start servoing and switch to forward position controller 
         self.start_servo()
@@ -121,20 +119,22 @@ class Centering(Node):
         #TO DO: RESTRUCTURE FOR MORE ORGANIZATION 
         #TO DO: GET RID OF ALL THE PRINT STATEMENTS 
         #TO DO: DETERMINE NEED OF ALL THE COMMENTS 
-        if self.tof_collected == False: 
-            # if tof data has not been collected 
-            now = time.time()
-            if (now - self.start_time ) < self.move_up_collect:
-                #if it hasn't been the alloted time for moving up and collecting tof data 
-                self.publish_twist([0.0, -0.1, 0.0], [0.0, 0.0, 0.0]) #move up at 0.1 m/s (negative y is up )
-            else:
-                #if the alloted time for moving up and collected tof data has passed 
-                self.tof_collected = True #set tof data collection to true 
-                self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving (move at 0 m/s) 
+        #this function is called every 0.1 seconds and holds the main control structure for getting parallel to the branch 
+      
+        if self.done_step1 == False: 
+             #if the system has not yet gotten parallel to the branch with a first guess 
+            if self.tof_collected == False: 
+                # if tof data has not been collected 
+                now = time.time()
+                if (now - self.start_time ) < self.move_up_collect:
+                    #if it hasn't been the alloted time for moving up and collecting tof data 
+                    self.publish_twist([0.0, -0.1, 0.0], [0.0, 0.0, 0.0]) #move up at 0.1 m/s (negative y is up )
+                else:
+                    #if the alloted time for moving up and collected tof data has passed 
+                    self.tof_collected = True #set tof data collection to true 
+                    self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving (move at 0 m/s) 
 
-        elif self.done == False: 
-            #if the system has not yet gotten parallel to the branch
-            if self.calc_angle_done ==False:
+            elif self.calc_angle_done ==False:
                 #if the angle of the branch hasn't been calculated 
                 self.calculate_angle() 
                 y_pose_want = (self.lowest_pos_tof1 + self.lowest_pos_tof2)/2 #find y_pose_want as the average of y tool position at the lowest raw tof readings
@@ -142,23 +142,27 @@ class Centering(Node):
             elif self.move_down == False: 
                 #if the angle has been calculated, but the system has not reached the center of the branch
                 self.publish_twist([0.0, 0.05, 0.0], [0.0, 0.0, 0.0])  #move down at 0.05 m/s (negative y is up )
-                y_pose_want = (self.lowest_pos_tof1 + self.lowest_pos_tof2)/2 #find y_pose_want as the average of y tool position at the lowest raw tof readings
-                y_pose_want_filtered = (self.lowest_filtered_pos_tof1+self.lowest_filtered_pos_tof2)/2 #find y_pose_want as the average of y tool position at the lowest filtered tof readings
+                y_pose_want = (self.lowest_pos_tof1+self.lowest_pos_tof2)/2 #find y_pose_want as the average of y tool position at the lowest filtered tof readings
                 print("calculated y_pose_want: ",y_pose_want)
-                print("calculated y_pose_want_filtered: ",y_pose_want_filtered)
-                self.move_down_to_y(y_pose_want_filtered) 
+                self.move_down_to_y(y_pose_want) 
             elif self.move_down == True: 
                 #if the angle has been calculated and the system has reached the center of the branch
                 self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving (move at 0 m/s) 
                 y_pose= self.get_tool_pose_y() 
                 print("final pose at", y_pose)
-                print("calculated angle needed to rotate filtered: ", self.branch_angle_filtered)
+                print("calculated angle needed to rotate filtered: ", self.branch_angle)
                 print("calculated angle needed to rotate: ", self.branch_angle)
-                print("calculated angle needed to rotate filtered: ", self.branch_angle_filtered)
-                self.switch_controller(self.joint_cntr, self.forward_cntr) #switch from forward_position controller to scaled_joint_trajectory controller
-                self.rotate_to_w(self.branch_angle_filtered)
+                self.switch_controller(self.joint_cntr, self.forward_cntr) #switch from forward_position controller to scaled_joint_trajectory controller 
+                self.rotate_to_w(self.branch_angle)
                 self.plot_tof()
-                self.done = True #the system has gotten parallel with the branch, set as True 
+                print("Done Plotting TOF ")
+                self.done_step1 = True #the system has gotten parallel with the branch, set as True 
+                msg= Bool()
+                msg.data = True
+                for x in range (0, 3):
+                    self.pub_step2.publish(msg)
+                self.switch_controller(self.forward_cntr, self.joint_cntr)
+
         
     
     def publish_twist(self, linear_speed, rot_speed):
@@ -174,75 +178,59 @@ class Centering(Node):
         self.get_logger().info(f"Sending: linear: {cmd.twist.linear} angular: {cmd.twist.angular}")
 
     def callback_tof1 (self, msg):
-        #collect and use raw tof1 data (in mm)
+        #collect raw tof1 data (in mm)
         now = time.time()
         if (now - self.start_time ) < self.move_up_collect:
              #if it hasn't been the alloted time for moving up and collecting tof data 
              self.tof1_readings.append(msg.data) #add raw data reading to list of tof1 readings 
-             self.tool_readings.append(self.tool_y) #add current tool position to list of tool readings for tof1  
-             if 150 < msg.data < 500:
-                #if the tof1 reading is between 150 mm and 500mm (~5.9in to 20in)
-                if msg.data < self.lowest_reading_tof1:
-                    #if the tof1 reading is lower that the previous lowest tof1 reading 
-                    self.lowest_reading_tof1 = msg.data #set the tof1 reading as the lowest tof1 reading 
-                    self.lowest_pos_tof1 = self.tool_y #save the current tool position as the lowest tool position for tof1 
 
     
     def callback_tof2(self, msg):
-        #collect and use raw tof2 data (in mm)
+        #collect raw tof2 data (in mm)
         now = time.time()
         if (now - self.start_time ) < self.move_up_collect:
             #if it hasn't been the alloted time for moving up and collecting tof data
             self.tof2_readings.append(msg.data) #add raw data reading to list of tof2 readings 
-            self.tool2_readings.append(self.tool_y) #add current tool position to list of tool readings for tof2 
-            if 150 < msg.data < 500:
-                #if the tof2 reading is between 150 mm and 500mm (~5.9in to 20in)
-                if msg.data < self.lowest_reading_tof2:
-                    #if the tof2 reading is lower that the previous lowest tof2 reading
-                    self.lowest_reading_tof2 = msg.data #set the tof2 reading as the lowest tof2 reading
-                    self.lowest_pos_tof2= self.tool_y #save the current tool position as the lowest tool position for tof2
     
     def callback_tof1_filtered(self, msg):
         #collect and use filtered tof1 data (in mm)
         now = time.time()
         if (now - self.start_time ) < self.move_up_collect:
             #if it hasn't been the alloted time for moving up and collecting tof data
-            self.tof1_filtered.append(msg.data) #add filtered data reading to list of tof1 readings
-            self.tool_filtered.append(self.tool_y) #add current tool position to list of tool filtered readings for tof1
+            self.tof1_filtered.append(msg.data) #add data reading to list of tof1 readings
             if 150 < msg.data < 500:
-                #if the filtered tof1 reading is between 150 mm and 500mm (~5.9in to 20in)
-                if msg.data < self.lowest_filtered_tof1:
-                    #if the filtered tof1 reading is lower that the previous lowest filtered tof1 reading
-                    self.lowest_filtered_tof1 = msg.data #set the tof1 reading as the lowest filtered tof1 reading
-                    self.lowest_filtered_pos_tof1= self.tool_y #save the current tool position as the lowest filtered tool position for tof1
+                #if the tof1 reading is between 150 mm and 500mm (~5.9in to 20in)
+                if msg.data < self.lowest_tof1:
+                    #if the tof1 reading is lower that the previous lowest tof1 reading
+                    self.lowest_tof1 = msg.data #set the tof1 reading as the lowest tof1 reading
+                    self.lowest_pos_tof1= self.tool_y #save the current tool position as the lowest tool position for tof1
     
     def callback_tof2_filtered(self, msg):
         #collect and use filtered tof2 data (in mm)
         now = time.time()
         if (now - self.start_time ) < self.move_up_collect:
             #if it hasn't been the alloted time for moving up and collecting tof data
-            self.tof2_filtered.append(msg.data) #add filtered data reading to list of tof2 readings
-            self.tool2_filtered.append(self.tool_y) #add current tool position to list of tool filtered readings for tof2
+            self.tof2_filtered.append(msg.data) #add data reading to list of tof2 readings
             if 150 < msg.data < 500:
-                #if the filtered tof2 reading is between 150 mm and 500mm (~5.9in to 20in)
-                if msg.data < self.lowest_filtered_tof2:
-                    #if the filtered tof2 reading is lower that the previous lowest filtered tof2 reading
-                    self.lowest_filtered_tof2 = msg.data #set the tof2 reading as the lowest filtered tof2 reading
-                    self.lowest_filtered_pos_tof2= self.tool_y #save the current tool position as the lowest filtered tool position for tof2
+                #if the tof2 reading is between 150 mm and 500mm (~5.9in to 20in)
+                if msg.data < self.lowest_tof2:
+                    #if the tof2 reading is lower that the previous lowest tof2 reading
+                    self.lowest_tof2 = msg.data #set the tof2 reading as the lowest tof2 reading
+                    self.lowest_pos_tof2= self.tool_y #save the current tool position as the lowest tool position for tof2
 
 
     def calculate_angle(self):
-        #calculate the angle the branch is at based on the tof filtered readings 
+        #calculate the angle the branch is at based on the tof readings 
         print("tof1 readings: ", self.tof1_readings)
         print("tof2 readings: ", self.tof2_readings)
+        print("tof1 filtered readings: ", self.tof1_filtered)
+        print("tof2 filtered readings: ", self.tof2_filtered)
         print("lowest y pose for tof1: ", self.lowest_pos_tof1)
         print("lowest y pose for tof2: ", self.lowest_pos_tof2)
         print("actual pose y value: ", self.tool_y)
         print("actual pose: ", self.get_tool_pose())
-        distance_readings = self.lowest_pos_tof1 - self.lowest_pos_tof2
-        self.branch_angle = np.arctan(distance_readings / self.dis_sensors)
-        distance_readings_filtered = self.lowest_filtered_pos_tof1 - self.lowest_filtered_pos_tof2 #find the distance between the lowest filtered tof readings 
-        self.branch_angle_filtered = np.arctan(distance_readings_filtered / self.dis_sensors) #using the distance between the sensors (known) and the lowest filtered tof readings (calculated), calculate the angle
+        distance_readings = self.lowest_pos_tof1 - self.lowest_pos_tof2 #find the distance between the lowest tof readings 
+        self.branch_angle = np.arctan(distance_readings / self.dis_sensors) #using the distance between the sensors (known) and the lowest filtered tof readings (calculated), calculate the angle
         self.calc_angle_done = True #set calculate angle done flag to true 
 
 
@@ -255,6 +243,7 @@ class Centering(Node):
             #when within 1mm of wanted y pose 
             self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving 
             self.move_down = True #set move done flag to True 
+            self.control_switch = False # set move control switch flag to False to get it reset  
         return 
     
     def rotate_to_w(self, angle):
@@ -306,60 +295,24 @@ class Centering(Node):
         t_f = []
         t2 = []
         t2_f = []
-        found = False
-        for idx, val in enumerate(self.tof1_filtered): 
-            t_f.append(idx)
-            if val == min(self.tof1_filtered) and found == False:
-                lowest_x_f = idx
-                found = True
         
-        found = False
-        for idx, val in enumerate(self.tof2_filtered): 
-            t2_f.append(idx)
-            if val == min(self.tof2_filtered) and found == False:
-                lowest_x2_f = idx
-                found = True
-
-        found = False
         for idx, val in enumerate(self.tof1_readings): 
             t.append(idx)
-            if val == self.lowest_reading_tof1 and found == False:
-                lowest_x = idx
-                found = True
         
-        found = False
         for idx, val in enumerate(self.tof2_readings): 
             t2.append(idx)
-            if val == self.lowest_reading_tof2 and found == False:
-                lowest_x2 = idx
-                found = True
 
-        model = np.poly1d(np.polyfit(t, 
-                             self.tof1_readings, 2)) 
-        y_fit = model(t)
-        found = False
-        for idx, val in enumerate(y_fit): 
-            if val == min(y_fit) and found == False:
-                lowest_x1_fit = idx
-                found = True
-        model2 = np.poly1d(np.polyfit(t2, 
-                             self.tof2_readings, 2)) 
-        y_fit2 = model2(t2)
-        found = False
-        for idx, val in enumerate(y_fit2): 
-            if val == min(y_fit2) and found == False:
-                lowest_x2_fit = idx
-                found = True
-        plt.plot(t,self.tof1_readings,'b', label = 'TOF1 readings')
-        #plt.plot(t, y_fit, 'g', label = 'TOF1 fit')
-        plt.plot(t2, self.tof2_readings, 'r', label = 'TOF2 readings')
-        #plt.plot(t2, y_fit2, 'm', label = 'TOF2 fit')
-        plt.plot(t_f, self.tof1_filtered, 'c', label = 'TOF1 reading filtered')
-        plt.plot(t2_f, self.tof2_filtered, 'k', label = 'TOF2 reading filtered')
-        #plt.plot([lowest_x, lowest_x], [self.lowest_reading_tof1-100,self.lowest_reading_tof1+100, ], 'c--',label = 'TOF1 middle')
-        #plt.plot([lowest_x2, lowest_x2], [self.lowest_reading_tof2-100,self.lowest_reading_tof2+100, ], 'k--' ,label = 'TOF2 middle')
-        #plt.plot([lowest_x1_fit, lowest_x1_fit], [min(y_fit)-100,min(y_fit)+100, ], 'c' , label = 'TOF1 fit middle')
-        #plt.plot([lowest_x2_fit, lowest_x2_fit], [min(y_fit2)-100,min(y_fit2)+100, ], 'k' , label = 'TOF2 fit middle')
+        for idx, val in enumerate(self.tof1_filtered): 
+            t_f.append(idx)
+        
+        for idx, val in enumerate(self.tof2_filtered): 
+            t2_f.append(idx)
+    
+       
+        plt.plot(t,self.tof1_readings,'b', label = 'TOF1 raw readings')
+        plt.plot(t2, self.tof2_readings, 'r', label = 'TOF2 raw readings')
+        plt.plot(t_f, self.tof1_filtered, 'c', label = 'TOF1 filtered reading')
+        plt.plot(t2_f, self.tof2_filtered, 'k', label = 'TOF2 filtered reading')
         plt.legend()
         plt.show()
         
@@ -456,7 +409,7 @@ def convert_tf_to_pose(tf: TransformStamped):
 
 def main(args=None):
     rclpy.init(args=args)
-    center = Centering()
+    center = CenteringCleaned()
     rclpy.spin(center)
     rclpy.shutdown ()
 
