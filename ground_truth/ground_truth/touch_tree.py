@@ -83,6 +83,7 @@ class TouchTree(Node):
                 self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving
                 self.count += 1
                 if self.count == 3:
+                    self.control_timer.shutdown()
                     self.final_z = self.get_tool_pose_z()
                     dif_z = abs(self.initial_z - self.final_z) * 39.37 #have to conver from meters to inches 
                     self.video_dis = 6 + dif_z
@@ -166,9 +167,8 @@ def main(args=None):
     rclpy.init(args=args)
 
     ang_check = TouchTree()
-    executor = MultiThreadedExecutor()
 
-    rclpy.spin(ang_check, executor)
+    rclpy.spin(ang_check)
 
     rclpy.shutdown()
 
