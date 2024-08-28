@@ -83,14 +83,14 @@ class TouchTree(Node):
                 self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving
                 self.count += 1
                 if self.count == 3:
-                    self.control_timer.shutdown()
+                    self.control_timer.cancel()
                     self.final_z = self.get_tool_pose_z()
                     dif_z = abs(self.initial_z - self.final_z) * 39.37 #have to conver from meters to inches 
                     self.video_dis = 6 + dif_z
                     print(f"Initial Z position: {self.initial_z}")
                     print(f"Final Z position: {self.final_z}")
                     print(f"change in Z position: {dif_z}")
-                    print(f"Original distance: {self.dis_video}")
+                    print(f"Original distance: {self.video_dis}")
                     request = CalcDiameter.Request()
                     request.video_dis = self.video_dis
                     future = self.calc_diameter_client.call_async(request)
