@@ -106,7 +106,7 @@ class TouchTree(Node):
                     print(f"change in Z position: {dif_z}")
                     print(f"Original distance: {self.video_dis}")
                     request = CalcDiameter.Request()
-                    request.video_dis = 7.0
+                    request.video_dis = self.video_dis
                     self.future = self.calc_diameter_client.call_async(request)
 
                 if self.future.done(): # a call just completed

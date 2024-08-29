@@ -260,7 +260,9 @@ class AngleCheck(Node):
                                     self.switch_controller(self.joint_cntr, self.forward_cntr) #switch from forward_position controller to scaled_joint_trajectory controller
                                     self.rotate_to_w(self.new_desired_angle)
                                     self.send_request = True 
+                                print(self.tool_angle)
                                 if (abs(self.new_desired_angle- self.tool_angle) < 0.001):
+                                    time.sleep(0.1)
                                     self.switch_controller(self.forward_cntr, self.joint_cntr) #switch from scaled_joint_trajectory controller to forward_position controller
                                     self.rotated_to_new = True 
                 
@@ -276,7 +278,9 @@ class AngleCheck(Node):
                                     self.move_up_to_y(self.desired_y)
                                     if self.at_y == True:
                                         self.moved_to_new = True
+                                
                             else:
+                                print(self.tool_angle)
                                 self.plot_tof()
                                 self.tries += 1 #increase tries by one 
                                 self.reset(False)
@@ -384,7 +388,7 @@ class AngleCheck(Node):
         #rotate the tool to the given angle  
         names = self.joint_names 
         pos = np.array(self.joints) 
-        print("Sending to rotate to ")
+        print("Sending to rotate to: ", angle)
         #for all the joints, use the current angle for all joints, but wrist 3. Set wrist 3 to the given angle  
         for idx, vals in enumerate(names):
             if vals == "wrist_3_joint":

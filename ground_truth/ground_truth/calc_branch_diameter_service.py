@@ -18,8 +18,8 @@ class CalcDiameterService(Node):
         self.service_calc = self.create_service(CalcDiameter, 'calc_diameter', self.calc_diameter)
 
         #initialize variables
-        self.diameter_pix = 157 #Change this to start with 0
-        self.img_width_pix = 640 # NEED TO CHECK THIS VALUE 
+        self.diameter_pix = 81 #Change this to start with 0
+        self.img_width_pix = 1280 # NEED TO CHECK THIS VALUE 
         self.angle = 24 #in degrees 
         
     def pixel_service (self, request, response):
