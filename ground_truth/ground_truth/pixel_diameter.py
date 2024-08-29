@@ -1,5 +1,5 @@
 
-from groun_truth_msgs.srv import CalcDiameter, CameraRecord
+from groun_truth_msgs.srv import CalcDiameter, CameraRecord, PixelWidth
 
 import rclpy
 from rclpy.node import Node
@@ -57,9 +57,9 @@ class PixelDiameter(Node):
         super().__init__('pixel_diameter')
         
         #Create clients 
-        self.calc_diameter_client = self.create_client(CalcDiameter, 'calc_diameter')
-        while not self.calc_diameter_client.wait_for_service(timeout_sec=1):
-            self.get_logger().info('waiting for calc_diameter service to start')
+        self.pixel_width_client= self.create_client(PixelWidth, 'pixel_width')
+        while not self.pixel_width_client.wait_for_service(timeout_sec=1):
+            self.get_logger().info('waiting for pixel_width service to start')
         
 
         self.camera_record_client = self.create_client(CameraRecord, 'camera_record')
@@ -125,8 +125,7 @@ class PixelDiameter(Node):
             ## HAVE TO ADD HERE TO DO OPTICAL FLOW 
             video_path = self.file_name
             frames, _, _ = read_video(str(video_path), output_format="TCHW")
-            print(frames)
-            frame = 4 
+            frame = int(len(frames)/2)
             flow_imgs = self.optical_flow(frames, frame)
             closing, flow_saved = self.filter_imgs(flow_imgs)
             submatrix = closing[300:500, 0:1279]
@@ -142,10 +141,10 @@ class PixelDiameter(Node):
             print("diameter W1: ", diameterW1, "middle W1: ", middleW1, "scoreW1: ", scoreW1)
 
             if not self.future: # A call is not pending
-                request = CalcDiameter.Request()
+                request = PixelWidth.Request()
                 request.diameter_pix_w1  = diameterW1
                 request.diameter_pix_w2  = diameterW2
-                self.future = self.camera_record_client.call_async(request)
+                self.future = self.pixel_width_client.call_async(request)
 
             if self.future.done(): # a call just completed
                 print("Done")
