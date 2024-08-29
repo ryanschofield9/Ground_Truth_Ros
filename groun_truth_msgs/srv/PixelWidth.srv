@@ -1,5 +1,6 @@
 #inputs
-int64 diameter_pix  
+int64 diameter_pix_W1 
+int64 diameter_pix_W2 
 ---
 #outputs 
 bool saved

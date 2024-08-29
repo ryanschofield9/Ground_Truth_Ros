@@ -262,7 +262,9 @@ class AngleCheck(Node):
                                     self.send_request = True 
                                 print(self.tool_angle)
                                 if (abs(self.new_desired_angle- self.tool_angle) < 0.001):
-                                    time.sleep(0.1)
+                                    print("Starting Sleep")
+                                    time.sleep(2)
+                                    print("Ending Sleep")
                                     self.switch_controller(self.forward_cntr, self.joint_cntr) #switch from scaled_joint_trajectory controller to forward_position controller
                                     self.rotated_to_new = True 
                 

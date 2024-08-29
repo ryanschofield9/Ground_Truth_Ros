@@ -18,32 +18,37 @@ class CalcDiameterService(Node):
         self.service_calc = self.create_service(CalcDiameter, 'calc_diameter', self.calc_diameter)
 
         #initialize variables
-        self.diameter_pix = 81 #Change this to start with 0
-        self.img_width_pix = 1280 # NEED TO CHECK THIS VALUE 
+        self.diameter_pix_W1 = 0.0 
+        self.diameter_pix_W2 = 0.0 
+        self.img_width_pix = 1280 
         self.angle = 24 #in degrees 
         
     def pixel_service (self, request, response):
         #Service function that saves the width of a branch in pixels when a request sent 
-        self.diameter_pix = request.diameter_pix 
+        self.diameter_pix_W1 = request.diameter_pix_W1
+        self.diameter_pix_W2 = request.diameter_pix_W2
         response = PixelWidth.Response()
         response.saved = True
         return response 
     
 
-    def calc_diameter(self, request,response):
+    def calc_diameters(self, request,response):
         #Service function that calculates the diameter of a branch in inches when a request is sent 
         print(f"GOT REQUEST: {request}")
         video_dis = request.video_dis 
         angle_in_rad = math.radians(self.angle) #have to turn the angle into radians to get correct tan value
         img_w_inch = 2*video_dis*math.tan(angle_in_rad) 
         pix_w_inch = img_w_inch / self.img_width_pix
-        diameter_inch = self.diameter_pix * pix_w_inch
-        print(f"The diamter in inches is {diameter_inch}")
+        diameter_inch_W1 = self.diameter_pix_W1 * pix_w_inch
+        diameter_inch_W2 = self.diameter_pix_W2 * pix_w_inch
+        print(f"The diamter in inches when using W1B1 is {diameter_inch_W1}")
+        print(f"The diamter in inches when using W2B1 is {diameter_inch_W2}")
         response = CalcDiameter.Response()
-        response.diameter = diameter_inch
+        response.diameter_W1 = diameter_inch_W1
+        response.diameter_W2 = diameter_inch_W2
         print(f"RETURNING RESPONSE: {response}")
         return response 
-    
+
 
 
 def main(args=None):

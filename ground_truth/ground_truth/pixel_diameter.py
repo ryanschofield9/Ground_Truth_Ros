@@ -55,12 +55,12 @@ class PixelDiameter(Node):
 
     def __init__(self):
         super().__init__('pixel_diameter')
-        '''
+        
         #Create clients 
         self.calc_diameter_client = self.create_client(CalcDiameter, 'calc_diameter')
         while not self.calc_diameter_client.wait_for_service(timeout_sec=1):
             self.get_logger().info('waiting for calc_diameter service to start')
-        '''
+        
 
         self.camera_record_client = self.create_client(CameraRecord, 'camera_record')
         while not self.camera_record_client.wait_for_service(timeout_sec=1):
@@ -134,11 +134,22 @@ class PixelDiameter(Node):
             all_middle = self.middle_count(all_starts, all_ends)
             diameters = self.diamter_options(all_starts, all_ends)
             middle_lines = self.calculate_middle_line_options(all_middle)
-            diameter, middle, score = self.score_options_W2_B1(diameters, middle_lines, submatrix)
+            diameterW2, middleW2, scoreW2 = self.score_options_W2_B1(diameters, middle_lines, submatrix)
+            diameterW1, middleW1, scoreW1 = self.score_options_W1_B1(diameters, middle_lines, submatrix)
             print(f"For Frame {frame}")
-            print("diameter: ", diameter, "middle: ", middle, "score: ", score)
-                
-            self.step_4 = False
+            print("diameter W2: ", diameterW2, "middle W2: ", middleW2, "scoreW2: ", scoreW2)
+            print("diameter W1: ", diameterW1, "middle W1: ", middleW1, "scoreW1: ", scoreW1)
+
+            if not self.future: # A call is not pending
+                request = CalcDiameter
+                request.diameter_pix_W1  = diameterW1
+                request.diameter_pix_W2  = diameterW2
+                self.future = self.camera_record_client.call_async(request)
+
+            if self.future.done(): # a call just completed
+                print("Done")
+                print(self.future.result())
+                self.step_4 = False
         
         else:
             msg = Bool()
