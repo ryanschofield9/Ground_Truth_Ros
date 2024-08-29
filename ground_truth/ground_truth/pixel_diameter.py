@@ -142,7 +142,7 @@ class PixelDiameter(Node):
             print("diameter W1: ", diameterW1, "middle W1: ", middleW1, "scoreW1: ", scoreW1)
 
             if not self.future: # A call is not pending
-                request = CalcDiameter
+                request = CalcDiameter.Request()
                 request.diameter_pix_w1  = diameterW1
                 request.diameter_pix_w2  = diameterW2
                 self.future = self.camera_record_client.call_async(request)
