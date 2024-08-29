@@ -47,15 +47,18 @@ class TouchTree(Node):
         self.sub = self.create_subscription(Bool, 'touching_tree_flag', self.callback_tree, 10) 
         self.pub_vel_commands = self.create_publisher(TwistStamped, '/servo_node/delta_twist_cmds', 10)
         self.sub_flag = self.create_subscription(Bool, 'step5',self.calback_step5_flag, 10 )
+        self.sub_reset = self.create_subscription(Bool, 'reset',self.calback_reset, 10 )
 
 
         #Create tf buffer and listener 
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
 
-        #Flags initialize 
+        #initalize states 
         self.step_5 = False
         self.step_6 = False
+        self.tree_touch = False
+        self.first = True 
         
         #set future 
         self.future = None
@@ -63,13 +66,15 @@ class TouchTree(Node):
         #create timers 
         self.control_timer = self.create_timer(1/10, self.main_control)
 
-        #set inital states 
-        self.tree_touch = False
-        self.count = 0
-        self.first = True 
+        #constant variables 
         self.base_frame = 'base_link' #base frame that doesn't move 
         self.tool_frame = 'tool0' #frame that the end effector is attached to
+
+        #initialaize variables 
         self.initial_z = self.get_tool_pose_z()
+        self.count = 0
+        
+        
         time.sleep(3) # wait 3 seconds 
 
         
@@ -154,6 +159,22 @@ class TouchTree(Node):
                 return p.z #return just the tool z position with respect to the base in m 
             else:
                 return pose
+            
+    def calback_reset(self,msg): 
+        if msg.data == True: 
+            self.reset()
+        
+    def reset(self): 
+        #reinitalize states 
+        self.step_5 = False
+        self.step_6 = False
+        self.tree_touch = False
+        self.first = True 
+
+        #reinitialaize variables 
+        self.initial_z = self.get_tool_pose_z()
+        self.count = 0  
+        self.future = None
     
 
 def convert_tf_to_pose(tf: TransformStamped):

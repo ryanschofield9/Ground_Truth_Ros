@@ -55,20 +55,11 @@ class TouchTree(Node):
         #Create publisher and subscribers 
         self.sub_flag = self.create_subscription(Bool, 'step3',self.calback_step3_flag, 10 )
         self.pub_step5 = self.create_publisher(Bool, 'step5', 10)
-
-        #Flags initialize 
-        self.step_3 = False
-        self.back_to_original = False 
-        
-        #set future 
-        self.future = None
+        self.sub_reset = self.create_subscription(Bool, 'reset',self.calback_reset, 10 )
         
         #create timers 
         self.control_timer = self.create_timer(1/10, self.main_control)
         self.tool_timer_pos_y = self.create_timer(1/50, self.pub_tool_pose_y)
-
-        #set inital states 
-        self.step3 = True
 
         
     def main_control (self):
@@ -83,21 +74,24 @@ class TouchTree(Node):
                 self.starting_y = self.tool_y 
 
             if self.future.done(): # a call just completed
-                self.get_logger().info("Done")
-                print(self.future.result())
-                self.step_3 = False 
-                msg = Bool()
-                msg.data = True 
-                self.future = None
+                if self.first == False: 
+                    self.get_logger().info("Done")
+                    print(self.future.result())
+                    self.first = True 
+                elif self.back_to_original == False:
+                    self.move_up_to_y(self.starting_y) 
+                    self.step_3 = False 
+                    self.step_4 = True 
+                    self.future = None
             
-        elif self.back_to_original == False:
-            self.move_up_to_y(self.starting_y) 
-        
-        else: 
+        elif self.step_4: 
             ## HAVE TO ADD HERE TO DO OPTICAL FLOW 
             msg = Bool()
             msg.data = True 
+            plt.plot([1,2], [1,2])
+            plt.show()
             self.pub_step5.publish(msg)
+            self.step_4 = False 
 
             
     def calback_step3_flag(self,msg):
@@ -140,6 +134,20 @@ class TouchTree(Node):
                 return p.y #return just the tool y position with respect to teh base in m 
             else:
                 return pose
+            
+    def calback_reset(self,msg): 
+        if msg.data == True: 
+            self.reset()
+        
+    def reset(self):
+        #Flags initialize 
+        self.step_3 = False
+        self.step_4 = False
+        self.back_to_original = False
+        self.first = False  
+        
+        #set future 
+        self.future = None
 
 def convert_tf_to_pose(tf: TransformStamped):
     #take the tf transform and turn that into a position  

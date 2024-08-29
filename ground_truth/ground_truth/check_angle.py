@@ -45,6 +45,7 @@ class AngleCheck(Node):
         self.sub_flag = self.create_subscription(Bool, 'step2',self.calback_step2_flag, 10 )
         self.pub_vel_commands = self.create_publisher(TwistStamped, '/servo_node/delta_twist_cmds', 10)
         self.pub_step3 = self.create_publisher(Bool, 'step3', 10)
+        self.sub_reset = self.create_subscription(Bool, 'reset',self.calback_reset, 10 )
 
         #create timers 
         self.control_timer = self.create_timer(1/10, self.main_control)
@@ -76,12 +77,12 @@ class AngleCheck(Node):
         self.move_down_flag = False #a flag to determine if the move down step has been completed  
         self.joint_rot_flag = False #a flag to detemine if the joint controller has finished its rotation 
         self.done = False #a flag to determine if the check angle process has finished  
-        self.saved_request = False #a flag to determine if the request has been saved
-        self.got_request = True 
         self.send_request = False
         self.rotated_to_new = False
         self.moved_to_new = False 
-        self.calc_first_time = False 
+        self.calc_first_time = False
+        self.step_2 = False 
+        self.first = True  
 
         #Wait three seconds to let everything get up and running (may not need)
         time.sleep(3)
@@ -94,8 +95,7 @@ class AngleCheck(Node):
         self.move_collect = 3 #alloted time in seconds for moving up and collecting tof data  
         self.rot_collect = 3 #alloted time in seconds for rotating and collecting tof data
         self.dis_sensors = 0.0508 # meters 
-        self.step_2 = False 
-        self.first = True 
+       
 
         #initialize variables 
         #anytime tof is used, it is filtered
@@ -279,7 +279,7 @@ class AngleCheck(Node):
                             else:
                                 self.plot_tof()
                                 self.tries += 1 #increase tries by one 
-                                self.reset()
+                                self.reset(False)
                         
                  
             else: 
@@ -551,29 +551,51 @@ class AngleCheck(Node):
         new_desired_y = (low_y_tof1+low_y_tof2)/2
         return new_desired_y
     
-    def reset(self):
-        #reset the flags, data holders, and start time to prepare to start the checking system again 
-        self.rot_up_flag = False
-        self.rot_down_flag = False
-        self.move_up_flag = False
-        self.move_down_flag = False 
-        self.joint_rot_flag = False
-        self.at_y= False
-        self.tof1_readings = [] 
+    def calback_reset(self,msg): 
+        if msg.data == True: 
+            self.reset(True)
+
+    def reset(self, full):
+        if full: 
+            #reinitilize full states 
+            self.done = False
+            self.step_2 = False 
+            self.first = True  
+
+            #reinitialize full variables 
+            self.tool_y = None
+            self.orient_z = None   
+            self.desired_angle = 0.0 
+            self.desired_y = 0.0 
+            self.tries = 0 
+            self.tool_angle = None
+        
+        else: 
+            self.start_time = time.time()
+
+        #reinital states
+        self.at_y= False 
+        self.rot_up_flag = False 
+        self.rot_down_flag = False 
+        self.move_up_flag = False 
+        self.move_down_flag = False  
+        self.joint_rot_flag = False    
+        self.send_request = False 
+        self.rotated_to_new = False
+        self.moved_to_new = False 
+        self.calc_first_time = False 
+
+        #reinitialize variables 
+        self.tof1_readings = []  
         self.tof2_readings = [] 
-        self.tool_orient_tof1 = [] 
-        self.tool_orient_tof2 = [] 
         self.tof1_filtered_rot = [] 
         self.tof2_filtered_rot = [] 
         self.tof1_filtered_up = [] 
         self.tof2_filtered_up = [] 
+        self.tool_orient_tof1 = [] 
+        self.tool_orient_tof2 = [] 
         self.tool_pos_tof1 = [] 
-        self.tool_pos_tof2 = [] 
-        self.start_time = time.time()
-        self.send_request = False
-        self.rotated_to_new = False
-        self.moved_to_new = False 
-        self.calc_first_time = False 
+        self.tool_pos_tof2 = []  
         
 
     def calback_step2_flag(self,msg):

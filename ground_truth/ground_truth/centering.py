@@ -48,6 +48,7 @@ class CenteringCleaned(Node):
         self.pub_step2 = self.create_publisher(Bool, 'step2', 10)
         self.pub_timer = self.create_timer(1/10, self.main_control)
         self.tool_timer = self.create_timer(1/10, self.pub_tool_pose_y)
+        self.sub_reset = self.create_subscription(Bool, 'reset',self.calback_reset, 10 )
 
         #Create tf buffer and listener 
         self.tf_buffer = Buffer()
@@ -395,6 +396,31 @@ class CenteringCleaned(Node):
         #function that saves the current joint names and positions 
         self.joint_names = msg.name
         self.joints= msg.position
+
+    def calback_reset(self,msg): 
+        if msg.data == True: 
+            self.reset()
+        
+    def reset(self):
+        #reinital states
+        self.servo_active = False 
+        self.tof_collected = False 
+        self.calc_angle_done = False 
+        self.move_down = False 
+        self.done_step1= False 
+        self.done_step2= False  
+
+        #initialize variables 
+        self.tof1_readings = [] 
+        self.tof2_readings = []
+        self.tof1_filtered = []  
+        self.tof2_filtered = [] 
+        self.lowest_tof1 = 550 
+        self.lowest_tof2 = 550 
+        self.lowest_pos_tof1 = None 
+        self.lowest_pos_tof2 = None  
+        self.tool_y = None 
+
 
 def convert_tf_to_pose(tf: TransformStamped):
     #take the tf transform and turn that into a position  
