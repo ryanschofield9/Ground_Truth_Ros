@@ -29,6 +29,7 @@ setup(
             'calc_diameter_service = ground_truth.calc_branch_diameter_service:main',
             'pixel_dimeter= ground_truth.pixel_diameter:main',
             'record_video_service= ground_truth.record_video_service:main',
+            'pub_reset= ground_truth.pub_reset:main',
         ],
     },
 )

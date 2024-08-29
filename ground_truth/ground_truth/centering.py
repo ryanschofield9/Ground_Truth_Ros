@@ -402,12 +402,13 @@ class CenteringCleaned(Node):
             self.reset()
         
     def reset(self):
+        print("resetting")
         #reinital states
         self.servo_active = False 
         self.tof_collected = False 
         self.calc_angle_done = False 
         self.move_down = False 
-        self.done_step1= False 
+        self.done_step1 = False 
         self.done_step2= False  
 
         #initialize variables 
@@ -419,7 +420,10 @@ class CenteringCleaned(Node):
         self.lowest_tof2 = 550 
         self.lowest_pos_tof1 = None 
         self.lowest_pos_tof2 = None  
-        self.tool_y = None 
+        self.tool_y = None
+
+        #switch controller 
+        self.switch_controller(self.forward_cntr, self.joint_cntr) 
 
 
 def convert_tf_to_pose(tf: TransformStamped):
