@@ -15,7 +15,7 @@ class CalcDiameterService(Node):
 
         #Create Service 
         self.service_pixel = self.create_service(PixelWidth, 'pixel_width', self.pixel_service) 
-        self.service_calc = self.create_service(CalcDiameter, 'calc_diameter', self.calc_diameter)
+        self.service_calc = self.create_service(CalcDiameter, 'calc_diameter', self.calc_diameters)
 
         #initialize variables
         self.diameter_pix_W1 = 0.0 
@@ -25,8 +25,8 @@ class CalcDiameterService(Node):
         
     def pixel_service (self, request, response):
         #Service function that saves the width of a branch in pixels when a request sent 
-        self.diameter_pix_W1 = request.diameter_pix_W1
-        self.diameter_pix_W2 = request.diameter_pix_W2
+        self.diameter_pix_W1 = request.diameter_pix_w1
+        self.diameter_pix_W2 = request.diameter_pix_w2
         response = PixelWidth.Response()
         response.saved = True
         return response 
@@ -44,8 +44,8 @@ class CalcDiameterService(Node):
         print(f"The diamter in inches when using W1B1 is {diameter_inch_W1}")
         print(f"The diamter in inches when using W2B1 is {diameter_inch_W2}")
         response = CalcDiameter.Response()
-        response.diameter_W1 = diameter_inch_W1
-        response.diameter_W2 = diameter_inch_W2
+        response.diameter_w1 = diameter_inch_W1
+        response.diameter_w2= diameter_inch_W2
         print(f"RETURNING RESPONSE: {response}")
         return response 
 

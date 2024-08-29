@@ -123,8 +123,9 @@ class PixelDiameter(Node):
             
         elif self.step_4: 
             ## HAVE TO ADD HERE TO DO OPTICAL FLOW 
-            video_path = "C:\\Users\\ryana\\Documents\\Graduate Research\\Ground_Truth_Ros\\ground_truth\\videos\\testing.avi"
+            video_path = self.file_name
             frames, _, _ = read_video(str(video_path), output_format="TCHW")
+            print(frames)
             frame = 4 
             flow_imgs = self.optical_flow(frames, frame)
             closing, flow_saved = self.filter_imgs(flow_imgs)
@@ -142,21 +143,19 @@ class PixelDiameter(Node):
 
             if not self.future: # A call is not pending
                 request = CalcDiameter
-                request.diameter_pix_W1  = diameterW1
-                request.diameter_pix_W2  = diameterW2
+                request.diameter_pix_w1  = diameterW1
+                request.diameter_pix_w2  = diameterW2
                 self.future = self.camera_record_client.call_async(request)
 
             if self.future.done(): # a call just completed
                 print("Done")
                 print(self.future.result())
                 self.step_4 = False
-        
-        else:
-            msg = Bool()
-            msg.data = True 
-            plt.plot([1,2], [1,2])
-            plt.show()
-            self.pub_step5.publish(msg)
+                msg = Bool()
+                msg.data = True 
+                plt.plot([1,2], [1,2])
+                plt.show()
+                self.pub_step5.publish(msg)
             
     def calback_step3_flag(self,msg):
         self.step_3= msg.data

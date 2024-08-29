@@ -261,28 +261,32 @@ class AngleCheck(Node):
                                     self.rotate_to_w(self.new_desired_angle)
                                     self.send_request = True 
                                 print(self.tool_angle)
-                                if (abs(self.new_desired_angle- self.tool_angle) < 0.001):
-                                    print("Starting Sleep")
-                                    time.sleep(2)
-                                    print("Ending Sleep")
+                                if (abs(self.new_desired_angle- self.tool_angle) < 0.00001):
+                                    print("Final tool angle: ", self.tool_angle)
+                                    #time.sleep(2)
                                     self.switch_controller(self.forward_cntr, self.joint_cntr) #switch from scaled_joint_trajectory controller to forward_position controller
+                                    print("tool angle after switch: ",self.tool_angle)
+                                    self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0])
                                     self.rotated_to_new = True 
                 
                             elif self.moved_to_new == False : 
                                 self.desired_y = self.new_desired_y #reset the desired_y with the new_desired_y
+                                print("tool angle during move down section: ", self.tool_angle)
                                 if self.dif_y < 0: 
                                     self.publish_twist([0.0, 0.1, 0.0], [0.0, 0.0, 0.0]) #move the tool in the y direction at 0.1m/s
                                     self.move_down_to_y(self.desired_y)
                                     if self.at_y == True:
+                                        print("tool angle after movedown: ",self.tool_angle)
                                         self.moved_to_new= True 
                                 else: 
                                     self.publish_twist([0.0, -0.1, 0.0], [0.0, 0.0, 0.0]) #move the tool in the y direction at 0.1m/s
                                     self.move_up_to_y(self.desired_y)
                                     if self.at_y == True:
+                                        print("tool angle after movedown: ",self.tool_angle)
                                         self.moved_to_new = True
                                 
                             else:
-                                print(self.tool_angle)
+                                print("tool angle before plot: ",self.tool_angle)
                                 self.plot_tof()
                                 self.tries += 1 #increase tries by one 
                                 self.reset(False)
