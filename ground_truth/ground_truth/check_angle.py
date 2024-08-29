@@ -249,8 +249,8 @@ class AngleCheck(Node):
                             self.tries = -1 
                             self.done = True #set the check angle step as done 
                         else: 
-                            print("Trying to get to new pos ")
-                            print(f"rotated to new: {self.rotated_to_new} moved to new: {self.moved_to_new}")
+                            #print("Trying to get to new pos ")
+                            #print(f"rotated to new: {self.rotated_to_new} moved to new: {self.moved_to_new}")
                             #if the check angle hasn't tried more than 3 times 
                             #self.tries += 1 #increase tries by one 
                             self.desired_angle = self.new_desired_angle #reset the desired_angle with the new_desired angle
@@ -258,9 +258,9 @@ class AngleCheck(Node):
                                 if self.send_request == False: 
                                     self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving
                                     self.switch_controller(self.joint_cntr, self.forward_cntr) #switch from forward_position controller to scaled_joint_trajectory controller
-                                    self.rotate_to_w(self.desired_angle)
+                                    self.rotate_to_w(self.new_desired_angle)
                                     self.send_request = True 
-                                if (abs(self.desired_angle- self.tool_angle) < 0.001):
+                                if (abs(self.new_desired_angle- self.tool_angle) < 0.001):
                                     self.switch_controller(self.forward_cntr, self.joint_cntr) #switch from scaled_joint_trajectory controller to forward_position controller
                                     self.rotated_to_new = True 
                 
@@ -384,7 +384,7 @@ class AngleCheck(Node):
         #rotate the tool to the given angle  
         names = self.joint_names 
         pos = np.array(self.joints) 
-
+        print("Sending to rotate to ")
         #for all the joints, use the current angle for all joints, but wrist 3. Set wrist 3 to the given angle  
         for idx, vals in enumerate(names):
             if vals == "wrist_3_joint":

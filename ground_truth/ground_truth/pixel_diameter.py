@@ -36,13 +36,12 @@ import time
 
 
 # TO DO: CREATE THE MESSAGE PACKAGE AND ADD THE SERVICE INTO IT SEE GITHUB FROM ROB599 HW3 FOR EXPLANATION
-class TouchTree(Node):
+class PixelDiameter(Node):
 
     def __init__(self):
-        super().__init__('tree_touch')
-
-        #Create clients 
+        super().__init__('pixel_diameter')
         '''
+        #Create clients 
         self.calc_diameter_client = self.create_client(CalcDiameter, 'calc_diameter')
         while not self.calc_diameter_client.wait_for_service(timeout_sec=1):
             self.get_logger().info('waiting for calc_diameter service to start')
@@ -51,15 +50,35 @@ class TouchTree(Node):
         self.camera_record_client = self.create_client(CameraRecord, 'camera_record')
         while not self.camera_record_client.wait_for_service(timeout_sec=1):
             self.get_logger().info('waiting for camera_record service to start')
+        
+
+        #Create tf buffer and listener 
+        self.tf_buffer = Buffer()
+        self.tf_listener = TransformListener(self.tf_buffer, self)
 
         #Create publisher and subscribers 
         self.sub_flag = self.create_subscription(Bool, 'step3',self.calback_step3_flag, 10 )
         self.pub_step5 = self.create_publisher(Bool, 'step5', 10)
         self.sub_reset = self.create_subscription(Bool, 'reset',self.calback_reset, 10 )
+        self.pub_vel_commands = self.create_publisher(TwistStamped, '/servo_node/delta_twist_cmds', 10)
         
         #create timers 
         self.control_timer = self.create_timer(1/10, self.main_control)
         self.tool_timer_pos_y = self.create_timer(1/50, self.pub_tool_pose_y)
+
+        #Flags initialize 
+        self.step_3 = False
+        self.step_4 = False
+        self.back_to_original = False
+        self.first = True 
+
+        #constant variables 
+        self.base_frame = 'base_link' #base frame that doesn't move 
+        self.tool_frame = 'tool0' #frame that the end effector is attached to 
+        
+        #set future 
+        self.future = None
+
 
         
     def main_control (self):
@@ -74,15 +93,17 @@ class TouchTree(Node):
                 self.starting_y = self.tool_y 
 
             if self.future.done(): # a call just completed
-                if self.first == False: 
+                if self.first: 
                     self.get_logger().info("Done")
                     print(self.future.result())
-                    self.first = True 
+                    self.first = False
                 elif self.back_to_original == False:
+                    self.publish_twist([0.0, -0.1, 0.0], [0.0, 0.0, 0.0])
                     self.move_up_to_y(self.starting_y) 
-                    self.step_3 = False 
-                    self.step_4 = True 
-                    self.future = None
+                elif self.back_to_original: 
+                        self.step_3 = False 
+                        self.step_4 = True 
+                        self.future = None
             
         elif self.step_4: 
             ## HAVE TO ADD HERE TO DO OPTICAL FLOW 
@@ -138,13 +159,25 @@ class TouchTree(Node):
     def calback_reset(self,msg): 
         if msg.data == True: 
             self.reset()
+
+    def publish_twist(self, linear_speed, rot_speed):
+        #publish a velocity command with the specified linear speed and rotation speed 
+        my_twist_linear = linear_speed 
+        my_twist_angular = rot_speed
+        cmd = TwistStamped()
+        cmd.header.frame_id = 'tool0'
+        cmd.twist.angular = Vector3(x=my_twist_angular[0], y=my_twist_angular[1], z=my_twist_angular[2])
+        cmd.twist.linear = Vector3(x=my_twist_linear[0], y=my_twist_linear[1], z=my_twist_linear[2])
+        cmd.header.stamp = self.get_clock().now().to_msg()
+        self.pub_vel_commands.publish(cmd)
+        self.get_logger().info(f"Sending: linear: {cmd.twist.linear} angular: {cmd.twist.angular}")
         
     def reset(self):
         #Flags initialize 
         self.step_3 = False
         self.step_4 = False
         self.back_to_original = False
-        self.first = False  
+        self.first = True  
         
         #set future 
         self.future = None
@@ -162,9 +195,9 @@ def convert_tf_to_pose(tf: TransformStamped):
 def main(args=None):
     rclpy.init(args=args)
 
-    ang_check = TouchTree()
+    pix_diameter= PixelDiameter()
 
-    rclpy.spin(ang_check)
+    rclpy.spin(pix_diameter)
 
     rclpy.shutdown()
 

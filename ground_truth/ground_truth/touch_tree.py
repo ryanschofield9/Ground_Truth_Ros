@@ -112,7 +112,7 @@ class TouchTree(Node):
                 if self.future.done(): # a call just completed
                     self.get_logger().info("Done")
                     print(self.future.result())
-                    self.step_4 = False 
+                    self.step_6 = False 
                     self.future = None
             
 
