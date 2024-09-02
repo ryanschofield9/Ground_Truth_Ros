@@ -263,11 +263,10 @@ class AngleCheck(Node):
                                 print(self.tool_angle)
                                 if (abs(self.new_desired_angle- self.tool_angle) < 0.001):
                                     print("Final tool angle: ", self.tool_angle)
-                                    #time.sleep(2)
+                                    self.rotated_to_new = True
                                     self.switch_controller(self.forward_cntr, self.joint_cntr) #switch from scaled_joint_trajectory controller to forward_position controller
-                                    print("tool angle after switch: ",self.tool_angle)
                                     self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0])
-                                    self.rotated_to_new = True 
+                                    print("tool angle after switch: ",self.tool_angle) 
                 
                             elif self.moved_to_new == False : 
                                 self.desired_y = self.new_desired_y #reset the desired_y with the new_desired_y

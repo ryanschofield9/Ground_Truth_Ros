@@ -30,6 +30,7 @@ from torchvision.models.optical_flow import raft_small
 from torchvision.utils import flow_to_image
 import copy 
 import cv2
+import statistics
 
 plt.rcParams["savefig.bbox"] = "tight"
 weights = Raft_Small_Weights.DEFAULT
@@ -132,18 +133,26 @@ class PixelDiameter(Node):
 
             all_starts, all_ends = self.pixel_count (submatrix)
             all_middle = self.middle_count(all_starts, all_ends)
-            diameters = self.diamter_options(all_starts, all_ends)
+            diameters = self.diameter_options(all_starts, all_ends)
             middle_lines = self.calculate_middle_line_options(all_middle)
+            diameter_mean = statistics.mean(diameters)
+            middle_mean = statistics.mean(middle_lines)
+            diameter_median = statistics.median(diameters)
+            middle_median = statistics.median(middle_lines)
             diameterW2, middleW2, scoreW2 = self.score_options_W2_B1(diameters, middle_lines, submatrix)
             diameterW1, middleW1, scoreW1 = self.score_options_W1_B1(diameters, middle_lines, submatrix)
             print(f"For Frame {frame}")
             print("diameter W2: ", diameterW2, "middle W2: ", middleW2, "scoreW2: ", scoreW2)
             print("diameter W1: ", diameterW1, "middle W1: ", middleW1, "scoreW1: ", scoreW1)
+            print("diameter Mean: ", diameter_mean, "middle mean: ", middle_mean)
+            print("diameter Median: ", diameter_median, "middle median: ", middle_median)
 
             if not self.future: # A call is not pending
                 request = PixelWidth.Request()
                 request.diameter_pix_w1  = diameterW1
                 request.diameter_pix_w2  = diameterW2
+                request.diameter_pix_mean  = diameter_mean
+                request.diameter_pix_median  = diameter_median
                 self.future = self.pixel_width_client.call_async(request)
 
             if self.future.done(): # a call just completed
@@ -428,7 +437,7 @@ class PixelDiameter(Node):
         print(f"diameter: {diameter}  diameter_new: {diameter_new}")
         return diameter_new
     
-    def diamter_options (self,all_starts, all_ends):
+    def diameter_options (self,all_starts, all_ends):
         # calculate the diameter of each row  
         diameter_estimates = [] # imitialize diameter estimate list 
         for idx in range (len (all_starts)):

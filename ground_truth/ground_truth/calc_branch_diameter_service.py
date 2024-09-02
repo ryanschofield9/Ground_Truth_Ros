@@ -20,13 +20,17 @@ class CalcDiameterService(Node):
         #initialize variables
         self.diameter_pix_W1 = 0.0 
         self.diameter_pix_W2 = 0.0 
+        self.diameter_pix_mean = 0.0 
+        self.diameter_pix_median = 0.0 
         self.img_width_pix = 1280 
-        self.angle = 24 #in degrees 
+        self.angle = 35 #in degrees 
         
     def pixel_service (self, request, response):
         #Service function that saves the width of a branch in pixels when a request sent 
         self.diameter_pix_W1 = request.diameter_pix_w1
         self.diameter_pix_W2 = request.diameter_pix_w2
+        self.diameter_pix_mean = request.diameter_pix_mean 
+        self.diameter_pix_median = request.diameter_pix_median
         response = PixelWidth.Response()
         response.saved = True
         return response 
@@ -41,11 +45,17 @@ class CalcDiameterService(Node):
         pix_w_inch = img_w_inch / self.img_width_pix
         diameter_inch_W1 = self.diameter_pix_W1 * pix_w_inch
         diameter_inch_W2 = self.diameter_pix_W2 * pix_w_inch
+        diameter_inch_mean = self.diameter_pix_mean
+        diameter_inch_median = self.diameter_pix_median
         print(f"The diamter in inches when using W1B1 is {diameter_inch_W1}")
         print(f"The diamter in inches when using W2B1 is {diameter_inch_W2}")
+        print(f"The diamter in inches when using mean is {diameter_inch_mean}")
+        print(f"The diamter in inches when using median is {diameter_inch_median}")
         response = CalcDiameter.Response()
         response.diameter_w1 = diameter_inch_W1
         response.diameter_w2= diameter_inch_W2
+        response.diameter_mean= diameter_inch_mean
+        response.diameter_median= diameter_inch_median
         print(f"RETURNING RESPONSE: {response}")
         return response 
 

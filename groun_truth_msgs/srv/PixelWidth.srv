@@ -1,6 +1,8 @@
 #inputs
 int64 diameter_pix_w1 
 int64 diameter_pix_w2 
+float32 diameter_pix_mean
+float32 diameter_pix_median
 ---
 #outputs 
 bool saved
