@@ -404,7 +404,7 @@ class CenteringCleaned(Node):
     def reset(self):
         print("resetting")
         #reinital states
-        self.servo_active = False 
+        self.servo_active = True
         self.tof_collected = False 
         self.calc_angle_done = False 
         self.move_down = False 
@@ -424,6 +424,9 @@ class CenteringCleaned(Node):
 
         #switch controller 
         self.switch_controller(self.forward_cntr, self.joint_cntr) 
+        
+        #reset start_time 
+        self.start_time = time.time() 
 
 
 def convert_tf_to_pose(tf: TransformStamped):
