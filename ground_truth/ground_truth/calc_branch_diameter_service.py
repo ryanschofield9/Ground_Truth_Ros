@@ -45,8 +45,8 @@ class CalcDiameterService(Node):
         pix_w_inch = img_w_inch / self.img_width_pix
         diameter_inch_W1 = self.diameter_pix_W1 * pix_w_inch
         diameter_inch_W2 = self.diameter_pix_W2 * pix_w_inch
-        diameter_inch_mean = self.diameter_pix_mean
-        diameter_inch_median = self.diameter_pix_median
+        diameter_inch_mean = self.diameter_pix_mean * pix_w_inch
+        diameter_inch_median = self.diameter_pix_median * pix_w_inch
         print(f"The diamter in inches when using W1B1 is {diameter_inch_W1}")
         print(f"The diamter in inches when using W2B1 is {diameter_inch_W2}")
         print(f"The diamter in inches when using mean is {diameter_inch_mean}")
