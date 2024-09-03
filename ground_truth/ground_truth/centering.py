@@ -44,17 +44,16 @@ class CenteringCleaned(Node):
         self.sub_tof1 = self.create_subscription(Float32, 'tof1_filter', self.callback_tof1_filtered, 10)
         self.sub_tof2 = self.create_subscription(Float32, 'tof2_filter', self.callback_tof2_filtered, 10)
         self.sub_joints = self.create_subscription(JointState, 'joint_states',self.callback_joints, 10 )
+        self.sub_reset = self.create_subscription(Bool, 'reset',self.calback_reset, 10 )
         self.pub_vel_commands = self.create_publisher(TwistStamped, '/servo_node/delta_twist_cmds', 10)
         self.pub_step2 = self.create_publisher(Bool, 'step2', 10)
         self.pub_timer = self.create_timer(1/10, self.main_control)
         self.tool_timer = self.create_timer(1/10, self.pub_tool_pose_y)
-        self.sub_reset = self.create_subscription(Bool, 'reset',self.calback_reset, 10 )
 
         #Create tf buffer and listener 
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
 
-        
         #Create Callback group
         self.service_handler_group = ReentrantCallbackGroup()
         
@@ -70,9 +69,6 @@ class CenteringCleaned(Node):
         )
 
         self.moveit_planning_client = ActionClient(self, MoveGroup, "move_action")
-        #self.angle_check_client = self.create_client(AngleCheck, 'angle_check')
-        #while not self.angle_check_client.wait_for_service(timeout_sec=1):
-         #   self.get_logger().info('waiting for service to start')
 
         #inital states
         self.servo_active = False #if the servos have been activated 
@@ -129,7 +125,7 @@ class CenteringCleaned(Node):
                 now = time.time()
                 if (now - self.start_time ) < self.move_up_collect:
                     #if it hasn't been the alloted time for moving up and collecting tof data 
-                    self.publish_twist([0.0, -0.1, 0.0], [0.0, 0.0, 0.0]) #move up at 0.1 m/s (negative y is up )
+                    self.publish_twist([0.0, -0.1, 0.0], [0.0, 0.0, 0.0]) #move up at 0.1 m/s (negative y is up ) 
                 else:
                     #if the alloted time for moving up and collected tof data has passed 
                     self.tof_collected = True #set tof data collection to true 
@@ -138,31 +134,27 @@ class CenteringCleaned(Node):
             elif self.calc_angle_done ==False:
                 #if the angle of the branch hasn't been calculated 
                 self.calculate_angle() 
-                y_pose_want = (self.lowest_pos_tof1 + self.lowest_pos_tof2)/2 #find y_pose_want as the average of y tool position at the lowest raw tof readings
-                print ("y_pose_want: ", y_pose_want)
+
             elif self.move_down == False: 
                 #if the angle has been calculated, but the system has not reached the center of the branch
                 self.publish_twist([0.0, 0.05, 0.0], [0.0, 0.0, 0.0])  #move down at 0.05 m/s (negative y is up )
                 y_pose_want = (self.lowest_pos_tof1+self.lowest_pos_tof2)/2 #find y_pose_want as the average of y tool position at the lowest filtered tof readings
-                print("calculated y_pose_want: ",y_pose_want)
                 self.move_down_to_y(y_pose_want) 
+
             elif self.move_down == True: 
                 #if the angle has been calculated and the system has reached the center of the branch
                 self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving (move at 0 m/s) 
-                y_pose= self.get_tool_pose_y() 
-                print("final pose at", y_pose)
-                print("calculated angle needed to rotate filtered: ", self.branch_angle)
                 print("calculated angle needed to rotate: ", self.branch_angle)
                 self.switch_controller(self.joint_cntr, self.forward_cntr) #switch from forward_position controller to scaled_joint_trajectory controller 
                 self.rotate_to_w(self.branch_angle)
                 self.plot_tof()
-                print("Done Plotting TOF ")
                 self.done_step1 = True #the system has gotten parallel with the branch, set as True 
                 msg= Bool()
                 msg.data = True
+                #publish to step_2 topic true 3 times to ensure that it gets there 
                 for x in range (0, 3):
                     self.pub_step2.publish(msg)
-                self.switch_controller(self.forward_cntr, self.joint_cntr)
+                self.switch_controller(self.forward_cntr, self.joint_cntr) #switch from scaled_joint_trajectory controller to forward position controller 
 
         
     
@@ -222,30 +214,19 @@ class CenteringCleaned(Node):
 
     def calculate_angle(self):
         #calculate the angle the branch is at based on the tof readings 
-        print("tof1 readings: ", self.tof1_readings)
-        print("tof2 readings: ", self.tof2_readings)
-        print("tof1 filtered readings: ", self.tof1_filtered)
-        print("tof2 filtered readings: ", self.tof2_filtered)
-        print("lowest y pose for tof1: ", self.lowest_pos_tof1)
-        print("lowest y pose for tof2: ", self.lowest_pos_tof2)
-        print("actual pose y value: ", self.tool_y)
-        print("actual pose: ", self.get_tool_pose())
         distance_readings = self.lowest_pos_tof1 - self.lowest_pos_tof2 #find the distance between the lowest tof readings 
         self.branch_angle = np.arctan(distance_readings / self.dis_sensors) #using the distance between the sensors (known) and the lowest filtered tof readings (calculated), calculate the angle
         self.calc_angle_done = True #set calculate angle done flag to true 
-
 
     
     def move_down_to_y(self, y_pose_want):
         #Using the given y pose that we want to go back to, move down until we reach that location 
         y_pose= self.tool_y #get the current tool y pose 
-        print("y_pose: ", y_pose, " y_pose_want", y_pose_want)
         if (y_pose - y_pose_want) < 0.001: 
             #when within 1mm of wanted y pose 
             self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving 
             self.move_down = True #set move done flag to True 
-            self.control_switch = False # set move control switch flag to False to get it reset  
-        return 
+            self.control_switch = False # set move control switch flag to False to get it reset   
     
     def rotate_to_w(self, angle):
         #rotate the tool to the given angle  
@@ -257,9 +238,7 @@ class CenteringCleaned(Node):
             if vals == "wrist_3_joint":
                 pos[idx]= angle
 
-        self.send_joint_pos(names, pos) 
-        return 
-    
+        self.send_joint_pos(names, pos)  
 
     def get_tool_pose_y(self, as_array=True):
             #Get the y position of the tool pose in respect to the base in m 
@@ -279,19 +258,19 @@ class CenteringCleaned(Node):
                 #if the pose is given as an array save the position and orientation as p and o respectively 
                 p = pose.pose.position
                 o = pose.pose.orientation
-                return p.y #return just the tool y position with respect to teh base in m 
+                return p.y #return just the tool y position with respect to the base in m 
             else:
                 return pose
             
-    def pub_tool_pose_y(self):
-        #save the current tool pose y 
-        #there is a timer calling this function every 0.1 seconds 
+    def pub_tool_pose_y(self): 
+        #there is a timer calling this function every 0.1 seconds and save the current y tool pose 
         self.tool_y = self.get_tool_pose_y()
 
     def plot_tof(self):
         #plot the the tof readings 
         # y axis is tof reading in mm
         # x axis is number tof reading 
+
         t = []
         t_f = []
         t2 = []
@@ -317,7 +296,6 @@ class CenteringCleaned(Node):
         plt.legend()
         plt.show()
         
-    
     def get_tool_pose(self, time=None, as_array=True):
                 #Get the position (position and orientation) of the tool pose in respect to the base in m 
                 try:
@@ -357,17 +335,15 @@ class CenteringCleaned(Node):
             activate_controllers = [act], deactivate_controllers= [deact], strictness = 2
             ) #create request for activating and deactivating controllers with a strictness level of STRICT 
         self.switch_ctrl.call_async(switch_ctrl_req) #make a service call to switch controllers 
-        print("Controllers have been switched")
         print(f"Activated: {act}  Deactivated: {deact}")
             
         return
     
     def send_joint_pos(self, joint_names, joints):
         #make a service call to moveit to go to given joint values 
-        print(f"GOAL")
         for n, p in zip (joint_names, joints):
              print(f"{n}: {p}")
-        print(f"NOW SENDING")
+        print(f"NOW SENDING GOAL TO MOVE GROUP")
         joint_constraints = [JointConstraint(joint_name=n, position=p) for n, p in zip(joint_names, joints)]
         kwargs = {"joint_constraints": joint_constraints}
         goal_msg = MoveGroup.Goal()
@@ -408,7 +384,7 @@ class CenteringCleaned(Node):
         self.tof_collected = False 
         self.calc_angle_done = False 
         self.move_down = False 
-        self.done_step1 = False 
+        self.done_step1 = False #set to true if want to have a start button 
         self.done_step2= False  
 
         #initialize variables 
@@ -423,10 +399,10 @@ class CenteringCleaned(Node):
         self.tool_y = None
 
         #switch controller 
-        self.switch_controller(self.forward_cntr, self.joint_cntr) 
+        self.switch_controller(self.forward_cntr, self.joint_cntr) #switch from scaled_joint_trajectory controller to forward position controller 
         
         #reset start_time 
-        self.start_time = time.time() 
+        self.start_time = time.time() #if do a start button would need to include this in the start too
 
 
 def convert_tf_to_pose(tf: TransformStamped):
