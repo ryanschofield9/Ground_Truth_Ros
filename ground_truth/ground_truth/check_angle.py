@@ -113,6 +113,11 @@ class AngleCheck(Node):
         self.desired_y = 0.0 # need to get this value
         self.tries = 0 #tracking how many times the check angle control has been attempted 
         self.tool_angle = None #saves the angle of the tool every 0.1 seconds 
+
+        #set start_time 
+        self.start_time = time.time() 
+
+
         
     def main_control (self):
         #TO DO: WRITE A SERVICE MSG TYPE  
@@ -306,45 +311,49 @@ class AngleCheck(Node):
     def callback_tof1 (self, msg):
         #collect raw tof1 data (in mm)
         now = time.time()
-        if (now - self.start_time ) < self.move_collect:
-             #if it hasn't been the alloted time for moving up and collecting tof data 
+        if self.step_2:
+            if (now - self.start_time ) < self.move_collect:
+                #if it hasn't been the alloted time for moving up and collecting tof data 
              self.tof1_readings.append(msg.data) #add raw data reading to list of tof1 readings 
 
     
     def callback_tof2(self, msg):
         #collect raw tof2 data (in mm)
         now = time.time()
-        if (now - self.start_time ) < self.move_collect:
-            #if it hasn't been the alloted time for moving up and collecting tof data
-            self.tof2_readings.append(msg.data) #add raw data reading to list of tof2 readings 
+        if self.step_2:
+            if (now - self.start_time ) < self.move_collect:
+                #if it hasn't been the alloted time for moving up and collecting tof data
+                self.tof2_readings.append(msg.data) #add raw data reading to list of tof2 readings 
     
     def callback_tof1_filtered(self, msg):
         #collect filtered tof1 data (in mm) and tool z orientation 
         now = time.time()
-        if self.rot_up_flag == False or self.rot_down_flag == False: 
-            #print("in orient collect ")
-            if (self.start_time-now) < self.rot_collect:  
-                self.tool_orient_tof1.append(self.tool_angle)
-                self.tof1_filtered_rot.append(msg.data)
-        else: 
-            #print("in orient collect ")
-            if (self.start_time-now) < self.move_collect:  
-                self.tool_pos_tof1.append(self.tool_y)
-                self.tof1_filtered_up.append(msg.data)
+        if self.step_2:
+            if self.rot_up_flag == False or self.rot_down_flag == False: 
+                #print("in orient collect ")
+                if (self.start_time-now) < self.rot_collect:  
+                    self.tool_orient_tof1.append(self.tool_angle)
+                    self.tof1_filtered_rot.append(msg.data)
+            else: 
+                #print("in orient collect ")
+                if (self.start_time-now) < self.move_collect:  
+                    self.tool_pos_tof1.append(self.tool_y)
+                    self.tof1_filtered_up.append(msg.data)
 
 
     
     def callback_tof2_filtered(self, msg):
         #collect filtered tof2 data (in mm) and tool z orientation 
         now = time.time()
-        if self.rot_up_flag == False or self.rot_down_flag == False:
-            if (self.start_time-now) < self.rot_collect:  
-                self.tool_orient_tof2.append(self.tool_angle)
-                self.tof2_filtered_rot.append(msg.data)
-        else:
-            if (self.start_time-now) < self.move_collect:  
-                self.tool_pos_tof2.append(self.tool_y)
-                self.tof2_filtered_up.append(msg.data)
+        if self.step_2:
+            if self.rot_up_flag == False or self.rot_down_flag == False:
+                if (self.start_time-now) < self.rot_collect:  
+                    self.tool_orient_tof2.append(self.tool_angle)
+                    self.tof2_filtered_rot.append(msg.data)
+            else:
+                if (self.start_time-now) < self.move_collect:  
+                    self.tool_pos_tof2.append(self.tool_y)
+                    self.tof2_filtered_up.append(msg.data)
 
     
     def move_down_to_y(self, y_pose_want):
@@ -541,6 +550,7 @@ class AngleCheck(Node):
     def calback_reset(self,msg): 
         if msg.data == True: 
             self.reset(True)
+            print("Sendding reset")
 
     def reset(self, full):
         if full: 
@@ -583,6 +593,7 @@ class AngleCheck(Node):
         self.tool_orient_tof2 = [] 
         self.tool_pos_tof1 = [] 
         self.tool_pos_tof2 = []  
+        print("Reset done")
         
 
     def calback_step2_flag(self,msg):

@@ -19,7 +19,8 @@ class ResetPub(Node):
         #Function that is called every 0.01 seconds to publish the TOF data from the Serial Port 
         msg = Bool()
         msg.data = True
-        self.publisher_bool.publish(msg)
+        for x in range (0,3):
+            self.publisher_bool.publish(msg)
         
 
 def main(args=None):
