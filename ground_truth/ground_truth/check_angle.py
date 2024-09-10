@@ -329,7 +329,7 @@ class AngleCheck(Node):
         #collect filtered tof1 data (in mm) and tool z orientation 
         now = time.time()
         if self.step_2:
-            if self.rot_up_flag == False or self.rot_down_flag == False: 
+            if self.rot_up_flag == False and self.rot_down_flag == False: 
                 #print("in orient collect ")
                 if (self.start_time-now) < self.rot_collect:  
                     self.tool_orient_tof1.append(self.tool_angle)
@@ -532,7 +532,7 @@ class AngleCheck(Node):
         print(f"idx of tof2 filtered_rot: {np.argmin(self.tof2_filtered_rot)}")
         print(f"valule of tool orient_tof1 {self.tool_orient_tof1[np.argmin(self.tof1_filtered_rot)]}")
         print(f"valule of tool orient_tof2 {self.tool_orient_tof2[np.argmin(self.tof2_filtered_rot)]}")
-        if abs (low_tof1_reading - high_tof1_reading)>50 and abs (low_tof2_reading - high_tof2_reading)>50: 
+        if abs (low_tof1_reading - high_tof1_reading)>50 or abs (low_tof2_reading - high_tof2_reading)>50: 
             new_desired_angle = (low_angle_tof1 + low_angle_tof2)/2
         else: 
             print("The diferences were too small so the angle is good")
