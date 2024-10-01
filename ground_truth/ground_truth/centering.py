@@ -86,7 +86,7 @@ class CenteringCleaned(Node):
         self.joint_cntr = 'scaled_joint_trajectory_controller' # name of controller that uses joint commands 
         self.base_frame = 'base_link' #base frame that doesn't move 
         self.tool_frame = 'tool0' #frame that the end effector is attached to 
-        self.move_up_collect = 5 #alloted time in seconds for moving up and collecting tof data  
+        self.move_up_collect = 10 #alloted time in seconds for moving up and collecting tof data  
         self.dis_sensors = 0.0508 # meters 
         self.branch_angle = 0 #initial angle of branch
 
@@ -214,6 +214,8 @@ class CenteringCleaned(Node):
 
     def calculate_angle(self):
         #calculate the angle the branch is at based on the tof readings 
+        print("TOF1: ", self.tof1_filtered)
+        print("TOF2: ", self.tof2_filtered)
         distance_readings = self.lowest_pos_tof1 - self.lowest_pos_tof2 #find the distance between the lowest tof readings 
         self.branch_angle = np.arctan(distance_readings / self.dis_sensors) #using the distance between the sensors (known) and the lowest filtered tof readings (calculated), calculate the angle
         self.calc_angle_done = True #set calculate angle done flag to true 
@@ -289,8 +291,8 @@ class CenteringCleaned(Node):
             t2_f.append(idx)
     
        
-        plt.plot(t,self.tof1_readings,'b', label = 'TOF1 raw readings')
-        plt.plot(t2, self.tof2_readings, 'r', label = 'TOF2 raw readings')
+        #plt.plot(t,self.tof1_readings,'b', label = 'TOF1 raw readings')
+        #plt.plot(t2, self.tof2_readings, 'r', label = 'TOF2 raw readings')
         plt.plot(t_f, self.tof1_filtered, 'c', label = 'TOF1 filtered reading')
         plt.plot(t2_f, self.tof2_filtered, 'k', label = 'TOF2 filtered reading')
         plt.legend()
