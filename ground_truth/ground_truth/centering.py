@@ -75,8 +75,9 @@ class CenteringCleaned(Node):
         self.tof_collected = False #if the tof data has been collected 
         self.calc_angle_done = False #if the angle of the branch has calculated 
         self.move_down = False #if the system has reached the center of the branch 
-        self.done_step1= False #if the system has gotten parallel with the branch
-        self.done_step2= False #if the system has checked that the system is parallel wiuth the brnach   
+        self.done_step1= False #if the system has gotten parallel with the branch 
+        self.step_1 = False #if it is time for step 1 to start 
+        self.first = False #if this is the first time running through and the start time needs to be set  
 
         #Wait three seconds to let everything get up and running (may not need)
         time.sleep(3)
@@ -117,44 +118,49 @@ class CenteringCleaned(Node):
         #TO DO: GET RID OF ALL THE PRINT STATEMENTS 
         #TO DO: DETERMINE NEED OF ALL THE COMMENTS 
         #this function is called every 0.1 seconds and holds the main control structure for getting parallel to the branch 
-      
-        if self.done_step1 == False: 
-             #if the system has not yet gotten parallel to the branch with a first guess 
-            if self.tof_collected == False: 
-                # if tof data has not been collected 
-                now = time.time()
-                if (now - self.start_time ) < self.move_up_collect:
-                    #if it hasn't been the alloted time for moving up and collecting tof data 
-                    self.publish_twist([0.0, -0.1, 0.0], [0.0, 0.0, 0.0]) #move up at 0.1 m/s (negative y is up ) 
-                else:
-                    #if the alloted time for moving up and collected tof data has passed 
-                    self.tof_collected = True #set tof data collection to true 
+        if self.step_1: 
+            if self.first:
+                 self.start_time = time.time()
+                 self.first = False
+            if self.done_step1 == False: 
+                #if the system has not yet gotten parallel to the branch with a first guess 
+                if self.tof_collected == False: 
+                    # if tof data has not been collected 
+                    now = time.time()
+                    if (now - self.start_time ) < self.move_up_collect:
+                        #if it hasn't been the alloted time for moving up and collecting tof data 
+                        self.publish_twist([0.0, -0.1, 0.0], [0.0, 0.0, 0.0]) #move up at 0.1 m/s (negative y is up ) 
+                    else:
+                        #if the alloted time for moving up and collected tof data has passed 
+                        self.tof_collected = True #set tof data collection to true 
+                        self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving (move at 0 m/s) 
+
+                elif self.calc_angle_done ==False:
+                    #if the angle of the branch hasn't been calculated 
+                    self.calculate_angle() 
+
+                elif self.move_down == False: 
+                    #if the angle has been calculated, but the system has not reached the center of the branch
+                    self.publish_twist([0.0, 0.05, 0.0], [0.0, 0.0, 0.0])  #move down at 0.05 m/s (negative y is up )
+                    y_pose_want = (self.lowest_pos_tof1+self.lowest_pos_tof2)/2 #find y_pose_want as the average of y tool position at the lowest filtered tof readings
+                    self.move_down_to_y(y_pose_want) 
+
+                elif self.move_down == True: 
+                    #if the angle has been calculated and the system has reached the center of the branch
                     self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving (move at 0 m/s) 
-
-            elif self.calc_angle_done ==False:
-                #if the angle of the branch hasn't been calculated 
-                self.calculate_angle() 
-
-            elif self.move_down == False: 
-                #if the angle has been calculated, but the system has not reached the center of the branch
-                self.publish_twist([0.0, 0.05, 0.0], [0.0, 0.0, 0.0])  #move down at 0.05 m/s (negative y is up )
-                y_pose_want = (self.lowest_pos_tof1+self.lowest_pos_tof2)/2 #find y_pose_want as the average of y tool position at the lowest filtered tof readings
-                self.move_down_to_y(y_pose_want) 
-
-            elif self.move_down == True: 
-                #if the angle has been calculated and the system has reached the center of the branch
-                self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving (move at 0 m/s) 
-                print("calculated angle needed to rotate: ", self.branch_angle)
-                self.switch_controller(self.joint_cntr, self.forward_cntr) #switch from forward_position controller to scaled_joint_trajectory controller 
-                self.rotate_to_w(self.branch_angle)
-                self.plot_tof()
-                self.done_step1 = True #the system has gotten parallel with the branch, set as True 
-                msg= Bool()
-                msg.data = True
-                #publish to step_2 topic true 3 times to ensure that it gets there 
-                for x in range (0, 3):
-                    self.pub_step2.publish(msg)
-                self.switch_controller(self.forward_cntr, self.joint_cntr) #switch from scaled_joint_trajectory controller to forward position controller 
+                    print("calculated angle needed to rotate: ", self.branch_angle)
+                    self.switch_controller(self.joint_cntr, self.forward_cntr) #switch from forward_position controller to scaled_joint_trajectory controller 
+                    self.rotate_to_w(self.branch_angle)
+                    self.plot_tof()
+                    self.done_step1 = True #the system has gotten parallel with the branch, set as True 
+                    msg= Bool()
+                    msg.data = True
+                    #publish to step_2 topic true 3 times to ensure that it gets there 
+                    for x in range (0, 3):
+                        self.pub_step2.publish(msg)
+                    self.switch_controller(self.forward_cntr, self.joint_cntr) #switch from scaled_joint_trajectory controller to forward position controller
+                    self.step_1 = False
+                    #possible add reset here   
 
         
     
@@ -216,9 +222,13 @@ class CenteringCleaned(Node):
         #calculate the angle the branch is at based on the tof readings 
         print("TOF1: ", self.tof1_filtered)
         print("TOF2: ", self.tof2_filtered)
-        distance_readings = self.lowest_pos_tof1 - self.lowest_pos_tof2 #find the distance between the lowest tof readings 
-        self.branch_angle = np.arctan(distance_readings / self.dis_sensors) #using the distance between the sensors (known) and the lowest filtered tof readings (calculated), calculate the angle
-        self.calc_angle_done = True #set calculate angle done flag to true 
+        try:
+            distance_readings = self.lowest_pos_tof1 - self.lowest_pos_tof2 #find the distance between the lowest tof readings 
+            self.branch_angle = np.arctan(distance_readings / self.dis_sensors) #using the distance between the sensors (known) and the lowest filtered tof readings (calculated), calculate the angle
+            self.calc_angle_done = True #set calculate angle done flag to true
+        except:
+            print("No branch was found. The system will restart its moving up process") 
+            self.tof_collected == False
 
     
     def move_down_to_y(self, y_pose_want):
@@ -386,8 +396,8 @@ class CenteringCleaned(Node):
         self.tof_collected = False 
         self.calc_angle_done = False 
         self.move_down = False 
-        self.done_step1 = False #set to true if want to have a start button 
-        self.done_step2= False  
+        self.done_step1 = False  
+        self.step_1 = False  
 
         #initialize variables 
         self.tof1_readings = [] 
@@ -403,8 +413,8 @@ class CenteringCleaned(Node):
         #switch controller 
         self.switch_controller(self.forward_cntr, self.joint_cntr) #switch from scaled_joint_trajectory controller to forward position controller 
         
-        #reset start_time 
-        self.start_time = time.time() #if do a start button would need to include this in the start too
+        #start_time will be reset by doing this
+        self.first = False
 
 
 def convert_tf_to_pose(tf: TransformStamped):
