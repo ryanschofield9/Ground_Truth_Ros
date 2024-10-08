@@ -78,6 +78,8 @@ class CenteringCleaned(Node):
         self.done_step1= False #if the system has gotten parallel with the branch 
         self.step_1 = False #if it is time for step 1 to start 
         self.first = False #if this is the first time running through and the start time needs to be set  
+        self.move_down = False #if the syste has moved down to start data collection 
+        self.collect_data = False # if the system is collecting data 
 
         #Wait three seconds to let everything get up and running (may not need)
         time.sleep(3)
@@ -87,7 +89,8 @@ class CenteringCleaned(Node):
         self.joint_cntr = 'scaled_joint_trajectory_controller' # name of controller that uses joint commands 
         self.base_frame = 'base_link' #base frame that doesn't move 
         self.tool_frame = 'tool0' #frame that the end effector is attached to 
-        self.move_up_collect = 10 #alloted time in seconds for moving up and collecting tof data  
+        self.move_up_collect = 5 #alloted time in seconds for moving up and collecting tof data  
+        self.move_down_start = 2 # alloted time in seconds for moving down to start tf and position correctly
         self.dis_sensors = 0.0508 # meters 
         self.branch_angle = 0 #initial angle of branch
 
@@ -124,7 +127,19 @@ class CenteringCleaned(Node):
                  self.first = False
             if self.done_step1 == False: 
                 #if the system has not yet gotten parallel to the branch with a first guess 
-                if self.tof_collected == False: 
+                if self.moved_down == False:
+                    now = time.time()
+                    if (now - self.start_time ) < self.move_down_start:
+                         #if it hasn't been the alloted time for moving down
+                        self.publish_twist([0.0, -0.1, 0.0], [0.0, 0.0, 0.0]) #move up at 0.1 m/s (negative y is up ) 
+                    else:
+                        self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving (move at 0 m/s) 
+                        self.moved_down = True 
+                        self.move_down_start = 2
+                        self.start_time = time.time()
+                elif self.tof_collected == False: 
+
+                    self.collect_data = True
                     # if tof data has not been collected 
                     now = time.time()
                     if (now - self.start_time ) < self.move_up_collect:
@@ -134,6 +149,7 @@ class CenteringCleaned(Node):
                         #if the alloted time for moving up and collected tof data has passed 
                         self.tof_collected = True #set tof data collection to true 
                         self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving (move at 0 m/s) 
+                        self.collect_data = False
 
                 elif self.calc_angle_done ==False:
                     #if the angle of the branch hasn't been calculated 
@@ -178,44 +194,48 @@ class CenteringCleaned(Node):
 
     def callback_tof1 (self, msg):
         #collect raw tof1 data (in mm)
-        now = time.time()
-        if (now - self.start_time ) < self.move_up_collect:
-             #if it hasn't been the alloted time for moving up and collecting tof data 
-             self.tof1_readings.append(msg.data) #add raw data reading to list of tof1 readings 
+        if self.collect_data:
+            now = time.time()
+            if (now - self.start_time ) < self.move_up_collect:
+                #if it hasn't been the alloted time for moving up and collecting tof data 
+                self.tof1_readings.append(msg.data) #add raw data reading to list of tof1 readings 
 
     
     def callback_tof2(self, msg):
         #collect raw tof2 data (in mm)
-        now = time.time()
-        if (now - self.start_time ) < self.move_up_collect:
-            #if it hasn't been the alloted time for moving up and collecting tof data
-            self.tof2_readings.append(msg.data) #add raw data reading to list of tof2 readings 
+        if self.collect_data:
+            now = time.time()
+            if (now - self.start_time ) < self.move_up_collect:
+                #if it hasn't been the alloted time for moving up and collecting tof data
+                self.tof2_readings.append(msg.data) #add raw data reading to list of tof2 readings 
     
     def callback_tof1_filtered(self, msg):
         #collect and use filtered tof1 data (in mm)
-        now = time.time()
-        if (now - self.start_time ) < self.move_up_collect:
-            #if it hasn't been the alloted time for moving up and collecting tof data
-            self.tof1_filtered.append(msg.data) #add data reading to list of tof1 readings
-            if 150 < msg.data < 500:
-                #if the tof1 reading is between 150 mm and 500mm (~5.9in to 20in)
-                if msg.data < self.lowest_tof1:
-                    #if the tof1 reading is lower that the previous lowest tof1 reading
-                    self.lowest_tof1 = msg.data #set the tof1 reading as the lowest tof1 reading
-                    self.lowest_pos_tof1= self.tool_y #save the current tool position as the lowest tool position for tof1
-    
+        if self.collect_data:
+            now = time.time()
+            if (now - self.start_time ) < self.move_up_collect:
+                #if it hasn't been the alloted time for moving up and collecting tof data
+                self.tof1_filtered.append(msg.data) #add data reading to list of tof1 readings
+                if 150 < msg.data < 500:
+                    #if the tof1 reading is between 150 mm and 500mm (~5.9in to 20in)
+                    if msg.data < self.lowest_tof1:
+                        #if the tof1 reading is lower that the previous lowest tof1 reading
+                        self.lowest_tof1 = msg.data #set the tof1 reading as the lowest tof1 reading
+                        self.lowest_pos_tof1= self.tool_y #save the current tool position as the lowest tool position for tof1
+        
     def callback_tof2_filtered(self, msg):
         #collect and use filtered tof2 data (in mm)
-        now = time.time()
-        if (now - self.start_time ) < self.move_up_collect:
-            #if it hasn't been the alloted time for moving up and collecting tof data
-            self.tof2_filtered.append(msg.data) #add data reading to list of tof2 readings
-            if 150 < msg.data < 500:
-                #if the tof2 reading is between 150 mm and 500mm (~5.9in to 20in)
-                if msg.data < self.lowest_tof2:
-                    #if the tof2 reading is lower that the previous lowest tof2 reading
-                    self.lowest_tof2 = msg.data #set the tof2 reading as the lowest tof2 reading
-                    self.lowest_pos_tof2= self.tool_y #save the current tool position as the lowest tool position for tof2
+        if self.collect_data:
+            now = time.time()
+            if (now - self.start_time ) < self.move_up_collect:
+                #if it hasn't been the alloted time for moving up and collecting tof data
+                self.tof2_filtered.append(msg.data) #add data reading to list of tof2 readings
+                if 150 < msg.data < 500:
+                    #if the tof2 reading is between 150 mm and 500mm (~5.9in to 20in)
+                    if msg.data < self.lowest_tof2:
+                        #if the tof2 reading is lower that the previous lowest tof2 reading
+                        self.lowest_tof2 = msg.data #set the tof2 reading as the lowest tof2 reading
+                        self.lowest_pos_tof2= self.tool_y #save the current tool position as the lowest tool position for tof2
 
 
     def calculate_angle(self):
@@ -228,7 +248,9 @@ class CenteringCleaned(Node):
             self.calc_angle_done = True #set calculate angle done flag to true
         except:
             print("No branch was found. The system will restart its moving up process") 
-            self.tof_collected == False
+            self.move_down_start += self.move_up_collect 
+            self.moved_down = False 
+
 
     
     def move_down_to_y(self, y_pose_want):
