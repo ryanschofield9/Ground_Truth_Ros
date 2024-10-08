@@ -24,6 +24,7 @@ import numpy as np
 from sensor_msgs.msg import Image 
 import cv2  
 import csv
+import datetime 
 
 class Run(Node):
     def __init__(self, shared_data):
@@ -35,6 +36,7 @@ class Run(Node):
         self.joint_names = ['elbow_joint', 'shoulder_lift_joint', 'shoulder_pan_joint', 'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
         self.joints= [0, 1, 2, 3, 4, 5]
         self.sub_tof1 = self.create_subscription(Image, 'camera_image', self.callback_image, 10)
+        self.diameter= ['W1', 'W2', 'Mean', 'Median']
         #app = QApplication(sys.argv)
         #self.main_window = Window()
         #app.exec()
@@ -49,6 +51,7 @@ class Run(Node):
         for i, x in enumerate(self.joints):
             self.joints[i]= x+1 
         self.shared_data.set_joints(self.joint_names, self.joints )
+        self.shared_data.set_diameters(self.diameter)
 
     def callback_joints(self,msg ):
         
@@ -209,6 +212,8 @@ class Window(QMainWindow):
 
         self.tests = []
 
+        self.trees_saved = []
+
         self.shared_data = shared_data
 
         self.timer = QtCore.QBasicTimer()
@@ -270,6 +275,8 @@ class Window(QMainWindow):
         self.middle_layout.addLayout(self.joint_layout)
         self.middle_layout.addLayout(self.diameter_layout)
 
+        # TO DO ADD FUNCTIONS TO START AND SWITCH TO scaled_joint_trajectory_controller'
+
         #layout for save and exit buttons
 
         self.button_layout = QHBoxLayout()
@@ -277,6 +284,7 @@ class Window(QMainWindow):
         self.button_layout.setSpacing(60)
 
         self.button_layout.setContentsMargins(100, 0, 100, 0)
+
 
         #layout of full page
 
@@ -345,12 +353,18 @@ class Window(QMainWindow):
 
         #add diameter 
 
-        self.label_diameter_found = QLabel ("TEST")
+        self.label_diameter_found_w1 = QLabel ("W1: None")
+        self.label_diameter_found_w2 = QLabel ("W2: None")
+        self.label_diameter_found_mean = QLabel ("Mean: None")
+        self.label_diameter_found_median = QLabel ("Median: None")
         self.label_diameter_real = QLineEdit()
         self.label_diameter_real.setMaxLength(30)
         self.label_diameter_real.setPlaceholderText("Please enter the calipered measured diameter")
         self.label_diameter_real.textChanged.connect(self.real_diameter_changed)
-        self.diameter_layout.addWidget(self.label_diameter_found)
+        self.diameter_layout.addWidget(self.label_diameter_found_w1)
+        self.diameter_layout.addWidget(self.label_diameter_found_w2)
+        self.diameter_layout.addWidget(self.label_diameter_found_mean)
+        self.diameter_layout.addWidget(self.label_diameter_found_median)
         self.diameter_layout.addWidget(self.label_diameter_real)
 
 
@@ -450,10 +464,11 @@ class Window(QMainWindow):
             self.branch_val = 1
         if self.trial_val == 0:
             self.trial_val = 1
-        for val in self.tests: 
+        for val in self.trees_saved: 
+            print(self.trees_saved)
             if val == [self.tree_val, self.branch_val, self.trial_val]:
-                print("Already Saved ")
-                popup = Popup_Label(self,"This trial will not be ", "" )
+                print("Already Saved Not adding anything to the saved values")
+                #popup = Popup_Label(self,"This trial will not be ", "" )
                 return 
         # add the joints in order 
         for idx, joint in enumerate(self.joint_names):
@@ -474,13 +489,16 @@ class Window(QMainWindow):
         for idx, joint in enumerate(self.joint_names):
             if joint == 'wrist_3_joint':
                 self.joints_in_order.append(self.joints[idx])
+        
 
-        self.tests.append([self.tree_val, self.branch_val, self.trial_val, self.joints_in_order[0],self.joints_in_order[1],self.joints_in_order[2], self.joints_in_order[3], self.joints_in_order[4], self.joints_in_order[5],self.real_diameter])
+        self.trees_saved.append([self.tree_val, self.branch_val, self.trial_val])
+        self.tests.append([self.tree_val, self.branch_val, self.trial_val, self.joints_in_order[0],self.joints_in_order[1],self.joints_in_order[2],self.joints_in_order[3], self.joints_in_order[4], self.joints_in_order[5],self.real_diameter, self.diameters[0], self.diameters[1], self.diameters[2], self.diameters[3]])
        
     
     def exit(self):
-        filename = 'src/Ground_Truth_Ros/ground_truth/csv_files/'+self.file + '.csv'
-        fields = ['Tree', 'Branch', 'Trial', 'elbow_joint', 'shoulder_lift_joint', 'shoulder_pan_joint', 'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint', 'measured diameter']
+        time = datetime.datetime.now()
+        filename = 'src/Ground_Truth_Ros/ground_truth/csv_files/'+self.file + str(time)+ '.csv'
+        fields = ['Tree', 'Branch', 'Trial', 'elbow_joint', 'shoulder_lift_joint', 'shoulder_pan_joint', 'wrist_1_joint', 'wrist_2_joint','wrist_3_joint', 'measured diameter', 'Diameter Found', "W1 Diameter", "W2 Diameter", "Mean Diameter", "Median Diameter"]
         with open(filename, 'w', newline='') as file:
             csvwriter = csv.writer(file)   
             # writing the fields   
@@ -516,9 +534,20 @@ class Window(QMainWindow):
 
         return joint_layout 
 
-        
+    def diameters_update(self):
+        self.diameters = self.shared_data.get_diameters()
+        self.label_diameter_found_w1.setText(f"W1: {self.diameters[0]}")
+        self.label_diameter_found_w2.setText(f"W2: {self.diameters[1]}")
+        self.label_diameter_found_mean.setText(f"Mean: {self.diameters[2]}")
+        self.label_diameter_found_median.setText(f"Median: {self.diameters[3]}")
+
+
+
+
+
     def timerEvent(self, e):
         self.joint_update(self.joint_layout)
+        self.diameters_update()
 
         
 
@@ -528,6 +557,7 @@ class SharedData:
         self.joint_names = [None, None, None, None, None, None]
         self.joints= [None, None, None, None, None, None]
         self.frame = None
+        self.diameter = [None, None, None, None]
     
     def get_reset(self):
         return self.reset
@@ -547,8 +577,14 @@ class SharedData:
         #print(frame)
     
     def get_frame(self):
-        print("in get frame")
         return self.frame 
+    
+    def set_diameters(self, diameter):
+        #print(diameter)
+        self.diameter = diameter
+
+    def get_diameters(self):
+        return self.diameter
     
 
 
