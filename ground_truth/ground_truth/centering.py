@@ -76,9 +76,9 @@ class CenteringCleaned(Node):
         self.calc_angle_done = False #if the angle of the branch has calculated 
         self.move_down = False #if the system has reached the center of the branch 
         self.done_step1= False #if the system has gotten parallel with the branch 
-        self.step_1 = False #if it is time for step 1 to start 
+        self.step_1 = True #if it is time for step 1 to start 
         self.first = False #if this is the first time running through and the start time needs to be set  
-        self.move_down = False #if the syste has moved down to start data collection 
+        self.move_down_initialize = False #if the syste has moved down to start data collection 
         self.collect_data = False # if the system is collecting data 
 
         #Wait three seconds to let everything get up and running (may not need)
@@ -89,7 +89,7 @@ class CenteringCleaned(Node):
         self.joint_cntr = 'scaled_joint_trajectory_controller' # name of controller that uses joint commands 
         self.base_frame = 'base_link' #base frame that doesn't move 
         self.tool_frame = 'tool0' #frame that the end effector is attached to 
-        self.move_up_collect = 5 #alloted time in seconds for moving up and collecting tof data  
+        self.move_up_collect = 7 #alloted time in seconds for moving up and collecting tof data  
         self.move_down_start = 2 # alloted time in seconds for moving down to start tf and position correctly
         self.dis_sensors = 0.0508 # meters 
         self.branch_angle = 0 #initial angle of branch
@@ -127,14 +127,14 @@ class CenteringCleaned(Node):
                  self.first = False
             if self.done_step1 == False: 
                 #if the system has not yet gotten parallel to the branch with a first guess 
-                if self.moved_down == False:
+                if self.move_down_initialize == False:
                     now = time.time()
                     if (now - self.start_time ) < self.move_down_start:
                          #if it hasn't been the alloted time for moving down
-                        self.publish_twist([0.0, -0.1, 0.0], [0.0, 0.0, 0.0]) #move up at 0.1 m/s (negative y is up ) 
+                        self.publish_twist([0.0, 0.1, 0.0], [0.0, 0.0, 0.0]) #move down at 0.1 m/s (negative y is up ) 
                     else:
                         self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving (move at 0 m/s) 
-                        self.moved_down = True 
+                        self.move_down_initialize = True 
                         self.move_down_start = 2
                         self.start_time = time.time()
                 elif self.tof_collected == False: 
@@ -195,6 +195,7 @@ class CenteringCleaned(Node):
     def callback_tof1 (self, msg):
         #collect raw tof1 data (in mm)
         if self.collect_data:
+            print("collecting data ")
             now = time.time()
             if (now - self.start_time ) < self.move_up_collect:
                 #if it hasn't been the alloted time for moving up and collecting tof data 
@@ -249,7 +250,9 @@ class CenteringCleaned(Node):
         except:
             print("No branch was found. The system will restart its moving up process") 
             self.move_down_start += self.move_up_collect 
-            self.moved_down = False 
+            self.move_down_initialize = False 
+            self.start_time = time.time()
+            self.tof_collected = False 
 
 
     
