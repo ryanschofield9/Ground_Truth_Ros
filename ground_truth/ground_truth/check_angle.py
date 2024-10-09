@@ -218,7 +218,7 @@ class AngleCheck(Node):
                         print(f"OLD desired_y: {self.desired_y} NEW desired_y: {self.new_desired_y}")
                         print(f"Tries: {self.tries}")
                         self.calc_first_time = True 
-                    if self.dif_angle <= 0.02 and abs(self.dif_y) <= 0.005:
+                    if self.dif_angle <= 0.02 and abs(self.dif_y) <= 0.05:
                         #if the angles are within ~1 degree of each other and the y is within 2.54 mm (0.1in) of each other 
                         self.done = True  #set the check angle step as done 
                     else: 
