@@ -218,8 +218,8 @@ class AngleCheck(Node):
                         print(f"OLD desired_y: {self.desired_y} NEW desired_y: {self.new_desired_y}")
                         print(f"Tries: {self.tries}")
                         self.calc_first_time = True 
-                    if self.dif_angle <= 0.02 and abs(self.dif_y) <= 0.05:
-                        #if the angles are within ~1 degree of each other and the y is within 2.54 mm (0.1in) of each other 
+                    if self.dif_angle <= 0.02 and abs(self.dif_y) <= 0.005:
+                        #if the angles are within ~1 degree of each other and the y is within 5 mm (0.1in) of each other 
                         self.done = True  #set the check angle step as done 
                     else: 
                         #if the angles or y values are outside the given ranges 
@@ -228,6 +228,7 @@ class AngleCheck(Node):
                             self.tries = -1 
                             self.done = True #set the check angle step as done 
                         else: 
+                          
                             #if the check angle hasn't tried more than 3 times  
                             self.desired_angle = self.new_desired_angle #reset the desired_angle with the new_desired angle
                             if self.rotated_to_new == False: 
@@ -267,6 +268,17 @@ class AngleCheck(Node):
                                         #if the arm is at the wanted y position
                                         print("tool angle after movedown: ",self.tool_angle)
                                         self.moved_to_new = True
+                                        print("Y Movement INFORMATION")
+                                        print(f"Readings TOF 1: {self.tof1_filtered_up}")
+                                        print(f"Tool Pos saved TOF 1: {self.tool_pos_tof1}")
+                                        print(f"Readings TOF 2: {self.tof2_filtered_up}")
+                                        print(f"Tool Pos saved TOF 2: {self.tool_pos_tof2}")
+                                        print("Rotation Movement INFORMATION")
+                                        print(f"Readings TOF 1: {self.tof1_filtered_rot}")
+                                        print(f"Tool Orient saved TOF1: {self.tool_orient_tof1}")
+                                        print(f"Readings TOF 2: {self.tof2_filtered_rot}")
+                                        print(f"Tool Orient saved TOF1: {self.tool_orient_tof2}")
+
                                 
                             else:
                                 #if the system has rotate to the new angle and the system has moved to the new y_position 
@@ -360,7 +372,7 @@ class AngleCheck(Node):
         #Using the given y pose that we want to go back to, move down until we reach that location 
         y_pose= self.tool_y #get the current tool y pose 
         #print("y_pose: ", y_pose, " y_pose_want", y_pose_want)
-        if (y_pose - y_pose_want) < 0.001: 
+        if (y_pose - y_pose_want) < 0.005: 
             #when within 1mm of wanted y pose 
             self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving  
             self.at_y = True
@@ -370,7 +382,7 @@ class AngleCheck(Node):
         #Using the given y pose that we want to go back to, move down until we reach that location 
         y_pose= self.tool_y #get the current tool y pose 
         #print("y_pose: ", y_pose, " y_pose_want", y_pose_want)
-        if (y_pose_want - y_pose) < 0.001: 
+        if (y_pose_want - y_pose) < 0.005: 
             #when within 1mm of wanted y pose 
             self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving 
             self.at_y = True
@@ -532,7 +544,7 @@ class AngleCheck(Node):
         print(f"idx of tof2 filtered_rot: {np.argmin(self.tof2_filtered_rot)}")
         print(f"valule of tool orient_tof1 {self.tool_orient_tof1[np.argmin(self.tof1_filtered_rot)]}")
         print(f"valule of tool orient_tof2 {self.tool_orient_tof2[np.argmin(self.tof2_filtered_rot)]}")
-        if abs (low_tof1_reading - high_tof1_reading)>50 or abs (low_tof2_reading - high_tof2_reading)>50: 
+        if abs (low_tof1_reading - high_tof1_reading) > 50 or abs (low_tof2_reading - high_tof2_reading) > 50: 
             new_desired_angle = (low_angle_tof1 + low_angle_tof2)/2
         else: 
             print("The diferences were too small so the angle is good")

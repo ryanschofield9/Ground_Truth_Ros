@@ -89,6 +89,7 @@ class TouchTree(Node):
                 self.initial_z = self.get_tool_pose_z()
                 self.first = False 
             if self.tree_touch == True: 
+                print("Touch Detected ")
                 self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving
                 self.count += 1
                 if self.count == 3:
@@ -99,7 +100,7 @@ class TouchTree(Node):
         elif self.step_6: 
                 if not self.future: # A call is not pending
                     self.final_z = self.get_tool_pose_z()
-                    dif_z = abs(self.initial_z - self.final_z) * 39.37 #have to conver from meters to inches 
+                    dif_z = abs(self.initial_z - self.final_z) * 39.37 #have to convert from meters to inches 
                     self.video_dis = 6 + dif_z
                     print(f"Initial Z position: {self.initial_z}")
                     print(f"Final Z position: {self.final_z}")

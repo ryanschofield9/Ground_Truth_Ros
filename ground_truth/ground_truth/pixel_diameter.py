@@ -134,6 +134,7 @@ class PixelDiameter(Node):
             all_starts, all_ends = self.pixel_count (submatrix)
             all_middle = self.middle_count(all_starts, all_ends)
             diameters = self.diameter_options(all_starts, all_ends)
+            print("Diameters: ", diameters)
             middle_lines = self.calculate_middle_line_options(all_middle)
             diameter_mean = float(statistics.mean(diameters))
             middle_mean = statistics.mean(middle_lines)

@@ -165,6 +165,8 @@ class CenteringCleaned(Node):
                     #if the angle has been calculated and the system has reached the center of the branch
                     self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving (move at 0 m/s) 
                     print("calculated angle needed to rotate: ", self.branch_angle)
+                    #print("TOF1: ", self.tof1_filtered)
+                    #print("TOF2: ", self.tof2_filtered)
                     self.switch_controller(self.joint_cntr, self.forward_cntr) #switch from forward_position controller to scaled_joint_trajectory controller 
                     self.rotate_to_w(self.branch_angle)
                     self.plot_tof()
@@ -190,7 +192,7 @@ class CenteringCleaned(Node):
         cmd.twist.linear = Vector3(x=my_twist_linear[0], y=my_twist_linear[1], z=my_twist_linear[2])
         cmd.header.stamp = self.get_clock().now().to_msg()
         self.pub_vel_commands.publish(cmd)
-        self.get_logger().info(f"Sending: linear: {cmd.twist.linear} angular: {cmd.twist.angular}")
+        #self.get_logger().info(f"Sending: linear: {cmd.twist.linear} angular: {cmd.twist.angular}")
 
     def callback_tof1 (self, msg):
         #collect raw tof1 data (in mm)
@@ -242,7 +244,9 @@ class CenteringCleaned(Node):
     def calculate_angle(self):
         #calculate the angle the branch is at based on the tof readings 
         print("TOF1: ", self.tof1_filtered)
+        print("TOF1: ", min(self.tof1_filtered))
         print("TOF2: ", self.tof2_filtered)
+        print("TOF2: ", min(self.tof2_filtered))
         try:
             distance_readings = self.lowest_pos_tof1 - self.lowest_pos_tof2 #find the distance between the lowest tof readings 
             self.branch_angle = np.arctan(distance_readings / self.dis_sensors) #using the distance between the sensors (known) and the lowest filtered tof readings (calculated), calculate the angle
