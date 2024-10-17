@@ -45,10 +45,12 @@ class CenteringCleaned(Node):
         self.sub_tof2 = self.create_subscription(Float32, 'tof2_filter', self.callback_tof2_filtered, 10)
         self.sub_joints = self.create_subscription(JointState, 'joint_states',self.callback_joints, 10 )
         self.sub_reset = self.create_subscription(Bool, 'reset',self.calback_reset, 10 )
+        self.sub_step1 = self.create_subscription(Bool, 'step1',self.calback_step1, 10 )
         self.pub_vel_commands = self.create_publisher(TwistStamped, '/servo_node/delta_twist_cmds', 10)
         self.pub_step2 = self.create_publisher(Bool, 'step2', 10)
         self.pub_timer = self.create_timer(1/10, self.main_control)
         self.tool_timer = self.create_timer(1/10, self.pub_tool_pose_y)
+        self.tool_timer_angle = self.create_timer(1/50,self.pub_tool_angle)
 
         #Create tf buffer and listener 
         self.tf_buffer = Buffer()
@@ -106,6 +108,7 @@ class CenteringCleaned(Node):
         self.lowest_pos_tof1 = None #y tool position at the lowest raw tof1 reading 
         self.lowest_pos_tof2 = None #y tool position at the lowest raw tof2 reading 
         self.tool_y = None #y position of the tool at the current moment 
+        self.tool_angle = 0 # storing the tool angle 
 
         #start servoing and switch to forward position controller 
         self.start_servo()
@@ -249,7 +252,8 @@ class CenteringCleaned(Node):
         print("TOF2: ", min(self.tof2_filtered))
         try:
             distance_readings = self.lowest_pos_tof1 - self.lowest_pos_tof2 #find the distance between the lowest tof readings 
-            self.branch_angle = np.arctan(distance_readings / self.dis_sensors) #using the distance between the sensors (known) and the lowest filtered tof readings (calculated), calculate the angle
+            self.branch_angle = np.arctan(distance_readings / self.dis_sensors) + self.tool_angle #using the distance between the sensors (known) and the lowest filtered tof readings (calculated), calculate the angle, also have to add the current angle
+
             self.calc_angle_done = True #set calculate angle done flag to true
         except:
             print("No branch was found. The system will restart its moving up process") 
@@ -258,7 +262,15 @@ class CenteringCleaned(Node):
             self.start_time = time.time()
             self.tof_collected = False 
 
-
+    def pub_tool_angle(self):
+        try:
+            names = self.joint_names 
+            pos = np.array(self.joints) 
+            for idx,vals in enumerate(names):
+                if vals == "wrist_3_joint":
+                    self.tool_angle = pos[idx] 
+        except:
+            print("Tool angle could not be found ")
     
     def move_down_to_y(self, y_pose_want):
         #Using the given y pose that we want to go back to, move down until we reach that location 
@@ -445,6 +457,9 @@ class CenteringCleaned(Node):
         #start_time will be reset by doing this
         self.first = False
 
+    def step_1 (self,msg):
+        self.reset()
+        self.step_1 = True 
 
 def convert_tf_to_pose(tf: TransformStamped):
     #take the tf transform and turn that into a position  

@@ -1,0 +1,5 @@
+#inputs
+bool start
+---
+#outputs 
+bool step1_started 

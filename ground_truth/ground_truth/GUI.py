@@ -4,6 +4,8 @@ from std_msgs.msg import Int64, Bool
 from geometry_msgs.msg import TwistStamped, Vector3
 import time 
 
+from groun_truth_msgs.srv import Start
+
 from PyQt6.QtWidgets import *
 
 from PyQt6 import QtCore, QtGui
@@ -29,8 +31,10 @@ import datetime
 class Run(Node):
     def __init__(self, shared_data):
         super().__init__('GUI')
-        self.pub = self.create_publisher(Bool, 'reset', 10)
-        self.timer = self.create_timer(1/10, self.reset)
+        #self.pub = self.create_publisher(Bool, 'reset', 10)
+        self.pub_step1 = self.create_publisher(Bool, 'step_1', 10)
+        self.service = self.create_service(Start, 'start', self.pub_start)
+        self.timer = self.create_timer(1/10, self.check_vals)
         self.shared_data = shared_data
         self.sub_joints = self.create_subscription(JointState, 'joint_states',self.callback_joints, 10 )
         self.joint_names = ['elbow_joint', 'shoulder_lift_joint', 'shoulder_pan_joint', 'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
@@ -42,27 +46,31 @@ class Run(Node):
         #app.exec()
         
     
-    def reset(self):
-        if self.shared_data.get_reset()== True:
-            msg = Bool()
-            msg.data = True
-            self.pub.publish(msg)
-            self.shared_data.set_reset(False)
+    def check_vals (self):
+        if self.shared_data.get_start()== True:
+            self.pub_start()
+        self.update_joints()
+
+    def update_joints(self):
         for i, x in enumerate(self.joints):
             self.joints[i]= x+1 
         self.shared_data.set_joints(self.joint_names, self.joints )
         self.shared_data.set_diameters(self.diameter)
-
+    
     def callback_joints(self,msg ):
         
         self.joint_names = msg.name
         self.joints= msg.position
         self.shared_data.set_joints(self.joint_names, self.joints )
 
-    def callback_image (self, msg):
-        frame = msg
-        #print ("in callback", frame)
-        self.shared_data.set_frame(frame)
+    def pub_start (self):
+        msg = Bool()
+        msg.data = True 
+        self.pub_step1_publish(msg)
+        self.started_data.set_start(False)
+        
+
+        
 
         
 class Popup_Exit (QMainWindow):
@@ -374,7 +382,8 @@ class Window(QMainWindow):
 
         self.button_exit = self.create_button("Exit", 200, 300, 120, 60, self.exit)
         
-        self.button_reset = self.create_button("Reset", 200, 300, 120, 60, self.reset)
+        #self.button_reset = self.create_button("Reset", 200, 300, 120, 60, self.reset)
+        self.button_reset = self.create_button("Start", 200, 300, 120, 60, self.start)
 
  
 
@@ -512,6 +521,9 @@ class Window(QMainWindow):
     def reset(self):
         self.shared_data.set_reset(True)
 
+    def reset(self):
+        self.shared_data.set_start(True)
+
     def joint_update(self, joint_layout):
         self.joint_names, self.joints = self.shared_data.get_joints()  
 
@@ -554,6 +566,7 @@ class Window(QMainWindow):
 class SharedData:
     def __init__(self):
         self.reset = False 
+        self.start = False
         self.joint_names = [None, None, None, None, None, None]
         self.joints= [None, None, None, None, None, None]
         self.frame = None
@@ -564,6 +577,12 @@ class SharedData:
     
     def set_reset (self, val):
         self.reset = val 
+
+    def get_start(self):
+        return self.start
+    
+    def set_start (self, val):
+        self.start = val 
     
     def set_joints(self, joint_names, joints ):
         self.joint_names = joint_names 
