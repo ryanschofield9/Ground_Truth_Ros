@@ -2,6 +2,7 @@ import rclpy
 from rclpy.node import Node 
 from std_msgs.msg import Int64, Bool
 from geometry_msgs.msg import TwistStamped, Vector3
+from rclpy.callback_groups import ReentrantCallbackGroup
 import time 
 
 from groun_truth_msgs.srv import Start
@@ -54,6 +55,9 @@ class Run(Node):
         self.joints= [0, 1, 2, 3, 4, 5]
         self.diameter= ['W1', 'W2', 'Mean', 'Median']
 
+        #Create Callback group
+        self.service_handler_group = ReentrantCallbackGroup()
+
         self.switch_ctrl = self.create_client(
             SwitchController, "/controller_manager/switch_controller", callback_group=self.service_handler_group
         )
@@ -73,7 +77,9 @@ class Run(Node):
             self.rotate_to_w(self.shared_data.get_rotate()[1])
             self.shared_data.set_rotate(False, self.shared_data.get_rotate()[1] )
         if self.shared_data.get_controller()[0] == True: 
+            print("Chaning Controller")
             self.switch_controller(self.shared_data.get_controller()[1], self.shared_data.get_controller()[2])
+            self.shared_data.set_controller(False, self.shared_data.get_controller()[1])
         self.update_joints()
 
     def update_joints(self):
@@ -301,6 +307,7 @@ class Window(QMainWindow):
         self.timer = QtCore.QBasicTimer()
 
         self.at_0 = True 
+        self.controller = "Joints"
 
         #QtGui.QImageReader.supportedImageFormats()
 
@@ -468,7 +475,9 @@ class Window(QMainWindow):
         # add rotate and change controller buttons 
 
         self.button_rotate = self.create_button("Rotate", 400, 300, 120, 60, self.rotate)
+        self.button_change = self.create_button("Change Controller", 400, 300, 120, 60, self.change)
         self.rot_change_layout.addWidget(self.button_rotate)
+        self.rot_change_layout.addWidget(self.button_change)
 
         #create save, reset, and exit buttons
 
@@ -617,7 +626,8 @@ class Window(QMainWindow):
 
     def start(self):
         self.shared_data.set_start(True)
-
+   
+    
     def joint_update(self, joint_layout):
         self.joint_names, self.joints = self.shared_data.get_joints()  
 
@@ -654,6 +664,14 @@ class Window(QMainWindow):
         else:
             self.shared_data.set_rotate(True, 1.5708) #radians is used, so 1.5708 rads is 90 degrees 
             self.at_0 = True
+
+    def change(self):
+        if self.controller == "Joints": 
+            self.shared_data.set_controller(True, "Forward")
+            self.controller = "Forward"
+        else:
+            self.shared_data.set_controller(True, "Joints")
+            self.controller = "Joints"
 
 
     def timerEvent(self, e):
