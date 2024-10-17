@@ -14,6 +14,7 @@ from controller_manager_msgs.srv import SwitchController
 import numpy as np
 
 from std_msgs.msg import Float32, Int64, Bool
+
 from sensor_msgs.msg import JointState
 import time 
 import matplotlib.pyplot as plt
@@ -26,7 +27,6 @@ from moveit_msgs.msg import (
     JointConstraint,
 )
 from rclpy.action import ActionClient
-from groun_truth_msgs.srv import AngleCheck
 
 
 
@@ -45,7 +45,7 @@ class CenteringCleaned(Node):
         self.sub_tof2 = self.create_subscription(Float32, 'tof2_filter', self.callback_tof2_filtered, 10)
         self.sub_joints = self.create_subscription(JointState, 'joint_states',self.callback_joints, 10 )
         self.sub_reset = self.create_subscription(Bool, 'reset',self.calback_reset, 10 )
-        self.sub_step1 = self.create_subscription(Bool, 'step1',self.calback_step1, 10 )
+        self.sub_step1 = self.create_subscription(Bool, 'step_1',self.callback_step_1, 10 )
         self.pub_vel_commands = self.create_publisher(TwistStamped, '/servo_node/delta_twist_cmds', 10)
         self.pub_step2 = self.create_publisher(Bool, 'step2', 10)
         self.pub_timer = self.create_timer(1/10, self.main_control)
@@ -78,13 +78,11 @@ class CenteringCleaned(Node):
         self.calc_angle_done = False #if the angle of the branch has calculated 
         self.move_down = False #if the system has reached the center of the branch 
         self.done_step1= False #if the system has gotten parallel with the branch 
-        self.step_1 = True #if it is time for step 1 to start 
+        self.step_1 = False #if it is time for step 1 to start 
         self.first = False #if this is the first time running through and the start time needs to be set  
         self.move_down_initialize = False #if the syste has moved down to start data collection 
         self.collect_data = False # if the system is collecting data 
 
-        #Wait three seconds to let everything get up and running (may not need)
-        time.sleep(3)
 
         #constant variables 
         self.forward_cntr = 'forward_position_controller' #name of controller that uses velocity commands 
@@ -128,6 +126,7 @@ class CenteringCleaned(Node):
             if self.first:
                  self.start_time = time.time()
                  self.first = False
+                 print("Setting Time")
             if self.done_step1 == False: 
                 #if the system has not yet gotten parallel to the branch with a first guess 
                 if self.move_down_initialize == False:
@@ -200,7 +199,6 @@ class CenteringCleaned(Node):
     def callback_tof1 (self, msg):
         #collect raw tof1 data (in mm)
         if self.collect_data:
-            print("collecting data ")
             now = time.time()
             if (now - self.start_time ) < self.move_up_collect:
                 #if it hasn't been the alloted time for moving up and collecting tof data 
@@ -438,7 +436,8 @@ class CenteringCleaned(Node):
         self.calc_angle_done = False 
         self.move_down = False 
         self.done_step1 = False  
-        self.step_1 = False  
+        self.step_1 = False 
+        self.move_down_initialize = False 
 
         #initialize variables 
         self.tof1_readings = [] 
@@ -455,9 +454,10 @@ class CenteringCleaned(Node):
         self.switch_controller(self.forward_cntr, self.joint_cntr) #switch from scaled_joint_trajectory controller to forward position controller 
         
         #start_time will be reset by doing this
-        self.first = False
+        self.first = True
 
-    def step_1 (self,msg):
+    def callback_step_1 (self,msg):
+        print("In step 1 ")
         self.reset()
         self.step_1 = True 
 

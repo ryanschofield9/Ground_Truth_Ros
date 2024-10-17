@@ -38,6 +38,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/CalcDiameter.srv"
   "srv/PixelWidth.srv"
   "srv/CameraRecord.srv"
+  "srv/Start.srv"
   "msg/ToolPose.msg"
 )
 

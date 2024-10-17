@@ -26,21 +26,40 @@ import numpy as np
 from sensor_msgs.msg import Image 
 import cv2  
 import csv
-import datetime 
+import datetime
+
+from sensor_msgs.msg import JointState
+import time 
+import matplotlib.pyplot as plt
+
+from moveit_msgs.action import MoveGroup
+from moveit_msgs.msg import (
+    MotionPlanRequest,
+    PlanningOptions,
+    Constraints,
+    JointConstraint,
+)
+from rclpy.action import ActionClient
+from controller_manager_msgs.srv import SwitchController
 
 class Run(Node):
     def __init__(self, shared_data):
         super().__init__('GUI')
         #self.pub = self.create_publisher(Bool, 'reset', 10)
         self.pub_step1 = self.create_publisher(Bool, 'step_1', 10)
-        self.service = self.create_service(Start, 'start', self.pub_start)
         self.timer = self.create_timer(1/10, self.check_vals)
         self.shared_data = shared_data
         self.sub_joints = self.create_subscription(JointState, 'joint_states',self.callback_joints, 10 )
         self.joint_names = ['elbow_joint', 'shoulder_lift_joint', 'shoulder_pan_joint', 'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
         self.joints= [0, 1, 2, 3, 4, 5]
-        self.sub_tof1 = self.create_subscription(Image, 'camera_image', self.callback_image, 10)
         self.diameter= ['W1', 'W2', 'Mean', 'Median']
+
+        self.switch_ctrl = self.create_client(
+            SwitchController, "/controller_manager/switch_controller", callback_group=self.service_handler_group
+        )
+
+
+        self.moveit_planning_client = ActionClient(self, MoveGroup, "move_action")
         #app = QApplication(sys.argv)
         #self.main_window = Window()
         #app.exec()
@@ -49,6 +68,12 @@ class Run(Node):
     def check_vals (self):
         if self.shared_data.get_start()== True:
             self.pub_start()
+        if self.shared_data.get_rotate()[0] == True: 
+            print("rotate to ",self.shared_data.get_rotate()[1] )
+            self.rotate_to_w(self.shared_data.get_rotate()[1])
+            self.shared_data.set_rotate(False, self.shared_data.get_rotate()[1] )
+        if self.shared_data.get_controller()[0] == True: 
+            self.switch_controller(self.shared_data.get_controller()[1], self.shared_data.get_controller()[2])
         self.update_joints()
 
     def update_joints(self):
@@ -66,13 +91,62 @@ class Run(Node):
     def pub_start (self):
         msg = Bool()
         msg.data = True 
-        self.pub_step1_publish(msg)
-        self.started_data.set_start(False)
+        self.pub_step1.publish(msg)
+        self.shared_data.set_start(False)
+        print("Publishing Start")
         
+    def rotate_to_w(self, angle):
+        #rotate the tool to the given angle  
+        names = self.joint_names 
+        pos = self.joints 
 
-        
+        #for all the joints, use the current angle for all joints, but wrist 3. Set wrist 3 to the given angle  
+        for idx, vals in enumerate (names):
+            if vals == "wrist_3_joint":
+                pos[idx]= angle
 
-        
+        self.send_joint_pos(names, pos)  
+
+    def send_joint_pos(self, joint_names, joints):
+        #make a service call to moveit to go to given joint values 
+        for n, p in zip (joint_names, joints):
+             print(f"{n}: {p}")
+        print(f"NOW SENDING GOAL TO MOVE GROUP")
+        joint_constraints = [JointConstraint(joint_name=n, position=p) for n, p in zip(joint_names, joints)]
+        kwargs = {"joint_constraints": joint_constraints}
+        goal_msg = MoveGroup.Goal()
+        goal_msg.request = MotionPlanRequest(
+            group_name="ur_manipulator",
+            goal_constraints=[Constraints(**kwargs)],
+            allowed_planning_time=5.0,
+        ) #create a service request of given joint values and an allowed planning time of 5 seconds 
+
+        goal_msg.planning_options = PlanningOptions(plan_only=False)
+
+        self.moveit_planning_client.wait_for_server() #wait for service to be active 
+        future = self.moveit_planning_client.send_goal_async(goal_msg) #make service call 
+        future.add_done_callback(self.goal_complete) #set done callback
+
+    def goal_complete(self, future):
+            #function that is called once a service call is made to moveit_planning 
+            rez = future.result()
+            if not rez.accepted:
+                print("Planning failed!")
+                return
+            else:
+                print("Plan succeeded!")
+
+    def switch_controller(self, act, deact):
+        #activate the act controllers given and deactivate the deact controllers given 
+        switch_ctrl_req = SwitchController.Request(
+            activate_controllers = [act], deactivate_controllers= [deact], strictness = 2
+            ) #create request for activating and deactivating controllers with a strictness level of STRICT 
+        self.switch_ctrl.call_async(switch_ctrl_req) #make a service call to switch controllers 
+        print(f"Activated: {act}  Deactivated: {deact}")
+            
+        return
+    
+
 class Popup_Exit (QMainWindow):
 
     def __init__(self,parent, tests):
@@ -226,6 +300,8 @@ class Window(QMainWindow):
 
         self.timer = QtCore.QBasicTimer()
 
+        self.at_0 = True 
+
         #QtGui.QImageReader.supportedImageFormats()
 
         # showing all the widgets
@@ -277,11 +353,24 @@ class Window(QMainWindow):
 
         self.diameter_layout.setContentsMargins(20, 0, 20, 0)
 
+        #layout for rotate and change controller button 
+
+        self.rot_change_layout = QHBoxLayout()
+        self.rot_change_layout.setSpacing(30)
+        self.rot_change_layout.setContentsMargins(20, 0, 20, 0)
+
+        #layout for diameter and rot_change 
+
+        self.dia_rot_layout = QVBoxLayout()
+        self.dia_rot_layout.addLayout(self.diameter_layout)
+        self.dia_rot_layout.addLayout(self.rot_change_layout)
+
+
         #set middle layout 
 
         self.middle_layout = QHBoxLayout()
         self.middle_layout.addLayout(self.joint_layout)
-        self.middle_layout.addLayout(self.diameter_layout)
+        self.middle_layout.addLayout(self.dia_rot_layout)
 
         # TO DO ADD FUNCTIONS TO START AND SWITCH TO scaled_joint_trajectory_controller'
 
@@ -375,6 +464,11 @@ class Window(QMainWindow):
         self.diameter_layout.addWidget(self.label_diameter_found_median)
         self.diameter_layout.addWidget(self.label_diameter_real)
 
+        
+        # add rotate and change controller buttons 
+
+        self.button_rotate = self.create_button("Rotate", 400, 300, 120, 60, self.rotate)
+        self.rot_change_layout.addWidget(self.button_rotate)
 
         #create save, reset, and exit buttons
 
@@ -521,7 +615,7 @@ class Window(QMainWindow):
     def reset(self):
         self.shared_data.set_reset(True)
 
-    def reset(self):
+    def start(self):
         self.shared_data.set_start(True)
 
     def joint_update(self, joint_layout):
@@ -553,8 +647,13 @@ class Window(QMainWindow):
         self.label_diameter_found_mean.setText(f"Mean: {self.diameters[2]}")
         self.label_diameter_found_median.setText(f"Median: {self.diameters[3]}")
 
-
-
+    def rotate(self):
+        if self.at_0 == True: 
+            self.shared_data.set_rotate(True, 0.0)
+            self.at_0 = False
+        else:
+            self.shared_data.set_rotate(True, 1.5708) #radians is used, so 1.5708 rads is 90 degrees 
+            self.at_0 = True
 
 
     def timerEvent(self, e):
@@ -567,10 +666,16 @@ class SharedData:
     def __init__(self):
         self.reset = False 
         self.start = False
+        self.rotate = False 
+        self.angle = 0 
         self.joint_names = [None, None, None, None, None, None]
         self.joints= [None, None, None, None, None, None]
         self.frame = None
         self.diameter = [None, None, None, None]
+        self.forward_cntr = 'forward_position_controller' #name of controller that uses velocity commands 
+        self.joint_cntr = 'scaled_joint_trajectory_controller' # name of controller that uses joint commands 
+        self.switch = False 
+        self.controller = 'Forward'
     
     def get_reset(self):
         return self.reset
@@ -604,6 +709,24 @@ class SharedData:
 
     def get_diameters(self):
         return self.diameter
+    
+    def set_rotate(self, rotate, angle):
+        self.rotate = rotate
+        self.angle = angle 
+
+    def get_rotate(self):
+        return [self.rotate, self.angle]
+    
+    def set_controller(self, switch, controller):
+        self.switch = switch 
+        self.controller = controller 
+
+    def get_controller(self):
+        if self.controller == "Forward":
+            return [self.switch, self.forward_cntr, self.joint_cntr]
+        else:
+            return [self.switch, self.joint_cntr, self.forward_cntr]
+
     
 
 
