@@ -1,9 +1,13 @@
 from groun_truth_msgs.srv import PixelWidth, CalcDiameter
+from groun_truth_msgs.msg import Diameters
 
 import rclpy
 from rclpy.node import Node
 
 import math 
+
+from std_msgs.msg import Float32
+
 
 
 
@@ -16,6 +20,9 @@ class CalcDiameterService(Node):
         #Create Service 
         self.service_pixel = self.create_service(PixelWidth, 'pixel_width', self.pixel_service) 
         self.service_calc = self.create_service(CalcDiameter, 'calc_diameter', self.calc_diameters)
+
+        #Create publisher 
+        self.pub_diameters = self.create_publisher(Diameters, 'diameters', 10)
 
         #initialize variables
         self.diameter_pix_W1 = 0.0 
@@ -51,6 +58,18 @@ class CalcDiameterService(Node):
         print(f"The diamter in inches when using W2B1 is {diameter_inch_W2}")
         print(f"The diamter in inches when using mean is {diameter_inch_mean}")
         print(f"The diamter in inches when using median is {diameter_inch_median}")
+        
+        # Publish diamters so that they go to the GUI 
+        msg = Diameters()
+        diameter_list = [diameter_inch_W1, diameter_inch_W2, diameter_inch_mean, diameter_inch_median]
+        msg.diameter_w1 = diameter_inch_W1
+        msg.diameter_w2 = diameter_inch_W2
+        msg.diameter_mean = diameter_inch_mean
+        msg.diameter_median = diameter_inch_median
+        self.pub_diameters.publish(msg)
+
+
+
         response = CalcDiameter.Response()
         response.diameter_w1 = diameter_inch_W1
         response.diameter_w2= diameter_inch_W2
