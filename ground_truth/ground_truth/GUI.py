@@ -1,6 +1,8 @@
 import rclpy 
 from rclpy.node import Node 
-from std_msgs.msg import Int64, Bool
+from std_msgs.msg import Int64, Bool, Float32 
+from groun_truth_msgs.msg import Diameters
+
 from geometry_msgs.msg import TwistStamped, Vector3
 from rclpy.callback_groups import ReentrantCallbackGroup
 import time 
@@ -48,6 +50,7 @@ class Run(Node):
         super().__init__('GUI')
         #self.pub = self.create_publisher(Bool, 'reset', 10)
         self.pub_step1 = self.create_publisher(Bool, 'step_1', 10)
+        self.sub_diameters = self.create_subscription(Diameters, 'diameters', self.callback_diameters, 10)
         self.timer = self.create_timer(1/10, self.check_vals)
         self.shared_data = shared_data
         self.sub_joints = self.create_subscription(JointState, 'joint_states',self.callback_joints, 10 )
@@ -86,13 +89,18 @@ class Run(Node):
         for i, x in enumerate(self.joints):
             self.joints[i]= x+1 
         self.shared_data.set_joints(self.joint_names, self.joints )
-        self.shared_data.set_diameters(self.diameter)
     
     def callback_joints(self,msg ):
         
         self.joint_names = msg.name
         self.joints= msg.position
         self.shared_data.set_joints(self.joint_names, self.joints )
+
+    def callback_diameters(self, msg):
+        self.diameter = [msg.diameter_w1, msg.diameter_w2, msg.diameter_mean, msg.diameter_median]
+                         
+
+        self.shared_data.set_diameters(self.diameter)
 
     def pub_start (self):
         msg = Bool()

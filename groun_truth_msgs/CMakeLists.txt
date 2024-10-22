@@ -40,6 +40,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/CameraRecord.srv"
   "srv/Start.srv"
   "msg/ToolPose.msg"
+  "msg/Diameters.msg"
 )
 
 ament_package()
