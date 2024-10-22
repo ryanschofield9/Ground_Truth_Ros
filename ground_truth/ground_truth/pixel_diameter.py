@@ -104,7 +104,7 @@ class PixelDiameter(Node):
         if self.step_3: 
             if not self.future: # A call is not pending
                 request = CameraRecord.Request()
-                self.file_name = 'src/Ground_Truth_Ros/ground_truth/videos/testing.avi'
+                self.file_name = 'src/GroundTruth/ground_truth/videos/testing.avi'
                 request.file_name = self.file_name
                 self.future = self.camera_record_client.call_async(request)
                 self.starting_y = self.tool_y 
