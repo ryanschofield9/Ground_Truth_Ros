@@ -74,7 +74,7 @@ class PixelDiameter(Node):
 
         #Create publisher and subscribers 
         self.sub_flag = self.create_subscription(Bool, 'step3',self.calback_step3_flag, 10 )
-        self.pub_step5 = self.create_publisher(Bool, 'step5', 10)
+        self.pub_step5 = self.create_publisher(Bool, 'step5_popup', 10)
         self.sub_reset = self.create_subscription(Bool, 'reset',self.calback_reset, 10 )
         self.pub_vel_commands = self.create_publisher(TwistStamped, '/servo_node/delta_twist_cmds', 10)
         
@@ -165,6 +165,7 @@ class PixelDiameter(Node):
                 plt.plot([1,2], [1,2])
                 plt.show()
                 self.pub_step5.publish(msg)
+                self.reset()
             
     def calback_step3_flag(self,msg):
         self.step_3= msg.data
