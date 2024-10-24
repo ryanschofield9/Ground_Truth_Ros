@@ -115,6 +115,7 @@ class TouchTree(Node):
                     print(self.future.result())
                     self.step_6 = False 
                     self.future = None
+                    self.reset()
             
 
                 

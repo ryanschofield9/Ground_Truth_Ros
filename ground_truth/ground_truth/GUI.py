@@ -58,6 +58,12 @@ class Run(Node):
         self.joints= [0, 1, 2, 3, 4, 5]
         self.diameter= ['W1', 'W2', 'Mean', 'Median']
 
+        self.start_time = time.time()
+        self.diameter_time = time.time()
+
+        self.pub_step5 = self.create_publisher(Bool, 'step5', 10)
+        self.sub_popup = self.create_subscription(Bool, 'step5_popup',self.callback_popup, 10 )
+
         #Create Callback group
         self.service_handler_group = ReentrantCallbackGroup()
 
@@ -83,6 +89,13 @@ class Run(Node):
             print("Chaning Controller")
             self.switch_controller(self.shared_data.get_controller()[1], self.shared_data.get_controller()[2])
             self.shared_data.set_controller(False, self.shared_data.get_controller()[1])
+        if self.shared_data.get_pub_5(): 
+            msg = Bool()
+            msg.data = True
+            self.pub_step5.publish(msg)
+            self.pub_step5.publish(msg)
+            self.pub_step5.publish(msg)
+            self.shared_data.set_pub_5(False)
         self.update_joints()
 
     def update_joints(self):
@@ -99,10 +112,18 @@ class Run(Node):
     def callback_diameters(self, msg):
         self.diameter = [msg.diameter_w1, msg.diameter_w2, msg.diameter_mean, msg.diameter_median]
                          
-
         self.shared_data.set_diameters(self.diameter)
+        self.diameter_time = time.time()
+
+        self.total_time = self.diameter_time - self.start_time
+        self.shared_data.set_total_time(self.total_time)
+
+    def callback_popup(self,msg):
+        self.popup=msg.data
+        self.shared_data.set_popup(self.popup)
 
     def pub_start (self):
+        self.start_time = time.time()
         msg = Bool()
         msg.data = True 
         self.pub_step1.publish(msg)
@@ -285,6 +306,111 @@ class Popup_Exit (QMainWindow):
 
         self.show()
 
+class Popup_Attach (QMainWindow):
+
+    def __init__(self,parent, shared_data):
+
+        super().__init__(parent)
+
+        # setting title
+
+        self.setWindowTitle("Attach Contact Pole")
+
+        # setting geometry
+
+        self.setGeometry(100, 100, 400, 300)
+
+        #attach shared data
+        self.shared_data = shared_data
+
+        # calling method
+
+        self.UiComponents()
+
+
+        # show all the widgets
+
+        self.show()
+
+        # method for widgets
+
+    def UiComponents(self):
+
+        # create layout
+
+        #layout for text at the top
+
+        text_layout = QHBoxLayout()
+
+        text_layout.setContentsMargins(150, 0, 150, 0)
+
+        #layout for save and exit buttons
+
+        button_layout = QHBoxLayout()
+
+        button_layout.setSpacing(60)
+
+        button_layout.setContentsMargins(100, 0, 100, 0)
+
+        #layout of full page
+
+        full_layout = QVBoxLayout()
+
+        full_layout.addLayout(text_layout)
+
+        full_layout.addLayout(button_layout)
+ 
+        #Add text  
+
+        self.label = QLabel("Have you attached the contact pole? ", self)
+
+        text_layout.addWidget(self.label)
+
+        #Add Buttons
+
+        self.button_yes = self.create_button("Yes", self.yes)
+
+        self.button_no = self.create_button("No", self.no)
+ 
+        button_layout.addWidget(self.button_yes)
+
+        button_layout.addWidget(self.button_no)
+
+
+        #Set Layout
+
+        widget = QWidget()
+
+        widget.setLayout(full_layout)
+
+        self.setCentralWidget(widget)
+
+ 
+    def create_button(self, name,func):
+
+        button = QPushButton(name, self)
+
+        button.clicked.connect(func)
+
+        return button
+
+
+    def yes(self):
+
+        self.pub_step6 = True
+        self.shared_data.set_pub_5(True)
+        self.close()
+
+
+    def no(self):
+
+        print("PLEASE Attach Contact Pole")
+
+ 
+
+    def exec(self):
+
+        self.show()
     
 class Window(QMainWindow):
 
@@ -316,6 +442,10 @@ class Window(QMainWindow):
 
         self.at_0 = True 
         self.controller = "Joints"
+
+        self.hit_pos = "N/a"
+        self.distance_tree= "N/a"
+        self.total_time = 0.0
 
         #QtGui.QImageReader.supportedImageFormats()
 
@@ -368,6 +498,14 @@ class Window(QMainWindow):
 
         self.diameter_layout.setContentsMargins(20, 0, 20, 0)
 
+        #layout for hit position 
+        self.hit_layout = QHBoxLayout()
+
+        self.hit_layout.setSpacing(30)
+
+        self.hit_layout.setContentsMargins(20, 0, 20, 0)
+
+
         #layout for rotate and change controller button 
 
         self.rot_change_layout = QHBoxLayout()
@@ -378,6 +516,7 @@ class Window(QMainWindow):
 
         self.dia_rot_layout = QVBoxLayout()
         self.dia_rot_layout.addLayout(self.diameter_layout)
+        self.dia_rot_layout.addLayout(self.hit_layout)
         self.dia_rot_layout.addLayout(self.rot_change_layout)
 
 
@@ -479,13 +618,35 @@ class Window(QMainWindow):
         self.diameter_layout.addWidget(self.label_diameter_found_median)
         self.diameter_layout.addWidget(self.label_diameter_real)
 
+
+        #add hit position text 
+        self.hit_text = QLineEdit()
+        self.hit_text.setMaxLength(15)
+        self.hit_text.setPlaceholderText("Enter Contact Postion")
+        self.hit_text.textChanged.connect(self.hit_position_func)
+        self.hit_layout.addWidget(self.hit_text)
+
+        self.dis_text = QLineEdit()
+        self.dis_text.setMaxLength(10) 
+        self.dis_text.setPlaceholderText("Distance From Tree")
+        self.dis_text.textChanged.connect(self.distance_func)
+        self.hit_layout.addWidget(self.dis_text)
+
+        self.time_text = QLabel (f"Time: {round(self.total_time,2)} ")
+        #self.time_text.setMaxLength(10)
+        #self.time_text.setPlaceholderText("Time to measure (s)")
+        #self.time_text.textChanged.connect(self.time_func)
+        self.hit_layout.addWidget(self.time_text)
+
         
         # add rotate and change controller buttons 
 
         self.button_rotate = self.create_button("Rotate", 400, 300, 120, 60, self.rotate)
         self.button_change = self.create_button("Change Controller", 400, 300, 120, 60, self.change)
+        self.button_start = self.create_button("Start", 200, 300, 120, 60, self.start)
         self.rot_change_layout.addWidget(self.button_rotate)
         self.rot_change_layout.addWidget(self.button_change)
+        self.rot_change_layout.addWidget(self.button_start)
 
         #create save, reset, and exit buttons
 
@@ -493,8 +654,7 @@ class Window(QMainWindow):
 
         self.button_exit = self.create_button("Exit", 200, 300, 120, 60, self.exit)
         
-        #self.button_reset = self.create_button("Reset", 200, 300, 120, 60, self.reset)
-        self.button_reset = self.create_button("Start", 200, 300, 120, 60, self.start)
+        self.button_start = self.create_button("Start", 200, 300, 120, 60, self.start)
 
  
 
@@ -502,7 +662,6 @@ class Window(QMainWindow):
 
         self.button_layout.addWidget(self.button_exit)
 
-        self.button_layout.addWidget(self.button_reset)
 
  
 
@@ -612,13 +771,13 @@ class Window(QMainWindow):
         
 
         self.trees_saved.append([self.tree_val, self.branch_val, self.trial_val])
-        self.tests.append([self.tree_val, self.branch_val, self.trial_val, self.joints_in_order[0],self.joints_in_order[1],self.joints_in_order[2],self.joints_in_order[3], self.joints_in_order[4], self.joints_in_order[5],self.real_diameter, self.diameters[0], self.diameters[1], self.diameters[2], self.diameters[3]])
+        self.tests.append([self.tree_val, self.branch_val, self.trial_val, self.joints_in_order[0],self.joints_in_order[1],self.joints_in_order[2],self.joints_in_order[3], self.joints_in_order[4], self.joints_in_order[5],self.real_diameter, self.diameters[0], self.diameters[1], self.diameters[2], self.diameters[3], self.hit_pos, self.distance_tree, self.total_time])
        
     
     def exit(self):
         time = datetime.datetime.now()
-        filename = 'src/Ground_Truth_Ros/ground_truth/csv_files/'+self.file + str(time)+ '.csv'
-        fields = ['Tree', 'Branch', 'Trial', 'elbow_joint', 'shoulder_lift_joint', 'shoulder_pan_joint', 'wrist_1_joint', 'wrist_2_joint','wrist_3_joint', 'measured diameter', 'Diameter Found', "W1 Diameter", "W2 Diameter", "Mean Diameter", "Median Diameter"]
+        filename = 'src/GroundTruth/ground_truth/csv_files/tes.csv'+self.file + str(time)+ '.csv'
+        fields = ['Tree', 'Branch', 'Trial', 'elbow_joint', 'shoulder_lift_joint', 'shoulder_pan_joint', 'wrist_1_joint', 'wrist_2_joint','wrist_3_joint', 'measured diameter', "W1 Diameter", "W2 Diameter", "Mean Diameter", "Median Diameter", "Contact", "Distance from Tree", "Time (s)"]
         with open(filename, 'w', newline='') as file:
             csvwriter = csv.writer(file)   
             # writing the fields   
@@ -634,36 +793,42 @@ class Window(QMainWindow):
 
     def start(self):
         self.shared_data.set_start(True)
-   
+
+    def hit_position_func(self, pos):
+        self.hit_pos= pos
+
+    def distance_func(self, dis):
+        self.distance_tree = dis
+    
     
     def joint_update(self, joint_layout):
         self.joint_names, self.joints = self.shared_data.get_joints()  
 
-        self.label_1.setText(f"{self.joint_names[0]}: {self.joints[0]}")  
+        self.label_1.setText(f"{self.joint_names[0]}: {round(self.joints[0],2)}")  
 
 
-        self.label_2.setText(f"{self.joint_names[1]}: {self.joints[1]}")  
+        self.label_2.setText(f"{self.joint_names[1]}: {round(self.joints[1],2)}")  
 
 
-        self.label_3.setText(f"{self.joint_names[2]}: {self.joints[2]}")  
+        self.label_3.setText(f"{self.joint_names[2]}: {round(self.joints[2],2)}")  
 
 
-        self.label_4.setText(f"{self.joint_names[3]}: {self.joints[3]}")  
+        self.label_4.setText(f"{self.joint_names[3]}: {round(self.joints[3],2)}")  
 
 
-        self.label_5.setText(f"{self.joint_names[4]}: {self.joints[4]}")  
+        self.label_5.setText(f"{self.joint_names[4]}: {round(self.joints[4],2)}")  
 
 
-        self.label_6.setText(f"{self.joint_names[5]}: {self.joints[5]}")  
+        self.label_6.setText(f"{self.joint_names[5]}: {round(self.joints[5],2)}")  
 
         return joint_layout 
 
     def diameters_update(self):
         self.diameters = self.shared_data.get_diameters()
-        self.label_diameter_found_w1.setText(f"W1: {self.diameters[0]}")
-        self.label_diameter_found_w2.setText(f"W2: {self.diameters[1]}")
-        self.label_diameter_found_mean.setText(f"Mean: {self.diameters[2]}")
-        self.label_diameter_found_median.setText(f"Median: {self.diameters[3]}")
+        self.label_diameter_found_w1.setText(f"W1: {round(self.diameters[0],2)}")
+        self.label_diameter_found_w2.setText(f"W2: {round(self.diameters[1],2)}")
+        self.label_diameter_found_mean.setText(f"Mean: {round(self.diameters[2],2)}")
+        self.label_diameter_found_median.setText(f"Median: {round(self.diameters[3],2)}")
 
     def rotate(self):
         if self.at_0 == True: 
@@ -681,10 +846,21 @@ class Window(QMainWindow):
             self.shared_data.set_controller(True, "Joints")
             self.controller = "Joints"
 
+    def attach_popup(self):
+        if self.shared_data.get_popup():
+            popup = Popup_Attach(self, self.shared_data)
+            popup.exec()
+            self.shared_data.set_popup(False)
+
+    def total_time_update(self):
+        self.total_time = round(self.shared_data.get_total_time(),2)
+        self.time_text.setText(f"Time: {self.total_time} ")
 
     def timerEvent(self, e):
         self.joint_update(self.joint_layout)
         self.diameters_update()
+        self.attach_popup()
+        self.total_time_update()
 
         
 
@@ -695,13 +871,16 @@ class SharedData:
         self.rotate = False 
         self.angle = 0 
         self.joint_names = [None, None, None, None, None, None]
-        self.joints= [None, None, None, None, None, None]
+        self.joints= [0,0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.frame = None
-        self.diameter = [None, None, None, None]
+        self.diameter = [0.0, 0.0, 0.0, 0.0]
         self.forward_cntr = 'forward_position_controller' #name of controller that uses velocity commands 
         self.joint_cntr = 'scaled_joint_trajectory_controller' # name of controller that uses joint commands 
         self.switch = False 
         self.controller = 'Forward'
+        self.popup = False 
+        self.pub_5 = False
+        self.total_time = 0 
     
     def get_reset(self):
         return self.reset
@@ -752,9 +931,25 @@ class SharedData:
             return [self.switch, self.forward_cntr, self.joint_cntr]
         else:
             return [self.switch, self.joint_cntr, self.forward_cntr]
-
+        
+    def set_popup(self, popup):
+        self.popup = popup
     
+    def get_popup(self):
+        return self.popup
+    
+    def set_pub_5(self, pub_5):
+        self.pub_5= pub_5
+    
+    def get_pub_5(self):
+        return self.pub_5
+    
+    def set_total_time(self, time):
+        self.total_time = time
 
+    def get_total_time(self):
+        return self.total_time
+    
 
 class ROS2NodeWrapper(threading.Thread):
     def __init__(self, node_class, *args, **kwargs):

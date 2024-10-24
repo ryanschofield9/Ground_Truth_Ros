@@ -304,6 +304,7 @@ class AngleCheck(Node):
                     msg = Bool()
                     msg.data = True 
                     self.pub_step3.publish(msg) #publish step 3 as true
+                    self.reset(True)
                     
                  
         
