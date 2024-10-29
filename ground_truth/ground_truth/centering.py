@@ -124,9 +124,9 @@ class CenteringCleaned(Node):
         #this function is called every 0.1 seconds and holds the main control structure for getting parallel to the branch 
         if self.step_1: 
             if self.first:
-                 self.start_time = time.time()
-                 self.first = False
-                 print("Setting Time")
+                self.start_time = time.time()
+                self.first = False
+                self.switch_controller(self.forward_cntr, self.joint_cntr)
             if self.done_step1 == False: 
                 #if the system has not yet gotten parallel to the branch with a first guess 
                 if self.move_down_initialize == False:

@@ -54,7 +54,7 @@ class RecordVideoService(Node):
         video.release()
         result.release()
         cv2.destroyAllWindows()
-        print("The video was sucessfully saved ")
+        self.get_logger().info(f"The video was successfully saved")
         response.recorded = True
         print("The response is ", response)
         return response 
