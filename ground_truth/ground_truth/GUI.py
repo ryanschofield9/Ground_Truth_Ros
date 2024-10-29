@@ -776,7 +776,7 @@ class Window(QMainWindow):
     
     def exit(self):
         time = datetime.datetime.now()
-        filename = 'src/GroundTruth/ground_truth/csv_files/tes.csv'+self.file + str(time)+ '.csv'
+        filename = 'src/GroundTruth/ground_truth/csv_files/'+self.file + str(time)+ '.csv'
         fields = ['Tree', 'Branch', 'Trial', 'elbow_joint', 'shoulder_lift_joint', 'shoulder_pan_joint', 'wrist_1_joint', 'wrist_2_joint','wrist_3_joint', 'measured diameter', "W1 Diameter", "W2 Diameter", "Mean Diameter", "Median Diameter", "Contact", "Distance from Tree", "Time (s)"]
         with open(filename, 'w', newline='') as file:
             csvwriter = csv.writer(file)   
