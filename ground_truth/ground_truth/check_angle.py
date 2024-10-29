@@ -93,6 +93,8 @@ class AngleCheck(Node):
         self.move_collect = 3 #alloted time in seconds for moving up and collecting tof data  
         self.rot_collect = 3 #alloted time in seconds for rotating and collecting tof data
         self.dis_sensors = 0.0508 # meters 
+        #self.small_measurement = 50 # measurement greater than this for the angle will be counted and a new angle will be found (branch)
+        self.small_measurement = 10 # measurement greater than this for the angle will be counted and a new angle will be found (dowel)
 
         #initialize variables 
         #anytime tof is used, it is filtered
@@ -545,7 +547,7 @@ class AngleCheck(Node):
         print(f"idx of tof2 filtered_rot: {np.argmin(self.tof2_filtered_rot)}")
         print(f"valule of tool orient_tof1 {self.tool_orient_tof1[np.argmin(self.tof1_filtered_rot)]}")
         print(f"valule of tool orient_tof2 {self.tool_orient_tof2[np.argmin(self.tof2_filtered_rot)]}")
-        if abs (low_tof1_reading - high_tof1_reading) > 50 or abs (low_tof2_reading - high_tof2_reading) > 50: 
+        if abs (low_tof1_reading - high_tof1_reading) > self.small_measurement or abs (low_tof2_reading - high_tof2_reading) > self.small_measurement: 
             new_desired_angle = (low_angle_tof1 + low_angle_tof2)/2
         else: 
             print("The diferences were too small so the angle is good")
