@@ -94,7 +94,7 @@ class AngleCheck(Node):
         self.rot_collect = 3 #alloted time in seconds for rotating and collecting tof data
         self.dis_sensors = 0.0508 # meters 
         #self.small_measurement = 50 # measurement greater than this for the angle will be counted and a new angle will be found (branch)
-        self.small_measurement = 10 # measurement greater than this for the angle will be counted and a new angle will be found (dowel)
+        self.small_measurement = 5 # measurement greater than this for the angle will be counted and a new angle will be found (dowel)
 
         #initialize variables 
         #anytime tof is used, it is filtered

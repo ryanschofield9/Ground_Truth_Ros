@@ -104,7 +104,7 @@ class PixelDiameter(Node):
         if self.step_3: 
             if not self.future: # A call is not pending
                 request = CameraRecord.Request()
-                self.file_name = 'src/GroundTruth/ground_truth/videos/testing.avi'
+                self.file_name = 'src/Ground_Truth_Ros/ground_truth/videos/testing.avi'
                 request.file_name = self.file_name
                 self.future = self.camera_record_client.call_async(request)
                 self.starting_y = self.tool_y 
@@ -129,6 +129,7 @@ class PixelDiameter(Node):
             frame = int(len(frames)/2)
             flow_imgs = self.optical_flow(frames, frame)
             closing, flow_saved = self.filter_imgs(flow_imgs)
+            final_img = copy.deepcopy(closing)
             submatrix = closing[300:500, 0:1279]
 
             all_starts, all_ends = self.pixel_count (submatrix)
@@ -147,6 +148,7 @@ class PixelDiameter(Node):
             print("diameter W1: ", diameterW1, "middle W1: ", middleW1, "scoreW1: ", scoreW1)
             print("diameter Mean: ", diameter_mean, "middle mean: ", middle_mean)
             print("diameter Median: ", diameter_median, "middle median: ", middle_median)
+            self.create_img_subplot(middleW2, diameterW2, '132', '132', final_img, closing, flow_imgs, frame, frames)
 
             if not self.future: # A call is not pending
                 request = PixelWidth.Request()
@@ -164,6 +166,7 @@ class PixelDiameter(Node):
                 msg.data = True 
                 plt.plot([1,2], [1,2])
                 plt.show()
+                self.create_img_subplot()
                 self.pub_step5.publish(msg)
                 self.reset()
             
@@ -562,6 +565,64 @@ class PixelDiameter(Node):
                 #print(f"diameter: {diameter}  middle: {middle}  rightmost: {right_most}  leftmost: {left_most} score: {score}")
                 #print(f" black outside: {black_val_outbox}   white inside: {white_val_inbox}")
         return diameter_save, middle_save, min_score
+    
+    def create_img_subplot (middle_new, diameter_new, tof1, tof2, final_img, closing, flow_imgs, frame, frames):
+        
+        #determine if the middle line is in the middle of the image 
+        threshold = 5 # number of pixels you can be right or left to be considered in the middle 
+        rows = final_img.shape[0]
+        columns = final_img.shape[1]
+        mult = np.zeros((rows*2, columns*2))
+        if middle_new < (columns/2 -threshold):
+            in_front = False 
+            direction = "left"
+        elif middle_new > (columns/2 +threshold):
+            in_front = False 
+            direction = "right"
+        else:
+            in_front = True 
+            direction = None
+                
+
+        pic1 = frames[frame]
+        pic1 = F.to_pil_image(pic1.to("cpu"))
+        pic2 = flow_imgs[0]
+        pic2 = F.to_pil_image(pic2.to("cpu"))
+        pic3 = closing
+        pic4 = final_img
+        pic5 = cv2.cvtColor(final_img, cv2.COLOR_GRAY2RGB)
+            #https://www.geeksforgeeks.org/python-opencv-cv2-puttext-method/
+            
+            # add TOF reading to image with green if in center and red if not
+        if in_front: 
+            color = (0,255,0)
+        else: 
+            color = (255, 0,0)
+        '''
+        image = cv2.putText(pic5, tof1, (int(middle_new - diameter_new - 50) ,240), cv2.FONT_HERSHEY_SIMPLEX ,  
+                    1, color, 3,  cv2.LINE_AA)
+        image = cv2.putText(pic5, tof2, (int(middle_new+ diameter_new + 50 ),240), cv2.FONT_HERSHEY_SIMPLEX ,  
+                    1, color, 3,  cv2.LINE_AA)
+        #if not in center, image will say if the line is to the left or right 
+        image = cv2.putText(pic5, direction, (300,400), cv2.FONT_HERSHEY_SIMPLEX ,  
+                    1, color, 3,  cv2.LINE_AA)
+        '''
+        #create subplots and image 
+        fig=plt.figure(frame)
+        fig.add_subplot(2,2,1)
+        plt.imshow(pic1)
+        fig.add_subplot(2,2,2)
+        plt.imshow(pic2)
+        fig.add_subplot(2,2,3)
+        plt.imshow(pic3, cmap='gray')
+        fig.add_subplot(2,2,4)
+        #show image 
+        plt.imshow(pic5)
+        plt.show()
+    
+        #filename = 'video_images/W2B1/full run/'+ 'frame' + str(frame) + 'scoring_white2_black1.png'
+        #plt.savefig(filename)
+    
 
 def convert_tf_to_pose(tf: TransformStamped):
     #take the tf transform and turn that into a position  
