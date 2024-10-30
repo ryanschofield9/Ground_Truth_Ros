@@ -94,7 +94,7 @@ class AngleCheck(Node):
         self.rot_collect = 3 #alloted time in seconds for rotating and collecting tof data
         self.dis_sensors = 0.0508 # meters 
         #self.small_measurement = 50 # measurement greater than this for the angle will be counted and a new angle will be found (branch)
-        self.small_measurement = 5 # measurement greater than this for the angle will be counted and a new angle will be found (dowel)
+        self.small_measurement = 7 # measurement greater than this for the angle will be counted and a new angle will be found (dowel)
 
         #initialize variables 
         #anytime tof is used, it is filtered
@@ -215,6 +215,8 @@ class AngleCheck(Node):
                         self.new_desired_y = self.calculate_desired_y()
                         self.dif_angle = abs(self.desired_angle -self.new_desired_angle) 
                         self.dif_y = (self.desired_y - self.new_desired_y)
+                        self.get_logger().info(f"dif angle = {self.dif_angle}     dif_y = {self.dif_y}")
+                        self.get_logger().info(f"Tries: {self.tries}")
                         print(f"dif angle = {self.dif_angle}     dif_y = {self.dif_y}")
                         print(f"OLD desired_angle: {self.desired_angle} NEW desired_angle: {self.new_desired_angle}")
                         print(f"OLD desired_y: {self.desired_y} NEW desired_y: {self.new_desired_y}")

@@ -129,13 +129,24 @@ class PixelDiameter(Node):
             frame = int(len(frames)/2)
             flow_imgs = self.optical_flow(frames, frame)
             closing, flow_saved = self.filter_imgs(flow_imgs)
+            '''
+            fig=plt.figure(frame)
+            fig.add_subplot(2,2,1)
+            plt.imshow(frames[frame])
+            fig.add_subplot(2,2,2)
+            plt.imshow(flow_imgs)
+            fig.add_subplot(2,2,3)
+            plt.imshow(closing)
+            plt.show()
+            #fig = plt.figure(flow_imgs)
+            '''
             final_img = copy.deepcopy(closing)
             submatrix = closing[300:500, 0:1279]
 
             all_starts, all_ends = self.pixel_count (submatrix)
             all_middle = self.middle_count(all_starts, all_ends)
             diameters = self.diameter_options(all_starts, all_ends)
-            print("Diameters: ", diameters)
+            self.get_logger().info(f"Diameters: {diameters}")
             middle_lines = self.calculate_middle_line_options(all_middle)
             diameter_mean = float(statistics.mean(diameters))
             middle_mean = statistics.mean(middle_lines)
@@ -148,7 +159,6 @@ class PixelDiameter(Node):
             print("diameter W1: ", diameterW1, "middle W1: ", middleW1, "scoreW1: ", scoreW1)
             print("diameter Mean: ", diameter_mean, "middle mean: ", middle_mean)
             print("diameter Median: ", diameter_median, "middle median: ", middle_median)
-            self.create_img_subplot(middleW2, diameterW2, '132', '132', final_img, closing, flow_imgs, frame, frames)
 
             if not self.future: # A call is not pending
                 request = PixelWidth.Request()
@@ -164,9 +174,8 @@ class PixelDiameter(Node):
                 self.step_4 = False
                 msg = Bool()
                 msg.data = True 
-                plt.plot([1,2], [1,2])
-                plt.show()
-                self.create_img_subplot()
+                self.create_box (diameterW2/2, middleW2, final_img)
+                self.create_img_subplot(middleW2, diameterW2, '132', '132', final_img, closing, flow_imgs, frame, frames)
                 self.pub_step5.publish(msg)
                 self.reset()
             
@@ -566,7 +575,7 @@ class PixelDiameter(Node):
                 #print(f" black outside: {black_val_outbox}   white inside: {white_val_inbox}")
         return diameter_save, middle_save, min_score
     
-    def create_img_subplot (middle_new, diameter_new, tof1, tof2, final_img, closing, flow_imgs, frame, frames):
+    def create_img_subplot (self, middle_new, diameter_new, tof1, tof2, final_img, closing, flow_imgs, frame, frames):
         
         #determine if the middle line is in the middle of the image 
         threshold = 5 # number of pixels you can be right or left to be considered in the middle 
