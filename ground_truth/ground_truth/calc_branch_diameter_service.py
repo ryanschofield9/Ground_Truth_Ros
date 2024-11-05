@@ -61,7 +61,6 @@ class CalcDiameterService(Node):
         
         # Publish diamters so that they go to the GUI 
         msg = Diameters()
-        diameter_list = [diameter_inch_W1, diameter_inch_W2, diameter_inch_mean, diameter_inch_median]
         msg.diameter_w1 = diameter_inch_W1
         msg.diameter_w2 = diameter_inch_W2
         msg.diameter_mean = diameter_inch_mean

@@ -34,7 +34,8 @@ class RecordVideoService(Node):
         frame_width = int(video.get(3))
         frame_height = int(video.get(4))
         size = (frame_width, frame_height)
-        result = cv2.VideoWriter(file, cv2.VideoWriter_fourcc(*'MJPG'), 10, size) 
+        self.get_logger().info(f"Video size: {size}")
+        result = cv2.VideoWriter(file, cv2.VideoWriter_fourcc(*'MJPG'), 10.0, size) 
         start_time = time.time()
         now = time.time()
         while (now - start_time ) < 3: 
@@ -69,7 +70,7 @@ class RecordVideoService(Node):
         cmd.twist.linear = Vector3(x=my_twist_linear[0], y=my_twist_linear[1], z=my_twist_linear[2])
         cmd.header.stamp = self.get_clock().now().to_msg()
         self.pub_vel_commands.publish(cmd)
-        self.get_logger().info(f"Sending: linear: {cmd.twist.linear} angular: {cmd.twist.angular}")
+        #self.get_logger().info(f"Sending: linear: {cmd.twist.linear} angular: {cmd.twist.angular}")
 
 def main(args=None):
     rclpy.init(args=args)

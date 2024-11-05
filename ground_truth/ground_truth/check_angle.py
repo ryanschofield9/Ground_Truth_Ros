@@ -296,11 +296,11 @@ class AngleCheck(Node):
                 #if the check angle has gotten into the correct range or failed 4 times 
                 if self.tries == -1:
                     #if tries is -1 meaning that the system has failed to get in the acceptable range after 4 tries 
-                    print("Could not get a good location please restart")
+                    self.get_logger().info(f"Could not get a good location please restart")
                     self.step_2 = False
                 else:
                     #if the system has gotten into the acceptable range in 4 or less tries  
-                    print("found a good location")
+                    self.get_logger().info(f"found a good location")
                     plt.plot([1,2], [1,2])
                     plt.show()
                     self.step_2 = False
@@ -308,7 +308,7 @@ class AngleCheck(Node):
                     msg = Bool()
                     msg.data = True 
                     self.pub_step3.publish(msg) #publish step 3 as true
-                    self.reset(True)
+                self.reset(True)
                     
                  
         

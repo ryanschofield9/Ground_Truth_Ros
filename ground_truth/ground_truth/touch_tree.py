@@ -89,12 +89,12 @@ class TouchTree(Node):
                 self.initial_z = self.get_tool_pose_z()
                 self.first = False 
             if self.tree_touch == True: 
-                print("Touch Detected ")
-                self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving
-                self.count += 1
-                if self.count == 3:
-                     self.step_5 = False 
-                     self.step_6 = True
+                self.get_logger().info("Touch Detected ")
+                for x in range (0,3):
+                    self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving
+               
+                self.step_5 = False 
+                self.step_6 = True
             else: 
                 self.publish_twist([0.0, 0.0, 0.1], [0.0, 0.0, 0.0]) #move forward in the z position at 0.1 m/s
         elif self.step_6: 

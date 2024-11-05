@@ -86,7 +86,8 @@ class PixelDiameter(Node):
         self.step_3 = False
         self.step_4 = False
         self.back_to_original = False
-        self.first = True 
+        self.first = True
+        self.first_subplot = True  
 
         #constant variables 
         self.base_frame = 'base_link' #base frame that doesn't move 
@@ -104,7 +105,7 @@ class PixelDiameter(Node):
         if self.step_3: 
             if not self.future: # A call is not pending
                 request = CameraRecord.Request()
-                self.file_name = 'src/Ground_Truth_Ros/ground_truth/videos/testing.avi'
+                self.file_name = '/home/ryan/ros2_ws_groundtruth/src/Ground_Truth_Ros/ground_truth/videos/testing.avi'
                 request.file_name = self.file_name
                 self.future = self.camera_record_client.call_async(request)
                 self.starting_y = self.tool_y 
@@ -129,19 +130,12 @@ class PixelDiameter(Node):
             frame = int(len(frames)/2)
             flow_imgs = self.optical_flow(frames, frame)
             closing, flow_saved = self.filter_imgs(flow_imgs)
-            '''
-            fig=plt.figure(frame)
-            fig.add_subplot(2,2,1)
-            plt.imshow(frames[frame])
-            fig.add_subplot(2,2,2)
-            plt.imshow(flow_imgs)
-            fig.add_subplot(2,2,3)
-            plt.imshow(closing)
-            plt.show()
-            #fig = plt.figure(flow_imgs)
-            '''
             final_img = copy.deepcopy(closing)
             submatrix = closing[300:500, 0:1279]
+            if self.first_subplot: 
+                self.create_img_subplot(500, 100, '132', '132', final_img, closing, flow_imgs, frame, frames)
+                self.first_subplott = False
+                self.get_logger().info(f"Closing: {closing} ")
 
             all_starts, all_ends = self.pixel_count (submatrix)
             all_middle = self.middle_count(all_starts, all_ends)
@@ -242,6 +236,7 @@ class PixelDiameter(Node):
         self.step_4 = False
         self.back_to_original = False
         self.first = True  
+        self.first_subplot = True  
         
         #set future 
         self.future = None
@@ -492,7 +487,12 @@ class PixelDiameter(Node):
         per = 0.6
         length_from_end = int(len(middle_estimates_list) * (per))
         middles = middle_estimates_list[-length_from_end:-1]
-        return middles
+
+        middle_options = []
+        for mid in middles: 
+            if 300< mid < 700:
+                middle_options.append(mid)
+        return middle_options 
     
     def calculate_col_scores(self,submatrix):
         #add up the sum off the pixels in each column (essentially counting white pixels becuase either 255 or 0)
