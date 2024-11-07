@@ -265,8 +265,15 @@ class CenteringCleaned(Node):
         print("TOF1: ", min(self.tof1_filtered))
         print("TOF2: ", self.tof2_filtered)
         print("TOF2: ", min(self.tof2_filtered))
+        print("TOF1 poses: ", self.tof1_pos_inrange)
+        print("TOF2 poses: ", self.tof2_pos_inrange)
+        print("argmin tof1: ",np.argmin(self.y_fit_tof1) )
+        print("argmin tof1: ",np.argmin(self.y_fit_tof2) )
+        
         idx_tof1_cleaned = (np.argmin(self.y_fit_tof1)/len(self.x_fit_tof1) ) * len(self.tof1_inrange_cleaned) + (len(self.tof1_inrange) - len(self.tof1_inrange_cleaned))
+
         idx_tof2_cleaned = (np.argmin(self.y_fit_tof2)/len(self.x_fit_tof2) ) * len(self.tof2_inrange_cleaned) + (len(self.tof2_inrange) - len(self.tof2_inrange_cleaned))
+    
         print("Idx of tof1_cleaned: ", idx_tof1_cleaned)
         print("idx of tof1 poses: ", len(self.tof1_pos_inrange))
         print("tof1 poses rounded : ", self.tof1_pos_inrange[round(idx_tof1_cleaned)])
@@ -277,36 +284,41 @@ class CenteringCleaned(Node):
         print("tof2 poses averaged : ", (self.tof2_pos_inrange[math.ceil(idx_tof2_cleaned)]+ self.tof2_pos_inrange[math.floor(idx_tof2_cleaned)])/2)
         print("Distance_readings new: ", self.tof1_pos_inrange[round(idx_tof1_cleaned)] - self.tof2_pos_inrange[round(idx_tof2_cleaned)] )
         print("Angle new: ", np.arctan( (self.tof1_pos_inrange[round(idx_tof1_cleaned)] - self.tof2_pos_inrange[round(idx_tof2_cleaned)])/ self.dis_sensors) + self.tool_angle)
-
-        try:
-            distance_readings = self.lowest_pos_tof1 - self.lowest_pos_tof2 #find the distance between the lowest tof readings 
-            distance_readings_rounded = self.tof1_pos_inrange[round(idx_tof1_cleaned)] - self.tof2_pos_inrange[round(idx_tof2_cleaned)]
-            average_reading_tof1 = (self.tof1_pos_inrange[math.ceil(idx_tof1_cleaned)]+ self.tof1_pos_inrange[math.floor(idx_tof1_cleaned)])/2
-            average_reading_tof2 =  (self.tof2_pos_inrange[math.ceil(idx_tof2_cleaned)]+ self.tof2_pos_inrange[math.floor(idx_tof2_cleaned)])/2
-            distance_reading_averaged = average_reading_tof1 - average_reading_tof2
-            interpolated_reading_tof1 = (idx_tof1_cleaned - math.ceil(idx_tof1_cleaned))* self.tof1_pos_inrange[math.ceil(idx_tof1_cleaned)] + (1-( (idx_tof1_cleaned - math.ceil(idx_tof1_cleaned))))* self.tof1_pos_inrange[math.floor(idx_tof1_cleaned)]
-            interpolated_reading_tof2 = (idx_tof2_cleaned - math.ceil(idx_tof2_cleaned))* self.tof2_pos_inrange[math.ceil(idx_tof2_cleaned)] + (1-( (idx_tof2_cleaned - math.ceil(idx_tof2_cleaned))))* self.tof2_pos_inrange[math.floor(idx_tof2_cleaned)]
-            distance_reading_interpolated = interpolated_reading_tof1 - interpolated_reading_tof2
-            print("Distance_readings: ", distance_readings )
-            print("Distance reading rounded: ", distance_readings_rounded)
-            print("Distance reading averaged: ", distance_reading_averaged)
-            print("Distance reading interpolated: ", distance_reading_interpolated)
-            self.branch_angle = np.arctan(distance_readings / self.dis_sensors) + self.tool_angle #using the distance between the sensors (known) and the lowest filtered tof readings (calculated), calculate the angle, also have to add the current angle
-            branch_angle_rounded = np.arctan(distance_readings_rounded / self.dis_sensors) + self.tool_angle
-            branch_angled_averaged = np.arctan(distance_reading_averaged / self.dis_sensors) + self.tool_angle
-            branch_angled_interpolated = np.arctan(distance_reading_interpolated / self.dis_sensors) + self.tool_angle
-            print("Branch Angle: ", self.branch_angle)
-            print("Branch Angle Rounded: ", branch_angle_rounded)
-            print("Branch Angle Averaged: ", branch_angled_averaged)
-            print("Branch Angle Interpolated: ", branch_angled_interpolated)
-            self.branch_angle = branch_angled_interpolated
-            self.calc_angle_done = True #set calculate angle done flag to true
-        except:
-            print("No branch was found. The system will restart its moving up process") 
-            self.move_down_start += self.move_up_collect 
-            self.move_down_initialize = False 
-            self.start_time = time.time()
-            self.tof_collected = False 
+        ## TO DO: THE MATH FOR INTERPOLATED IS WRONG NEED TO LOOK INTO 
+        #try:
+        distance_readings = self.lowest_pos_tof1 - self.lowest_pos_tof2 #find the distance between the lowest tof readings 
+        distance_readings_rounded = self.tof1_pos_inrange[round(idx_tof1_cleaned)] - self.tof2_pos_inrange[round(idx_tof2_cleaned)]
+        average_reading_tof1 = (self.tof1_pos_inrange[math.ceil(idx_tof1_cleaned)]+ self.tof1_pos_inrange[math.floor(idx_tof1_cleaned)])/2
+        average_reading_tof2 =  (self.tof2_pos_inrange[math.ceil(idx_tof2_cleaned)]+ self.tof2_pos_inrange[math.floor(idx_tof2_cleaned)])/2
+        distance_reading_averaged = average_reading_tof1 - average_reading_tof2
+        interpolated_reading_tof1 = abs(idx_tof1_cleaned - math.ceil(idx_tof1_cleaned))* self.tof1_pos_inrange[math.floor(idx_tof1_cleaned)] + (1-abs( (idx_tof1_cleaned - math.ceil(idx_tof1_cleaned))))* self.tof1_pos_inrange[math.ceil(idx_tof1_cleaned)]
+        interpolated_reading_tof2 = abs((idx_tof2_cleaned - math.ceil(idx_tof2_cleaned)))* self.tof2_pos_inrange[math.floor(idx_tof2_cleaned)] + (1-abs( (idx_tof2_cleaned - math.ceil(idx_tof2_cleaned))))* self.tof2_pos_inrange[math.ceil(idx_tof2_cleaned)]
+        distance_reading_interpolated = interpolated_reading_tof1 - interpolated_reading_tof2
+        print("Distance_readings: ", distance_readings )
+        print("Distance reading rounded: ", distance_readings_rounded)
+        print("Distance reading averaged: ", distance_reading_averaged)
+        print("Low tof1 idx: ",[math.floor(idx_tof1_cleaned)])
+        print("Low tof1 position: ", self.tof1_pos_inrange[math.floor(idx_tof1_cleaned)])
+        print("High tof1 position: ",self.tof1_pos_inrange[math.ceil(idx_tof1_cleaned)] )
+        print("Low tof2 position: ", self.tof2_pos_inrange[math.floor(idx_tof2_cleaned)])
+        print("High tof2 position: ",self.tof2_pos_inrange[math.ceil(idx_tof2_cleaned)] )
+        print("Distance reading interpolated: ", distance_reading_interpolated)
+        branch_angle = np.arctan(distance_readings / self.dis_sensors) + self.tool_angle #using the distance between the sensors (known) and the lowest filtered tof readings (calculated), calculate the angle, also have to add the current angle
+        branch_angle_rounded = np.arctan(distance_readings_rounded / self.dis_sensors) + self.tool_angle
+        branch_angled_averaged = np.arctan(distance_reading_averaged / self.dis_sensors) + self.tool_angle
+        branch_angled_interpolated = np.arctan(distance_reading_interpolated / self.dis_sensors) + self.tool_angle
+        self.get_logger().info(f"Branch Angle: {branch_angle}")
+        self.get_logger().info(f"Branch Angle Rounded: {branch_angle_rounded}")
+        self.get_logger().info(f"Branch Angle Averaged: {branch_angled_averaged}")
+        self.get_logger().info(f"Branch Angle Interpolated: {branch_angled_interpolated}")
+        self.branch_angle = branch_angled_interpolated
+        self.calc_angle_done = True #set calculate angle done flag to true
+        #except:
+            #print("No branch was found. The system will restart its moving up process") 
+            #self.move_down_start += self.move_up_collect 
+            #self.move_down_initialize = False 
+            #self.start_time = time.time()
+            #self.tof_collected = False 
 
     def pub_tool_angle(self):
         try:
@@ -321,7 +333,7 @@ class CenteringCleaned(Node):
     def move_down_to_y(self, y_pose_want):
         #Using the given y pose that we want to go back to, move down until we reach that location 
         y_pose= self.tool_y #get the current tool y pose 
-        if (y_pose - y_pose_want) < 0: 
+        if (y_pose - y_pose_want) < -0.005: 
             #when within 1mm of wanted y pose 
             self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving 
             self.move_down = True #set move done flag to True 
@@ -366,8 +378,8 @@ class CenteringCleaned(Node):
         self.tool_y = self.get_tool_pose_y()
 
     def create_fit(self):
-        t = []
-        t_2 = []
+        self.t_fit = []
+        self.t_2_fit = []
         tof1_inrange_cleaned = []
         tof2_inrange_cleaned = []
         cleaned = False
@@ -406,21 +418,19 @@ class CenteringCleaned(Node):
                  tof2_inrange_cleaned.append(self.tof2_inrange[x])
 
         for idx, val in enumerate(tof1_inrange_cleaned): 
-            t.append(idx)
+            self.t_fit.append(idx)
         
         for idx, val in enumerate(tof2_inrange_cleaned): 
-            t_2.append(idx)
+            self.t_2_fit.append(idx)
 
         self.tof1_inrange_cleaned = tof1_inrange_cleaned
         self.tof2_inrange_cleaned = tof2_inrange_cleaned
-        self.t = t
-        self.t_2 = t_2
-        params_tof1, covariance_tof1 = curve_fit(parabola, t, tof1_inrange_cleaned)
-        params_tof2, covariance_tof2 = curve_fit(parabola, t_2, tof2_inrange_cleaned)
+        params_tof1, covariance_tof1 = curve_fit(parabola, self.t_fit, tof1_inrange_cleaned)
+        params_tof2, covariance_tof2 = curve_fit(parabola, self.t_2_fit, tof2_inrange_cleaned)
         a1, b1, c1 = params_tof1
         a2, b2, c2 = params_tof2
-        self.x_fit_tof1 = np.linspace(min(t), max(t), 500)
-        self.x_fit_tof2 = np.linspace(min(t_2), max(t_2), 500)
+        self.x_fit_tof1 = np.linspace(min(self.t_fit), max(self.t_fit), 500)
+        self.x_fit_tof2 = np.linspace(min(self.t_2_fit), max(self.t_2_fit), 500)
         self.y_fit_tof1 = parabola(self.x_fit_tof1, a1, b1, c1)
         self.y_fit_tof2 = parabola(self.x_fit_tof2, a2, b2, c2)
 
@@ -453,15 +463,18 @@ class CenteringCleaned(Node):
        
         #plt.plot(t,self.tof1_readings,'b', label = 'TOF1 raw readings')
         #plt.plot(t2, self.tof2_readings, 'r', label = 'TOF2 raw readings')
-        plt.plot(t_f, self.tof1_filtered, 'c', label = 'TOF1 filtered reading')
-        plt.plot(t2_f, self.tof2_filtered, 'k', label = 'TOF2 filtered reading')
-        plt.legend()
-        plt.show()
+        #plt.plot(t_f, self.tof1_filtered, 'c', label = 'TOF1 filtered reading')
+        #plt.plot(t2_f, self.tof2_filtered, 'k', label = 'TOF2 filtered reading')
+        #plt.legend()
+        #plt.show()
+        
+        plt.plot(self.t_fit, self.tof1_inrange_cleaned, label = "TOF1 raw cleaned in range")
+        plt.plot(self.t_2_fit, self.tof2_inrange_cleaned, label = "TOF1 raw cleaned in range")
 
-        plt.scatter(self.t, self.tof1_inrange_cleaned, label='Tof 1 ')
-        plt.scatter(self.t_2, self.tof2_inrange_cleaned, label='Tof 2 ')
-        plt.plot(self.x_fit_tof1, self.y_fit_tof1, color='red', label='Fitted parabola tof1 ')
-        plt.plot(self.x_fit_tof2, self.y_fit_tof2, color='green', label='Fitted parabola tof2 ')
+        #plt.scatter(self.t, self.tof1_inrange_cleaned, label='Tof 1 ')
+        #plt.scatter(self.t_2, self.tof2_inrange_cleaned, label='Tof 2 ')
+        plt.plot(self.x_fit_tof1, self.y_fit_tof1, color='r', label='Fitted parabola tof1 ')
+        plt.plot(self.x_fit_tof2, self.y_fit_tof2, color='b', label='Fitted parabola tof2 ')
         plt.legend()
         plt.show()
     

@@ -411,6 +411,111 @@ class Popup_Attach (QMainWindow):
     def exec(self):
 
         self.show()
+
+class Popup_Not_Attach (QMainWindow):
+
+    def __init__(self,parent, shared_data):
+
+        super().__init__(parent)
+
+        # setting title
+
+        self.setWindowTitle("Disattach Contact Pole")
+
+        # setting geometry
+
+        self.setGeometry(100, 100, 400, 300)
+
+        #attach shared data
+        self.shared_data = shared_data
+
+        # calling method
+
+        self.UiComponents()
+
+
+        # show all the widgets
+
+        self.show()
+
+        # method for widgets
+
+    def UiComponents(self):
+
+        # create layout
+
+        #layout for text at the top
+
+        text_layout = QHBoxLayout()
+
+        text_layout.setContentsMargins(150, 0, 150, 0)
+
+        #layout for save and exit buttons
+
+        button_layout = QHBoxLayout()
+
+        button_layout.setSpacing(60)
+
+        button_layout.setContentsMargins(100, 0, 100, 0)
+
+        #layout of full page
+
+        full_layout = QVBoxLayout()
+
+        full_layout.addLayout(text_layout)
+
+        full_layout.addLayout(button_layout)
+ 
+        #Add text  
+
+        self.label = QLabel("Have you disattached the contact pole? ", self)
+
+        text_layout.addWidget(self.label)
+
+        #Add Buttons
+
+        self.button_yes = self.create_button("Yes", self.yes)
+
+        self.button_no = self.create_button("No", self.no)
+ 
+        button_layout.addWidget(self.button_yes)
+
+        button_layout.addWidget(self.button_no)
+
+
+        #Set Layout
+
+        widget = QWidget()
+
+        widget.setLayout(full_layout)
+
+        self.setCentralWidget(widget)
+
+ 
+    def create_button(self, name,func):
+
+        button = QPushButton(name, self)
+
+        button.clicked.connect(func)
+
+        return button
+
+
+    def yes(self):
+
+        self.shared_data.set_start(True)
+        self.close()
+
+
+    def no(self):
+
+        print("PLEASE DisAttach Contact Pole")
+
+ 
+
+    def exec(self):
+
+        self.show()
     
 class Window(QMainWindow):
 
@@ -654,7 +759,9 @@ class Window(QMainWindow):
 
         self.button_exit = self.create_button("Exit", 200, 300, 120, 60, self.exit)
         
-        self.button_start = self.create_button("Start", 200, 300, 120, 60, self.start)
+        
+        
+        #self.button_start = self.create_button("Start", 200, 300, 120, 60, self.start)
 
  
 
@@ -792,7 +899,10 @@ class Window(QMainWindow):
         self.shared_data.set_reset(True)
 
     def start(self):
-        self.shared_data.set_start(True)
+        popup = Popup_Not_Attach(self, self.shared_data)
+        popup.exec()
+        #self.shared_data.set_popup(False)
+
 
     def hit_position_func(self, pos):
         self.hit_pos= pos

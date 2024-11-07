@@ -132,16 +132,20 @@ class PixelDiameter(Node):
             closing, flow_saved = self.filter_imgs(flow_imgs)
             final_img = copy.deepcopy(closing)
             submatrix = closing[300:500, 0:1279]
+            '''
             if self.first_subplot: 
                 self.create_img_subplot(500, 100, '132', '132', final_img, closing, flow_imgs, frame, frames)
                 self.first_subplott = False
                 self.get_logger().info(f"Closing: {closing} ")
+            '''
 
             all_starts, all_ends = self.pixel_count (submatrix)
             all_middle = self.middle_count(all_starts, all_ends)
             diameters = self.diameter_options(all_starts, all_ends)
             self.get_logger().info(f"Diameters: {diameters}")
+            self.get_logger().info(f"All middles: {all_middle}")
             middle_lines = self.calculate_middle_line_options(all_middle)
+            self.get_logger().info(f"Middle_lines: {middle_lines}")
             diameter_mean = float(statistics.mean(diameters))
             middle_mean = statistics.mean(middle_lines)
             diameter_median = float(statistics.median(diameters))
@@ -420,7 +424,7 @@ class PixelDiameter(Node):
         all_middle = [] #initializes list of all the middle points in each row 
         for i in range (len(all_starts)):
             #calculate the middle based on the start and values in each row 
-            mid = round((all_ends[i][0] - all_starts[i][0])/2 +all_starts[i][0])
+            mid = round((all_ends[i][-1] - all_starts[i][0])/2 +all_starts[i][0])
             all_middle.append(mid) 
         return all_middle
     
@@ -483,15 +487,17 @@ class PixelDiameter(Node):
         #reorganize list so the list is organized by least seen number to most seen numbers
         middle_estimates_occurances = self.check_occurances(all_middle)
         middle_estimates_list = self.create_list_single(middle_estimates_occurances)
+
+        middle_available = []
+        for mid in middle_estimates_list: 
+            if 340< mid < 940:
+                middle_available.append(mid)
+  
         #change list so only the top 40% most seen values are in the list 
         per = 0.6
-        length_from_end = int(len(middle_estimates_list) * (per))
-        middles = middle_estimates_list[-length_from_end:-1]
+        length_from_end = int(len(middle_available) * (per))
+        middle_options = middle_available[-length_from_end:-1]
 
-        middle_options = []
-        for mid in middles: 
-            if 300< mid < 700:
-                middle_options.append(mid)
         return middle_options 
     
     def calculate_col_scores(self,submatrix):
