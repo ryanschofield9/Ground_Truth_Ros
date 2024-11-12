@@ -34,6 +34,7 @@ setup(
             'record_video_service= ground_truth.record_video_service:main',
             'pub_reset= ground_truth.pub_reset:main',
             'Gui= ground_truth.GUI:main',
+            'touch= ground_truth.touch:main',
 
         ],
     },

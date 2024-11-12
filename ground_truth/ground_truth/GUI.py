@@ -63,6 +63,8 @@ class Run(Node):
 
         self.pub_step5 = self.create_publisher(Bool, 'step5', 10)
         self.sub_popup = self.create_subscription(Bool, 'step5_popup',self.callback_popup, 10 )
+        self.pub_touch_button= self.create_publisher(Bool, 'touch', 10 )
+
 
         #Create Callback group
         self.service_handler_group = ReentrantCallbackGroup()
@@ -96,6 +98,15 @@ class Run(Node):
             self.pub_step5.publish(msg)
             self.pub_step5.publish(msg)
             self.shared_data.set_pub_5(False)
+        if self.shared_data.get_touch_button():
+            print("starting touch code")
+            msg = Bool ()
+            msg.data = True
+            self.pub_touch_button.publish(msg)
+            self.pub_touch_button.publish(msg)
+            self.pub_touch_button.publish(msg)
+            self.shared_data.set_touch_button(False)
+
         self.update_joints()
 
     def update_joints(self):
@@ -552,6 +563,11 @@ class Window(QMainWindow):
         self.distance_tree= "N/a"
         self.total_time = 0.0
 
+        self.trees_possible = ['UFO', 'Envy'] 
+        self.tree_type =  str(self.trees_possible[0])
+
+        self.notes = "N/a"
+
         #QtGui.QImageReader.supportedImageFormats()
 
         # showing all the widgets
@@ -619,10 +635,18 @@ class Window(QMainWindow):
 
         #layout for diameter and rot_change 
 
+        self.start_touch_layout = QHBoxLayout()
+        self.start_touch_layout.setSpacing(30)
+        self.start_touch_layout.setContentsMargins(20, 0, 20, 0)
+
+        self.notes_layout = QHBoxLayout()
+
         self.dia_rot_layout = QVBoxLayout()
+        self.dia_rot_layout.addLayout(self.notes_layout)
         self.dia_rot_layout.addLayout(self.diameter_layout)
         self.dia_rot_layout.addLayout(self.hit_layout)
         self.dia_rot_layout.addLayout(self.rot_change_layout)
+        self.dia_rot_layout.addLayout(self.start_touch_layout)
 
 
         #set middle layout 
@@ -652,11 +676,18 @@ class Window(QMainWindow):
         self.full_layout.addLayout(self.button_layout)
 
  
+        self.combobox = QComboBox()
+        self.combobox.addItems(['_UFO', 'Envy'])
+        self.combobox.activated.connect(self.activated)
+        self.file_layout.addWidget(self.combobox)
+        
         self.file_name = QLineEdit()
         self.file_name.setMaxLength(30)
         self.file_name.setPlaceholderText("Enter your filename (no file type)")
         self.file_name.textChanged.connect(self.filename_changed)
         self.file_layout.addWidget(self.file_name)
+        self.file = self.tree_type+'_Tree_' +str(self.tree_val)
+        self.file_name.setText(self.file)
 
         #create test counting boxes
 
@@ -743,15 +774,30 @@ class Window(QMainWindow):
         #self.time_text.textChanged.connect(self.time_func)
         self.hit_layout.addWidget(self.time_text)
 
+        self.note_area = QLineEdit()
+        self.note_area.setMaxLength(100)
+        self.note_area.setPlaceholderText("Enter Any Notes Here (100 Characters MAX)")    
+        self.note_area.textChanged.connect(self.note_func)
+        self.notes_layout.addWidget(self.note_area)
+
+
+
+        # Add start and touch button 
+        self.button_start = self.create_button("Start", 200, 300, 120, 60, self.start)
+        self.button_touch = self.create_button("Touch", 400, 300, 120, 60, self.touch_button)
+
+        self.start_touch_layout.addWidget(self.button_start)
+        self.start_touch_layout.addWidget(self.button_touch)
+
+
         
         # add rotate and change controller buttons 
 
         self.button_rotate = self.create_button("Rotate", 400, 300, 120, 60, self.rotate)
         self.button_change = self.create_button("Change Controller", 400, 300, 120, 60, self.change)
-        self.button_start = self.create_button("Start", 200, 300, 120, 60, self.start)
+       
         self.rot_change_layout.addWidget(self.button_rotate)
         self.rot_change_layout.addWidget(self.button_change)
-        self.rot_change_layout.addWidget(self.button_start)
 
         #create save, reset, and exit buttons
 
@@ -781,7 +827,11 @@ class Window(QMainWindow):
         self.setCentralWidget(widget)
 
  
-
+    def activated(self, idx):
+        self.tree_type =  str(self.trees_possible[idx])
+        self.file = self.tree_type+'_Tree_' +str(self.tree_val)
+        self.file_name.setText(self.file)
+    
     def filename_changed (self,file):
         self.file = file 
 
@@ -817,6 +867,8 @@ class Window(QMainWindow):
         # getting current value of spin box
 
         self.tree_val = self.tree.value()
+        self.file = self.tree_type+'_Tree_' +str(self.tree_val)
+        self.file_name.setText(self.file)
 
         self.branch.setValue(1)
 
@@ -878,13 +930,20 @@ class Window(QMainWindow):
         
 
         self.trees_saved.append([self.tree_val, self.branch_val, self.trial_val])
-        self.tests.append([self.tree_val, self.branch_val, self.trial_val, self.joints_in_order[0],self.joints_in_order[1],self.joints_in_order[2],self.joints_in_order[3], self.joints_in_order[4], self.joints_in_order[5],self.real_diameter, self.diameters[0], self.diameters[1], self.diameters[2], self.diameters[3], self.hit_pos, self.distance_tree, self.total_time])
+        self.tests.append([self.tree_val, self.branch_val, self.trial_val, self.joints_in_order[0],self.joints_in_order[1],self.joints_in_order[2],self.joints_in_order[3], self.joints_in_order[4], self.joints_in_order[5],self.real_diameter, self.diameters[0], self.diameters[1], self.diameters[2], self.diameters[3], self.hit_pos, self.distance_tree, self.total_time, self.notes])
+        self.notes = "N/a"
+        self.note_area.clear()
+        self.hit_pos = "N/a"
+        self.hit_text.clear()
        
     
     def exit(self):
-        time = datetime.datetime.now()
-        filename = 'src/GroundTruth/ground_truth/csv_files/'+self.file + str(time)+ '.csv'
-        fields = ['Tree', 'Branch', 'Trial', 'elbow_joint', 'shoulder_lift_joint', 'shoulder_pan_joint', 'wrist_1_joint', 'wrist_2_joint','wrist_3_joint', 'measured diameter', "W1 Diameter", "W2 Diameter", "Mean Diameter", "Median Diameter", "Contact", "Distance from Tree", "Time (s)"]
+        time = str(datetime.datetime.now())
+        print("File name is: ", self.file_name)
+        print("Time is ", time)
+
+        filename = '/src/Ground_Truth_Ros/ground_truth/csv_files/'+self.file + time+ '.csv'
+        fields = ['Tree', 'Branch', 'Trial', 'elbow_joint', 'shoulder_lift_joint', 'shoulder_pan_joint', 'wrist_1_joint', 'wrist_2_joint','wrist_3_joint', 'measured diameter', "W1 Diameter", "W2 Diameter", "Mean Diameter", "Median Diameter", "Contact", "Distance from Tree", "Time (s)", "Notes"]
         with open(filename, 'w', newline='') as file:
             csvwriter = csv.writer(file)   
             # writing the fields   
@@ -901,7 +960,10 @@ class Window(QMainWindow):
     def start(self):
         popup = Popup_Not_Attach(self, self.shared_data)
         popup.exec()
-        #self.shared_data.set_popup(False)
+        
+
+    def touch_button(self):
+        self.shared_data.set_touch_button(True)
 
 
     def hit_position_func(self, pos):
@@ -932,6 +994,9 @@ class Window(QMainWindow):
         self.label_6.setText(f"{self.joint_names[5]}: {round(self.joints[5],2)}")  
 
         return joint_layout 
+    
+    def note_func(self,note):
+        self.notes = note
 
     def diameters_update(self):
         self.diameters = self.shared_data.get_diameters()
@@ -991,6 +1056,7 @@ class SharedData:
         self.popup = False 
         self.pub_5 = False
         self.total_time = 0 
+        self.touch_button = False
     
     def get_reset(self):
         return self.reset
@@ -1053,6 +1119,12 @@ class SharedData:
     
     def get_pub_5(self):
         return self.pub_5
+    
+    def set_touch_button(self, touch_button):
+        self.touch_button = touch_button
+    
+    def get_touch_button(self):
+        return self.touch_button
     
     def set_total_time(self, time):
         self.total_time = time

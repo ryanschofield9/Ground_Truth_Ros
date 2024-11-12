@@ -18,6 +18,11 @@ def generate_launch_description():
             executable='touch_tree',
             name='touch_tree',
         ),
+         Node(
+            package='ground_truth',
+            executable='touch',
+            name='touch',
+        ),
         Node(
             package='ground_truth',
             executable='calc_diameter_service',
