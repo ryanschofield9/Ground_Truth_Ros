@@ -642,9 +642,9 @@ class Window(QMainWindow):
         self.notes_layout = QHBoxLayout()
 
         self.dia_rot_layout = QVBoxLayout()
-        self.dia_rot_layout.addLayout(self.notes_layout)
         self.dia_rot_layout.addLayout(self.diameter_layout)
         self.dia_rot_layout.addLayout(self.hit_layout)
+        self.dia_rot_layout.addLayout(self.notes_layout)
         self.dia_rot_layout.addLayout(self.rot_change_layout)
         self.dia_rot_layout.addLayout(self.start_touch_layout)
 
@@ -677,7 +677,7 @@ class Window(QMainWindow):
 
  
         self.combobox = QComboBox()
-        self.combobox.addItems(['_UFO', 'Envy'])
+        self.combobox.addItems(self.trees_possible)
         self.combobox.activated.connect(self.activated)
         self.file_layout.addWidget(self.combobox)
         
@@ -938,13 +938,11 @@ class Window(QMainWindow):
        
     
     def exit(self):
-        time = str(datetime.datetime.now())
-        print("File name is: ", self.file_name)
-        print("Time is ", time)
-
-        filename = '/src/Ground_Truth_Ros/ground_truth/csv_files/'+self.file + time+ '.csv'
+        time = datetime.datetime.now()
+        time_formated = time.strftime("_%Y_%m_%d_%H_%M_%S")
+        filename = '/home/ryan/ros2_ws_groundtruth/src/Ground_Truth_Ros/ground_truth/csv_files/'+self.file + time_formated+ '.csv'
         fields = ['Tree', 'Branch', 'Trial', 'elbow_joint', 'shoulder_lift_joint', 'shoulder_pan_joint', 'wrist_1_joint', 'wrist_2_joint','wrist_3_joint', 'measured diameter', "W1 Diameter", "W2 Diameter", "Mean Diameter", "Median Diameter", "Contact", "Distance from Tree", "Time (s)", "Notes"]
-        with open(filename, 'w', newline='') as file:
+        with open(filename, 'x', newline='') as file:
             csvwriter = csv.writer(file)   
             # writing the fields   
             csvwriter.writerow(fields)   
