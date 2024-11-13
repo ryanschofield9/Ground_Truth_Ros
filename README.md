@@ -16,7 +16,7 @@ ros2 launch ur_robot_driver ur5e.launch.py robot_ip:=10.10.10.10 use_fake_hardwa
 ```
 Run the following command if you are running on a real arm 
 ```
-ros2 launch ur_robot_driver ur5e.launch.py robot_ip:=169.254.177.230 use_fake_hardware:=false
+ros2 launch ur_robot_driver ur5e.launch.py robot_ip:=169.254.177.220 use_fake_hardware:=false
 ```
 4. Start Moveit 
 ```
