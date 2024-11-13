@@ -1076,7 +1076,7 @@ class Window(QMainWindow):
 
     def total_time_update(self):
         if round(self.total_time,2) != round(self.shared_data.get_total_time(),2):
-            logging.info(f"Total time changed to: {self.round(self.shared_data.get_total_time(),2)}")
+            logging.info(f"Total time changed to: {round(self.shared_data.get_total_time(),2)}")
 
         self.total_time = round(self.shared_data.get_total_time(),2)
         self.time_text.setText(f"Time: {self.total_time} ")

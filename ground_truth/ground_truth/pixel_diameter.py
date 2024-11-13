@@ -48,7 +48,7 @@ from rclpy.action import ActionClient
 '''
 
 import time 
-
+import math 
 
 
 # TO DO: CREATE THE MESSAGE PACKAGE AND ADD THE SERVICE INTO IT SEE GITHUB FROM ROB599 HW3 FOR EXPLANATION
@@ -140,6 +140,8 @@ class PixelDiameter(Node):
             '''
 
             all_starts, all_ends = self.pixel_count (submatrix)
+            self.get_logger().info(f"All starts: {all_starts}")
+            self.get_logger().info(f"All ends: {all_ends}")
             all_middle = self.middle_count(all_starts, all_ends)
             diameters = self.diameter_options(all_starts, all_ends)
             self.get_logger().info(f"Diameters: {diameters}")
@@ -461,8 +463,11 @@ class PixelDiameter(Node):
         diameter_estimates_occurances = self.check_occurances(diameter_estimates)
         diameter_estimates_list = self.create_list_single(diameter_estimates_occurances)
 
+
+        self.get_logger().info(f"Diameter_estimates (before shrinking): {diameter_estimates}")
         per = 0.6
-        length_from_end = int(len(diameter_estimates_list) * (per))
+        length_from_end = int(math.ceil(len(diameter_estimates_list) * (per)))
+        self.get_logger().info(f"Length from end: {length_from_end}")
         diameters = diameter_estimates_list[-length_from_end:-1]
         return diameters
 

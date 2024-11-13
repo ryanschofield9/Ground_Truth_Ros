@@ -91,7 +91,7 @@ class Touch(Node):
 
     def callback_tree (self, msg):
         #self.get_logger().info(f"GOT msg and setting self.touch_tree to: {msg.data}")
-        if self.step_5: 
+        if self.touch_flag: 
             self.tree_touch = msg.data 
     
     def calback_touch_flag(self, msg): 
