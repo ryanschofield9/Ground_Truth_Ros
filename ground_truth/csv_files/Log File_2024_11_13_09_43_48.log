@@ -1,0 +1,28 @@
+2024-11-13 09:43:48,446 - INFO - File name changed to: UFO_Tree_0
+2024-11-13 09:43:48,447 - INFO - Trial Number changed to: 1
+2024-11-13 09:43:48,447 - INFO - Branch Number changed to: 1
+2024-11-13 09:43:48,447 - INFO - File name changed to: UFO_Tree_1
+2024-11-13 09:43:48,447 - INFO - File name changed to: UFO_Tree_1
+2024-11-13 09:43:48,447 - INFO - Tree Number changed to: 1
+2024-11-13 09:43:50,993 - INFO - File name changed to: Envy_Tree_1
+2024-11-13 09:43:50,993 - INFO - File name changed to: Envy_Tree_1
+2024-11-13 09:43:53,328 - INFO - File name changed to: Envy_Tree_2
+2024-11-13 09:43:53,328 - INFO - File name changed to: Envy_Tree_2
+2024-11-13 09:43:53,328 - INFO - Tree Number changed to: 2
+2024-11-13 09:43:53,766 - INFO - File name changed to: Envy_Tree_3
+2024-11-13 09:43:53,766 - INFO - File name changed to: Envy_Tree_3
+2024-11-13 09:43:53,766 - INFO - Tree Number changed to: 3
+2024-11-13 09:43:54,084 - INFO - File name changed to: Envy_Tree_4
+2024-11-13 09:43:54,084 - INFO - File name changed to: Envy_Tree_4
+2024-11-13 09:43:54,084 - INFO - Tree Number changed to: 4
+2024-11-13 09:43:55,241 - INFO - Branch Number changed to: 2
+2024-11-13 09:43:55,677 - INFO - Branch Number changed to: 3
+2024-11-13 09:43:55,860 - INFO - Branch Number changed to: 4
+2024-11-13 09:43:58,146 - INFO - Trial Number changed to: 2
+2024-11-13 09:43:59,409 - INFO - File name changed to: Envy_Tree_5
+2024-11-13 09:43:59,409 - INFO - Trial Number changed to: 1
+2024-11-13 09:43:59,409 - INFO - Branch Number changed to: 1
+2024-11-13 09:43:59,409 - INFO - File name changed to: Envy_Tree_5
+2024-11-13 09:43:59,409 - INFO - Tree Number changed to: 5
+2024-11-13 09:44:00,722 - INFO - Exit Requested. Saved Values : []
+2024-11-13 09:44:00,722 - INFO - After Exit Request values were saved to: /home/ryan/ros2_ws_groundtruth/src/Ground_Truth_Ros/ground_truth/csv_files/Envy_Tree_5_2024_11_13_09_44_00.csv

@@ -21,6 +21,7 @@ from PIL import Image as IMG
 from PIL.ImageQt import ImageQt
 
 import sys
+import logging
 from sensor_msgs.msg import JointState
 
 import time
@@ -568,7 +569,17 @@ class Window(QMainWindow):
 
         self.notes = "N/a"
 
-        #QtGui.QImageReader.supportedImageFormats()
+        self.W1 = 0.0
+        self.W2 = 0.0
+        self.mean = 0.0
+        self.median = 0.0
+
+        #adding logging 
+        time = datetime.datetime.now()
+        time_formated = time.strftime("_%Y_%m_%d_%H_%M_%S")
+        log_file = "/home/ryan/ros2_ws_groundtruth/src/Ground_Truth_Ros/ground_truth/csv_files/Log File" + time_formated +".log"
+        logging.basicConfig(filename=log_file, level=logging.INFO,
+                            format='%(asctime)s - %(levelname)s - %(message)s')
 
         # showing all the widgets
 
@@ -831,12 +842,15 @@ class Window(QMainWindow):
         self.tree_type =  str(self.trees_possible[idx])
         self.file = self.tree_type+'_Tree_' +str(self.tree_val)
         self.file_name.setText(self.file)
+        logging.info(f"File name changed to: {self.file}")
     
     def filename_changed (self,file):
         self.file = file 
+        logging.info(f"File name changed to: {self.file}")
 
     def real_diameter_changed (self,diameter):
-        self.real_diameter = diameter 
+        self.real_diameter = diameter
+        logging.info(f"Measured Diameter changed to: {self.real_diameter}") 
         
     def create_QSpinBox (self,name, func):
 
@@ -874,6 +888,9 @@ class Window(QMainWindow):
 
         self.trial.setValue(1)
 
+        logging.info(f"File name changed to: {self.file}")
+        logging.info(f"Tree Number changed to: {self.tree_val}")
+
          
 
     def action_branch(self):
@@ -886,6 +903,8 @@ class Window(QMainWindow):
 
         self.trial.setValue(1)
 
+        logging.info(f"Branch Number changed to: {self.branch_val}")
+
    
 
     def action_trial(self):
@@ -893,6 +912,7 @@ class Window(QMainWindow):
         # getting current value of spin box
 
         self.trial_val = self.trial.value()
+        logging.info(f"Trial Number changed to: {self.trial_val}")
 
     def save(self):
         self.joints_in_order = []
@@ -935,6 +955,7 @@ class Window(QMainWindow):
         self.note_area.clear()
         self.hit_pos = "N/a"
         self.hit_text.clear()
+        logging.info(f"Save Requested. Saved Values : {self.tests}")
        
     
     def exit(self):
@@ -948,6 +969,10 @@ class Window(QMainWindow):
             csvwriter.writerow(fields)   
             # writing the data rows   
             csvwriter.writerows(self.tests) 
+
+        logging.info(f"Exit Requested. Saved Values : {self.tests}")
+        logging.info(f"After Exit Request values were saved to: {filename}")
+
     
         popup = Popup_Exit(self, self.tests)
         popup.exec()
@@ -956,19 +981,23 @@ class Window(QMainWindow):
         self.shared_data.set_reset(True)
 
     def start(self):
+        logging.info(f"Start Requested")
         popup = Popup_Not_Attach(self, self.shared_data)
         popup.exec()
         
 
     def touch_button(self):
+        logging.info(f"Touch Requested")
         self.shared_data.set_touch_button(True)
 
 
     def hit_position_func(self, pos):
         self.hit_pos= pos
+        logging.info(f"Hit position changed to: {self.hit_pos} ")
 
     def distance_func(self, dis):
         self.distance_tree = dis
+        logging.info(f"Distance to tree changed to: {self.distance_tree} ")
     
     
     def joint_update(self, joint_layout):
@@ -995,21 +1024,39 @@ class Window(QMainWindow):
     
     def note_func(self,note):
         self.notes = note
+        logging.info(f"Note changed to: {self.notes} ")
 
     def diameters_update(self):
         self.diameters = self.shared_data.get_diameters()
+        if round(self.diameters[0],2) != round(self.W1, 2):
+            logging.info(f"Diameter W1 changed to: {self.diameters[0]} ")
+        if round(self.diameters[1],2) != round(self.W2,2):
+            logging.info(f"Diameter W2 changed to: {self.diameters[1]} ")
+        if round(self.diameters[2],2 )!= round(self.mean,2):
+            logging.info(f"Diameter Mean changed to: {self.diameters[2]} ")
+        if round(self.diameters[3],2) != round(self.median,2):
+            logging.info(f"Diameter Median changed to: {self.diameters[3]} ")
+        
         self.label_diameter_found_w1.setText(f"W1: {round(self.diameters[0],2)}")
         self.label_diameter_found_w2.setText(f"W2: {round(self.diameters[1],2)}")
         self.label_diameter_found_mean.setText(f"Mean: {round(self.diameters[2],2)}")
         self.label_diameter_found_median.setText(f"Median: {round(self.diameters[3],2)}")
 
+        self.W1 = self.diameters[0]
+        self.W2 = self.diameters[1]
+        self.mean = self.diameters[2]
+        self.median = self.diameters[2]
+
     def rotate(self):
         if self.at_0 == True: 
             self.shared_data.set_rotate(True, 0.0)
             self.at_0 = False
+            logging.info(f"Set to Rotate to: 0 degrees (0.0 radians)")
         else:
             self.shared_data.set_rotate(True, 1.5708) #radians is used, so 1.5708 rads is 90 degrees 
             self.at_0 = True
+            logging.info(f"Set to Rotate to: 90 degrees (1.5708 radians)")
+        
 
     def change(self):
         if self.controller == "Joints": 
@@ -1019,6 +1066,8 @@ class Window(QMainWindow):
             self.shared_data.set_controller(True, "Joints")
             self.controller = "Joints"
 
+        logging.info(f"Controller change requested : Switching to {self.controller}")
+
     def attach_popup(self):
         if self.shared_data.get_popup():
             popup = Popup_Attach(self, self.shared_data)
@@ -1026,6 +1075,9 @@ class Window(QMainWindow):
             self.shared_data.set_popup(False)
 
     def total_time_update(self):
+        if round(self.total_time,2) != round(self.shared_data.get_total_time(),2):
+            logging.info(f"Total time changed to: {self.round(self.shared_data.get_total_time(),2)}")
+
         self.total_time = round(self.shared_data.get_total_time(),2)
         self.time_text.setText(f"Time: {self.total_time} ")
 
