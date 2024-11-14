@@ -1,0 +1,2 @@
+Tree,Branch,Trial,elbow_joint,shoulder_lift_joint,shoulder_pan_joint,wrist_1_joint,wrist_2_joint,wrist_3_joint,measured diameter,W1 Diameter,W2 Diameter,Mean Diameter,Median Diameter,Contact,Distance from Tree,Time (s),Notes
+1,1,1,-0.9114214181900024,-2.5979658565916957,-0.18115312257875615,0.3477812248417358,0.7486642003059387,1.4719390869140625,0.5,0.5642260909080505,0.47572004795074463,0.5966256260871887,0.5531628131866455,right,9.0,49.65,Missed the branch and I had to nmake contact with the pole to make it stop 

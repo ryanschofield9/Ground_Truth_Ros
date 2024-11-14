@@ -1045,7 +1045,7 @@ class Window(QMainWindow):
         self.W1 = self.diameters[0]
         self.W2 = self.diameters[1]
         self.mean = self.diameters[2]
-        self.median = self.diameters[2]
+        self.median = self.diameters[3]
 
     def rotate(self):
         if self.at_0 == True: 

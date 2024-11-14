@@ -1,0 +1,38 @@
+2024-11-14 12:06:14,983 - INFO - File name changed to: UFO_Tree_0
+2024-11-14 12:06:14,983 - INFO - Trial Number changed to: 1
+2024-11-14 12:06:14,984 - INFO - Branch Number changed to: 1
+2024-11-14 12:06:14,984 - INFO - File name changed to: UFO_Tree_1
+2024-11-14 12:06:14,984 - INFO - File name changed to: UFO_Tree_1
+2024-11-14 12:06:14,984 - INFO - Tree Number changed to: 1
+2024-11-14 12:13:29,322 - INFO - Start Requested
+2024-11-14 12:14:07,822 - INFO - Measured Diameter changed to: 0
+2024-11-14 12:14:08,061 - INFO - Measured Diameter changed to: 0.
+2024-11-14 12:14:08,712 - INFO - Measured Diameter changed to: 0.7
+2024-11-14 12:14:08,920 - INFO - Measured Diameter changed to: 0.75
+2024-11-14 12:14:25,282 - INFO - Diameter W1 changed to: 0.7800481915473938 
+2024-11-14 12:14:25,282 - INFO - Diameter W2 changed to: 0.7800481915473938 
+2024-11-14 12:14:25,282 - INFO - Diameter Mean changed to: 0.8190506100654602 
+2024-11-14 12:14:25,282 - INFO - Diameter Median changed to: 0.8288012146949768 
+2024-11-14 12:14:25,282 - INFO - Total time changed to: 46.55
+2024-11-14 12:14:32,605 - INFO - Hit position changed to: r 
+2024-11-14 12:14:32,722 - INFO - Hit position changed to: ri 
+2024-11-14 12:14:32,922 - INFO - Hit position changed to: rif 
+2024-11-14 12:14:32,990 - INFO - Hit position changed to: rifh 
+2024-11-14 12:14:33,305 - INFO - Hit position changed to: rif 
+2024-11-14 12:14:33,438 - INFO - Hit position changed to: ri 
+2024-11-14 12:14:33,925 - INFO - Hit position changed to: rii 
+2024-11-14 12:14:34,289 - INFO - Hit position changed to: ri 
+2024-11-14 12:14:34,356 - INFO - Hit position changed to: rig 
+2024-11-14 12:14:34,499 - INFO - Hit position changed to: righ 
+2024-11-14 12:14:34,541 - INFO - Hit position changed to: right 
+2024-11-14 12:14:34,660 - INFO - Hit position changed to: right  
+2024-11-14 12:14:35,122 - INFO - Hit position changed to: right = 
+2024-11-14 12:14:35,592 - INFO - Hit position changed to: right  
+2024-11-14 12:14:35,741 - INFO - Hit position changed to: right 
+2024-11-14 12:14:37,811 - INFO - Distance to tree changed to: 9 
+2024-11-14 12:14:38,502 - INFO - Distance to tree changed to: 9. 
+2024-11-14 12:14:38,792 - INFO - Distance to tree changed to: 9.0 
+2024-11-14 12:14:43,518 - INFO - Hit position changed to:  
+2024-11-14 12:14:43,518 - INFO - Save Requested. Saved Values : [[1, 1, 1, -1.0567097663879395, -2.52354158977651, -0.15547258058656865, 0.41838662206616206, 0.7227597236633301, 1.5107632875442505, '0.75', 0.7800481915473938, 0.7800481915473938, 0.8190506100654602, 0.8288012146949768, 'right', '9.0', 46.55, 'N/a']]
+2024-11-14 12:14:44,637 - INFO - Exit Requested. Saved Values : [[1, 1, 1, -1.0567097663879395, -2.52354158977651, -0.15547258058656865, 0.41838662206616206, 0.7227597236633301, 1.5107632875442505, '0.75', 0.7800481915473938, 0.7800481915473938, 0.8190506100654602, 0.8288012146949768, 'right', '9.0', 46.55, 'N/a']]
+2024-11-14 12:14:44,637 - INFO - After Exit Request values were saved to: /home/ryan/ros2_ws_groundtruth/src/Ground_Truth_Ros/ground_truth/csv_files/UFO_Tree_1_2024_11_14_12_14_44.csv

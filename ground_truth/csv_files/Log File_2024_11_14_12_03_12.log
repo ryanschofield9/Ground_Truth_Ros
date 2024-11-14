@@ -1,0 +1,123 @@
+2024-11-14 12:03:12,491 - INFO - File name changed to: UFO_Tree_0
+2024-11-14 12:03:12,491 - INFO - Trial Number changed to: 1
+2024-11-14 12:03:12,492 - INFO - Branch Number changed to: 1
+2024-11-14 12:03:12,492 - INFO - File name changed to: UFO_Tree_1
+2024-11-14 12:03:12,492 - INFO - File name changed to: UFO_Tree_1
+2024-11-14 12:03:12,492 - INFO - Tree Number changed to: 1
+2024-11-14 12:03:16,294 - INFO - Controller change requested : Switching to Forward
+2024-11-14 12:03:17,047 - INFO - Controller change requested : Switching to Joints
+2024-11-14 12:03:33,938 - INFO - Measured Diameter changed to: 0
+2024-11-14 12:03:34,185 - INFO - Measured Diameter changed to: 0.
+2024-11-14 12:03:34,400 - INFO - Measured Diameter changed to: 0.5
+2024-11-14 12:03:36,297 - INFO - Distance to tree changed to: 9 
+2024-11-14 12:03:36,381 - INFO - Distance to tree changed to: 9. 
+2024-11-14 12:03:36,564 - INFO - Distance to tree changed to: 9.0 
+2024-11-14 12:03:40,021 - INFO - Start Requested
+2024-11-14 12:04:31,281 - INFO - Diameter W1 changed to: 0.5642260909080505 
+2024-11-14 12:04:31,281 - INFO - Diameter W2 changed to: 0.47572004795074463 
+2024-11-14 12:04:31,281 - INFO - Diameter Mean changed to: 0.5966256260871887 
+2024-11-14 12:04:31,281 - INFO - Diameter Median changed to: 0.5531628131866455 
+2024-11-14 12:04:31,281 - INFO - Total time changed to: 49.65
+2024-11-14 12:04:37,719 - INFO - Hit position changed to: t 
+2024-11-14 12:04:37,803 - INFO - Hit position changed to: ti 
+2024-11-14 12:04:38,199 - INFO - Hit position changed to: t 
+2024-11-14 12:04:38,333 - INFO - Hit position changed to:  
+2024-11-14 12:04:38,475 - INFO - Hit position changed to: r 
+2024-11-14 12:04:38,601 - INFO - Hit position changed to: ri 
+2024-11-14 12:04:38,932 - INFO - Hit position changed to: rig 
+2024-11-14 12:04:39,032 - INFO - Hit position changed to: righ 
+2024-11-14 12:04:39,159 - INFO - Hit position changed to: right 
+2024-11-14 12:04:40,983 - INFO - Note changed to: N 
+2024-11-14 12:04:41,331 - INFO - Note changed to:  
+2024-11-14 12:04:41,581 - INFO - Note changed to: M 
+2024-11-14 12:04:41,791 - INFO - Note changed to: Mi 
+2024-11-14 12:04:41,876 - INFO - Note changed to: Mis 
+2024-11-14 12:04:42,025 - INFO - Note changed to: Miss 
+2024-11-14 12:04:42,165 - INFO - Note changed to: Misse 
+2024-11-14 12:04:42,302 - INFO - Note changed to: Missed 
+2024-11-14 12:04:42,377 - INFO - Note changed to: Missed  
+2024-11-14 12:04:42,543 - INFO - Note changed to: Missed t 
+2024-11-14 12:04:42,594 - INFO - Note changed to: Missed th 
+2024-11-14 12:04:42,653 - INFO - Note changed to: Missed the 
+2024-11-14 12:04:42,679 - INFO - Note changed to: Missed the  
+2024-11-14 12:04:42,923 - INFO - Note changed to: Missed the b 
+2024-11-14 12:04:42,950 - INFO - Note changed to: Missed the br 
+2024-11-14 12:04:43,110 - INFO - Note changed to: Missed the bra 
+2024-11-14 12:04:43,210 - INFO - Note changed to: Missed the bran 
+2024-11-14 12:04:43,344 - INFO - Note changed to: Missed the branc 
+2024-11-14 12:04:43,419 - INFO - Note changed to: Missed the branch 
+2024-11-14 12:04:43,479 - INFO - Note changed to: Missed the branch  
+2024-11-14 12:04:43,639 - INFO - Note changed to: Missed the branch a 
+2024-11-14 12:04:43,739 - INFO - Note changed to: Missed the branch an 
+2024-11-14 12:04:43,799 - INFO - Note changed to: Missed the branch and 
+2024-11-14 12:04:43,883 - INFO - Note changed to: Missed the branch and  
+2024-11-14 12:04:44,265 - INFO - Note changed to: Missed the branch and I 
+2024-11-14 12:04:44,350 - INFO - Note changed to: Missed the branch and I  
+2024-11-14 12:04:44,763 - INFO - Note changed to: Missed the branch and I h 
+2024-11-14 12:04:44,832 - INFO - Note changed to: Missed the branch and I ha 
+2024-11-14 12:04:44,991 - INFO - Note changed to: Missed the branch and I had 
+2024-11-14 12:04:45,099 - INFO - Note changed to: Missed the branch and I had  
+2024-11-14 12:04:45,259 - INFO - Note changed to: Missed the branch and I had t 
+2024-11-14 12:04:45,342 - INFO - Note changed to: Missed the branch and I had to 
+2024-11-14 12:04:45,460 - INFO - Note changed to: Missed the branch and I had to  
+2024-11-14 12:04:46,701 - INFO - Note changed to: Missed the branch and I had to n 
+2024-11-14 12:04:46,710 - INFO - Note changed to: Missed the branch and I had to nm 
+2024-11-14 12:04:46,789 - INFO - Note changed to: Missed the branch and I had to nma 
+2024-11-14 12:04:46,872 - INFO - Note changed to: Missed the branch and I had to nmak 
+2024-11-14 12:04:46,950 - INFO - Note changed to: Missed the branch and I had to nmake 
+2024-11-14 12:04:47,051 - INFO - Note changed to: Missed the branch and I had to nmake  
+2024-11-14 12:04:47,226 - INFO - Note changed to: Missed the branch and I had to nmake c 
+2024-11-14 12:04:47,293 - INFO - Note changed to: Missed the branch and I had to nmake co 
+2024-11-14 12:04:47,451 - INFO - Note changed to: Missed the branch and I had to nmake con 
+2024-11-14 12:04:47,569 - INFO - Note changed to: Missed the branch and I had to nmake cont 
+2024-11-14 12:04:47,727 - INFO - Note changed to: Missed the branch and I had to nmake conta 
+2024-11-14 12:04:47,936 - INFO - Note changed to: Missed the branch and I had to nmake contac 
+2024-11-14 12:04:48,176 - INFO - Note changed to: Missed the branch and I had to nmake contact 
+2024-11-14 12:04:48,226 - INFO - Note changed to: Missed the branch and I had to nmake contact  
+2024-11-14 12:04:48,426 - INFO - Note changed to: Missed the branch and I had to nmake contact w 
+2024-11-14 12:04:48,494 - INFO - Note changed to: Missed the branch and I had to nmake contact wi 
+2024-11-14 12:04:48,645 - INFO - Note changed to: Missed the branch and I had to nmake contact wit 
+2024-11-14 12:04:48,662 - INFO - Note changed to: Missed the branch and I had to nmake contact with 
+2024-11-14 12:04:48,730 - INFO - Note changed to: Missed the branch and I had to nmake contact with  
+2024-11-14 12:04:48,849 - INFO - Note changed to: Missed the branch and I had to nmake contact with t 
+2024-11-14 12:04:49,024 - INFO - Note changed to: Missed the branch and I had to nmake contact with th 
+2024-11-14 12:04:49,108 - INFO - Note changed to: Missed the branch and I had to nmake contact with the 
+2024-11-14 12:04:49,159 - INFO - Note changed to: Missed the branch and I had to nmake contact with the  
+2024-11-14 12:04:49,293 - INFO - Note changed to: Missed the branch and I had to nmake contact with the p 
+2024-11-14 12:04:49,443 - INFO - Note changed to: Missed the branch and I had to nmake contact with the po 
+2024-11-14 12:04:49,585 - INFO - Note changed to: Missed the branch and I had to nmake contact with the pol 
+2024-11-14 12:04:49,627 - INFO - Note changed to: Missed the branch and I had to nmake contact with the pole 
+2024-11-14 12:04:49,729 - INFO - Note changed to: Missed the branch and I had to nmake contact with the pole  
+2024-11-14 12:04:49,887 - INFO - Note changed to: Missed the branch and I had to nmake contact with the pole t 
+2024-11-14 12:04:49,947 - INFO - Note changed to: Missed the branch and I had to nmake contact with the pole to 
+2024-11-14 12:04:50,015 - INFO - Note changed to: Missed the branch and I had to nmake contact with the pole to  
+2024-11-14 12:04:50,936 - INFO - Note changed to: Missed the branch and I had to nmake contact with the pole to n 
+2024-11-14 12:04:50,945 - INFO - Note changed to: Missed the branch and I had to nmake contact with the pole to nm 
+2024-11-14 12:04:51,031 - INFO - Note changed to: Missed the branch and I had to nmake contact with the pole to nma 
+2024-11-14 12:04:51,090 - INFO - Note changed to: Missed the branch and I had to nmake contact with the pole to nmak 
+2024-11-14 12:04:51,175 - INFO - Note changed to: Missed the branch and I had to nmake contact with the pole to nmake 
+2024-11-14 12:04:51,243 - INFO - Note changed to: Missed the branch and I had to nmake contact with the pole to nmake  
+2024-11-14 12:04:51,444 - INFO - Note changed to: Missed the branch and I had to nmake contact with the pole to nmake 
+2024-11-14 12:04:51,578 - INFO - Note changed to: Missed the branch and I had to nmake contact with the pole to nmak 
+2024-11-14 12:04:51,711 - INFO - Note changed to: Missed the branch and I had to nmake contact with the pole to nma 
+2024-11-14 12:04:51,813 - INFO - Note changed to: Missed the branch and I had to nmake contact with the pole to nm 
+2024-11-14 12:04:51,923 - INFO - Note changed to: Missed the branch and I had to nmake contact with the pole to n 
+2024-11-14 12:04:52,023 - INFO - Note changed to: Missed the branch and I had to nmake contact with the pole to  
+2024-11-14 12:04:52,379 - INFO - Note changed to: Missed the branch and I had to nmake contact with the pole to m 
+2024-11-14 12:04:52,537 - INFO - Note changed to: Missed the branch and I had to nmake contact with the pole to ma 
+2024-11-14 12:04:52,579 - INFO - Note changed to: Missed the branch and I had to nmake contact with the pole to mak 
+2024-11-14 12:04:52,690 - INFO - Note changed to: Missed the branch and I had to nmake contact with the pole to make 
+2024-11-14 12:04:52,775 - INFO - Note changed to: Missed the branch and I had to nmake contact with the pole to make  
+2024-11-14 12:04:52,917 - INFO - Note changed to: Missed the branch and I had to nmake contact with the pole to make i 
+2024-11-14 12:04:53,304 - INFO - Note changed to: Missed the branch and I had to nmake contact with the pole to make it 
+2024-11-14 12:04:53,387 - INFO - Note changed to: Missed the branch and I had to nmake contact with the pole to make it  
+2024-11-14 12:04:53,579 - INFO - Note changed to: Missed the branch and I had to nmake contact with the pole to make it s 
+2024-11-14 12:04:53,819 - INFO - Note changed to: Missed the branch and I had to nmake contact with the pole to make it st 
+2024-11-14 12:04:53,928 - INFO - Note changed to: Missed the branch and I had to nmake contact with the pole to make it sto 
+2024-11-14 12:04:54,079 - INFO - Note changed to: Missed the branch and I had to nmake contact with the pole to make it stop 
+2024-11-14 12:04:54,137 - INFO - Note changed to: Missed the branch and I had to nmake contact with the pole to make it stop  
+2024-11-14 12:05:02,935 - INFO - Note changed to:  
+2024-11-14 12:05:02,935 - INFO - Hit position changed to:  
+2024-11-14 12:05:02,935 - INFO - Save Requested. Saved Values : [[1, 1, 1, -0.9114214181900024, -2.5979658565916957, -0.18115312257875615, 0.3477812248417358, 0.7486642003059387, 1.4719390869140625, '0.5', 0.5642260909080505, 0.47572004795074463, 0.5966256260871887, 0.5531628131866455, 'right', '9.0', 49.65, 'Missed the branch and I had to nmake contact with the pole to make it stop ']]
+2024-11-14 12:05:04,266 - INFO - Exit Requested. Saved Values : [[1, 1, 1, -0.9114214181900024, -2.5979658565916957, -0.18115312257875615, 0.3477812248417358, 0.7486642003059387, 1.4719390869140625, '0.5', 0.5642260909080505, 0.47572004795074463, 0.5966256260871887, 0.5531628131866455, 'right', '9.0', 49.65, 'Missed the branch and I had to nmake contact with the pole to make it stop ']]
+2024-11-14 12:05:04,266 - INFO - After Exit Request values were saved to: /home/ryan/ros2_ws_groundtruth/src/Ground_Truth_Ros/ground_truth/csv_files/UFO_Tree_1_2024_11_14_12_05_04.csv
