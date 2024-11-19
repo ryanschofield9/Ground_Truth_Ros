@@ -51,6 +51,8 @@ class CenteringCleaned(Node):
         self.pub_vel_commands = self.create_publisher(TwistStamped, '/servo_node/delta_twist_cmds', 10)
         self.pub_step2 = self.create_publisher(Bool, 'step2', 10)
         self.pub_step3 = self.create_publisher(Bool, 'step3', 10)
+        self.pub_angle =self.create_publisher(Float32, 'angle',10)
+        self.pub_correction =self.create_publisher(Bool, 'correction',10)
         self.pub_timer = self.create_timer(1/10, self.main_control)
         self.tool_timer = self.create_timer(1/10, self.pub_tool_pose_y)
         self.tool_timer_angle = self.create_timer(1/50,self.pub_tool_angle)
@@ -190,8 +192,9 @@ class CenteringCleaned(Node):
                     msg.data = True
                     #publish to step_2 topic true 3 times to ensure that it gets there 
                     for x in range (0, 3):
-                        self.pub_step3.publish(msg)
-                    self.switch_controller(self.forward_cntr, self.joint_cntr) #switch from scaled_joint_trajectory controller to forward position controller
+                        #self.pub_step3.publish(msg)
+                        self.pub_correction.publish(msg)
+                    #self.switch_controller(self.forward_cntr, self.joint_cntr) #switch from scaled_joint_trajectory controller to forward position controller
                     self.step_1 = False
                     #possible add reset here   
 
@@ -312,7 +315,12 @@ class CenteringCleaned(Node):
         self.get_logger().info(f"Branch Angle Averaged: {branch_angled_averaged}")
         self.get_logger().info(f"Branch Angle Interpolated: {branch_angled_interpolated}")
         self.branch_angle = branch_angled_interpolated
+        self.get_logger().info(f"Sending branch angle as: {self.branch_angle}")
         self.calc_angle_done = True #set calculate angle done flag to true
+        msg = Float32()
+        msg.data = self.branch_angle
+        for x in range (0,3):
+            self.pub_angle.publish(msg)
         #except:
             #print("No branch was found. The system will restart its moving up process") 
             #self.move_down_start += self.move_up_collect 

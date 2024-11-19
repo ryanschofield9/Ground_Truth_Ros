@@ -51,6 +51,10 @@ class Run(Node):
         super().__init__('GUI')
         #self.pub = self.create_publisher(Bool, 'reset', 10)
         self.pub_step1 = self.create_publisher(Bool, 'step_1', 10)
+        self.pub_step3 = self.create_publisher(Bool, 'step3', 10)
+        self.sub_angle =self.create_subscription(Float32, 'angle', self.callback_angle, 10)
+        self.pub_step3 = self.create_publisher(Bool, 'step3', 10)
+        self.sub_correction =self.create_subscription(Bool, 'correction',self.callback_correction,10)
         self.sub_diameters = self.create_subscription(Diameters, 'diameters', self.callback_diameters, 10)
         self.timer = self.create_timer(1/10, self.check_vals)
         self.shared_data = shared_data
@@ -61,6 +65,12 @@ class Run(Node):
 
         self.start_time = time.time()
         self.diameter_time = time.time()
+
+        self.correction_asked_for = False 
+        self.correction = False 
+
+        self.forward_cntr = 'forward_position_controller' #name of controller that uses velocity commands 
+        self.joint_cntr = 'scaled_joint_trajectory_controller' # name of controller that uses joint commands 
 
         self.pub_step5 = self.create_publisher(Bool, 'step5', 10)
         self.sub_popup = self.create_subscription(Bool, 'step5_popup',self.callback_popup, 10 )
@@ -108,6 +118,25 @@ class Run(Node):
             self.pub_touch_button.publish(msg)
             self.shared_data.set_touch_button(False)
 
+        if self.correction: 
+            self.shared_data.set_correction_popup(True)
+            self.switch_controller(self.joint_cntr, self.forward_cntr) #switch from forward position controller to scaled_joint_trajectory controller
+            self.correction = False
+
+        if self.shared_data.get_correction_done(): 
+            self.correction_asked_for = False
+            self.shared_data.set_correction_done(False)
+            self.switch_controller(self.forward_cntr, self.joint_cntr) #switch from scaled_joint_trajectory controller to forward position controller
+            msg = Bool()
+            msg.data = True
+            for x in range (0, 3):
+                self.pub_step3.publish(msg)
+
+        if self.shared_data.get_rotate_to()[1]: 
+            print("rotate to: ", self.shared_data.get_rotate_to()[0])
+            self.rotate_to_w(self.shared_data.get_rotate_to()[0])
+            self.shared_data.set_rotate_to(0.0, False)
+
         self.update_joints()
 
     def update_joints(self):
@@ -133,6 +162,16 @@ class Run(Node):
     def callback_popup(self,msg):
         self.popup=msg.data
         self.shared_data.set_popup(self.popup)
+
+    def callback_angle(self, msg):
+        self.angle_calc = msg.data
+        self.shared_data.set_angle_calc(msg.data)
+        
+    def callback_correction(self,msg):
+        if self.correction_asked_for == False: 
+            self.correction = msg.data 
+            self.correction_asked_for = True 
+
 
     def pub_start (self):
         self.start_time = time.time()
@@ -418,6 +457,7 @@ class Popup_Attach (QMainWindow):
 
         print("PLEASE Attach Contact Pole")
 
+
  
 
     def exec(self):
@@ -529,6 +569,173 @@ class Popup_Not_Attach (QMainWindow):
 
         self.show()
     
+
+class Popup_Angle_Correction (QMainWindow):
+
+    def __init__(self,parent, shared_data):
+
+        super().__init__(parent)
+
+        # setting title
+
+        self.setWindowTitle("Angle Correction ")
+
+        # setting geometry
+
+        self.setGeometry(100, 100, 400, 300)
+
+        #attach shared data
+        self.shared_data = shared_data
+
+
+        #angle options 
+        self.angle_options = ['0', '5', '10', '15', '20', '25', '30']
+
+        #directon options 
+        self.direction_options = ['CW', "CCW"]
+
+        self.angle_add = 0 
+
+        self.angle_direction = 'CW'
+
+        # calling method
+
+        self.UiComponents()
+
+
+        # show all the widgets
+
+        self.show()
+
+        # method for widgets
+
+    def UiComponents(self):
+
+        # create layout
+
+        #layout for text at the top
+
+        text_layout = QHBoxLayout()
+
+        text_layout.setContentsMargins(150, 0, 150, 0)
+
+        #layout for dropdown menus 
+
+        dropdown_layout = QHBoxLayout()
+
+        dropdown_layout.setSpacing(60)
+
+        dropdown_layout.setContentsMargins(100, 0, 100, 0)
+
+        #layout for save and exit buttons
+
+        button_layout = QHBoxLayout()
+
+        button_layout.setSpacing(60)
+
+        button_layout.setContentsMargins(100, 0, 100, 0)
+
+        #layout of full page
+
+        full_layout = QVBoxLayout()
+
+        full_layout.addLayout(text_layout)
+
+        full_layout.addLayout(dropdown_layout)
+
+        full_layout.addLayout(button_layout)
+ 
+        #Add text  
+
+        self.label = QLabel("Please Select the Angle Correction Needed. Press Save when done", self)
+
+        text_layout.addWidget(self.label)
+
+        #Add Drop Downs
+
+        self.angle_menu = QComboBox()
+        self.angle_menu.addItems(self.angle_options)
+        self.angle_menu.currentIndexChanged.connect( self.angle_menu_idx_changed)
+
+        self.dir_menu = QComboBox()
+        self.dir_menu.addItems(self.direction_options)
+        self.dir_menu.currentIndexChanged.connect( self.dir_menu_idx_changed)
+
+        dropdown_layout.addWidget(self.angle_menu)
+        dropdown_layout.addWidget(self.dir_menu)
+
+        #Add Two Drop Down Menus 
+
+        self.button_yes = self.create_button("Yes", self.yes)
+
+        self.button_no = self.create_button("No", self.no)
+ 
+        button_layout.addWidget(self.button_yes)
+
+        button_layout.addWidget(self.button_no)
+
+
+        #Set Layout
+
+        widget = QWidget()
+
+        widget.setLayout(full_layout)
+
+        self.setCentralWidget(widget)
+
+ 
+    def create_button(self, name,func):
+
+        button = QPushButton(name, self)
+
+        button.clicked.connect(func)
+
+        return button
+
+
+    def angle_menu_idx_changed(self, idx):
+        print("Menu Angle Changed: ", float(self.angle_options[idx]))
+        self.angle_add = float(self.angle_options[idx])
+        angle = self.shared_data.get_angle_calc()
+        if self.angle_direction =='CW':
+            angle_new = angle +self.angle_add *0.0174533
+        else: 
+            angle_new = angle - self.angle_add *0.0174533
+        
+        self.shared_data.set_rotate_to(angle_new, True)
+
+    def dir_menu_idx_changed(self, idx):
+        print("Direciton Angle Changed: ", self.direction_options[idx])
+        self.angle_direction = self.direction_options[idx]
+        angle = self.shared_data.get_angle_calc()
+        if self.angle_direction =='CW':
+            angle_new = angle +self.angle_add *0.0174533
+        else: 
+            angle_new = angle - self.angle_add *0.0174533
+        
+        self.shared_data.set_rotate_to(angle_new, True)
+
+
+
+
+    def yes(self):
+
+        self.shared_data.set_correction_done(True)
+        self.shared_data.set_correction_data(True, self.angle_add *0.0174533, self.angle_direction)
+        self.close()
+        
+
+
+    def no(self):
+
+        print("You must hit save to move forward with your angle correction ")
+
+ 
+
+    def exec(self):
+
+        self.show()
+
 class Window(QMainWindow):
 
     def __init__(self, shared_data):
@@ -950,7 +1157,7 @@ class Window(QMainWindow):
         
 
         self.trees_saved.append([self.tree_val, self.branch_val, self.trial_val])
-        self.tests.append([self.tree_val, self.branch_val, self.trial_val, self.joints_in_order[0],self.joints_in_order[1],self.joints_in_order[2],self.joints_in_order[3], self.joints_in_order[4], self.joints_in_order[5],self.real_diameter, self.diameters[0], self.diameters[1], self.diameters[2], self.diameters[3], self.hit_pos, self.distance_tree, self.total_time, self.notes])
+        self.tests.append([self.tree_val, self.branch_val, self.trial_val, self.joints_in_order[0],self.joints_in_order[1],self.joints_in_order[2],self.joints_in_order[3], self.joints_in_order[4], self.joints_in_order[5],self.real_diameter, self.diameters[0], self.diameters[1], self.diameters[2], self.diameters[3], self.hit_pos, self.distance_tree, self.total_time, self.angle_add, self.angle_dir, self.notes])
         self.notes = "N/a"
         self.note_area.clear()
         self.hit_pos = "N/a"
@@ -962,7 +1169,7 @@ class Window(QMainWindow):
         time = datetime.datetime.now()
         time_formated = time.strftime("_%Y_%m_%d_%H_%M_%S")
         filename = '/home/ryan/ros2_ws_groundtruth/src/Ground_Truth_Ros/ground_truth/csv_files/'+self.file + time_formated+ '.csv'
-        fields = ['Tree', 'Branch', 'Trial', 'elbow_joint', 'shoulder_lift_joint', 'shoulder_pan_joint', 'wrist_1_joint', 'wrist_2_joint','wrist_3_joint', 'measured diameter', "W1 Diameter", "W2 Diameter", "Mean Diameter", "Median Diameter", "Contact", "Distance from Tree", "Time (s)", "Notes"]
+        fields = ['Tree', 'Branch', 'Trial', 'elbow_joint', 'shoulder_lift_joint', 'shoulder_pan_joint', 'wrist_1_joint', 'wrist_2_joint','wrist_3_joint', 'measured diameter', "W1 Diameter", "W2 Diameter", "Mean Diameter", "Median Diameter", "Contact", "Distance from Tree", "Time (s)", "Angle Correction", "Angle Correction Direction","Notes"]
         with open(filename, 'x', newline='') as file:
             csvwriter = csv.writer(file)   
             # writing the fields   
@@ -1081,11 +1288,25 @@ class Window(QMainWindow):
         self.total_time = round(self.shared_data.get_total_time(),2)
         self.time_text.setText(f"Time: {self.total_time} ")
 
+    def correction_popup(self):
+        if self.shared_data.get_correction_popup():
+            self.shared_data.set_correction_popup(False)
+            popup = Popup_Angle_Correction(self, self.shared_data)
+            popup.exec()
+
+    def correction_data(self):
+        if self.shared_data.get_correction_data()[0]:
+            self.angle_add = self.shared_data.get_correction_data()[1]
+            self.angle_dir = self.shared_data.get_correction_data()[2]
+            self.shared_data.set_correction_data(False, self.angle_add, self.angle_dir)
+
     def timerEvent(self, e):
         self.joint_update(self.joint_layout)
         self.diameters_update()
         self.attach_popup()
         self.total_time_update()
+        self.correction_popup()
+        self.correction_data()
 
         
 
@@ -1107,6 +1328,14 @@ class SharedData:
         self.pub_5 = False
         self.total_time = 0 
         self.touch_button = False
+        self.angle_calc = 0.0
+        self.correction_popup = False
+        self.correction_done = False 
+        self.rotate_to = 0.0 
+        self.rotate_to_request = False
+        self.correction_data_set = False
+        self.angle_add = 0.0
+        self.angle_dir = 'CW'
     
     def get_reset(self):
         return self.reset
@@ -1182,6 +1411,42 @@ class SharedData:
     def get_total_time(self):
         return self.total_time
     
+    def set_angle_calc(self, angle_calc):
+        self.angle_calc = angle_calc
+        
+    def get_angle_calc(self):
+        return self.angle_calc 
+    
+    def set_correction_popup(self, correction_popup):
+        self.correction_popup = correction_popup
+
+    def get_correction_popup(self):
+        return self.correction_popup
+    
+    def set_correction_done(self, correction_done):
+        self.correction_done = correction_done 
+    
+    def get_correction_done(self):
+        return self.correction_done
+    
+    def set_rotate_to(self, rotate_to, rotate_to_request):
+        self.rotate_to = rotate_to
+        self.rotate_to_request = rotate_to_request 
+
+    def get_rotate_to(self):
+        return [self.rotate_to, self.rotate_to_request]
+    
+    def set_correction_data(self, b, angle_add, angle_dir):
+        self.correction_data_set = b
+        self.angle_add = angle_add 
+        self.angle_dir = angle_dir
+
+    def get_correction_data(self):
+        return [self.correction_data_set, self.angle_add, self.angle_dir]
+
+
+    
+
 
 class ROS2NodeWrapper(threading.Thread):
     def __init__(self, node_class, *args, **kwargs):

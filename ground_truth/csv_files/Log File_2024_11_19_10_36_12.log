@@ -1,0 +1,31 @@
+2024-11-19 10:36:12,721 - INFO - File name changed to: UFO_Tree_0
+2024-11-19 10:36:12,722 - INFO - Trial Number changed to: 1
+2024-11-19 10:36:12,722 - INFO - Branch Number changed to: 1
+2024-11-19 10:36:12,722 - INFO - File name changed to: UFO_Tree_1
+2024-11-19 10:36:12,722 - INFO - File name changed to: UFO_Tree_1
+2024-11-19 10:36:12,722 - INFO - Tree Number changed to: 1
+2024-11-19 10:36:15,194 - INFO - Controller change requested : Switching to Forward
+2024-11-19 10:36:16,029 - INFO - Controller change requested : Switching to Joints
+2024-11-19 10:43:46,876 - INFO - Start Requested
+2024-11-19 10:44:17,177 - INFO - Start Requested
+2024-11-19 10:45:28,112 - INFO - Diameter W1 changed to: 0.803255021572113 
+2024-11-19 10:45:28,112 - INFO - Diameter W2 changed to: 0.7630922794342041 
+2024-11-19 10:45:28,112 - INFO - Diameter Mean changed to: 0.798620879650116 
+2024-11-19 10:45:28,112 - INFO - Diameter Median changed to: 0.803255021572113 
+2024-11-19 10:45:28,112 - INFO - Total time changed to: 69.24
+2024-11-19 10:45:39,563 - INFO - Hit position changed to: r 
+2024-11-19 10:45:39,685 - INFO - Hit position changed to: ri 
+2024-11-19 10:45:39,828 - INFO - Hit position changed to: rig 
+2024-11-19 10:45:39,902 - INFO - Hit position changed to: righ 
+2024-11-19 10:45:40,030 - INFO - Hit position changed to: right 
+2024-11-19 10:45:41,434 - INFO - Distance to tree changed to: 9 
+2024-11-19 10:45:41,657 - INFO - Distance to tree changed to: 9. 
+2024-11-19 10:45:42,488 - INFO - Distance to tree changed to: 9.0 
+2024-11-19 10:45:43,951 - INFO - Measured Diameter changed to: 0
+2024-11-19 10:45:44,167 - INFO - Measured Diameter changed to: 0.
+2024-11-19 10:45:44,522 - INFO - Measured Diameter changed to: 0.7
+2024-11-19 10:45:44,729 - INFO - Measured Diameter changed to: 0.75
+2024-11-19 10:45:47,859 - INFO - Hit position changed to:  
+2024-11-19 10:45:47,859 - INFO - Save Requested. Saved Values : [[1, 1, 1, -1.0188403129577637, -2.544710775414938, -0.16468602815736944, 0.3986227947422485, 0.7318354845046997, 1.5752754211425781, '0.75', 0.803255021572113, 0.7630922794342041, 0.798620879650116, 0.803255021572113, 'right', '9.0', 69.24, 'N/a']]
+2024-11-19 10:45:53,016 - INFO - Exit Requested. Saved Values : [[1, 1, 1, -1.0188403129577637, -2.544710775414938, -0.16468602815736944, 0.3986227947422485, 0.7318354845046997, 1.5752754211425781, '0.75', 0.803255021572113, 0.7630922794342041, 0.798620879650116, 0.803255021572113, 'right', '9.0', 69.24, 'N/a']]
+2024-11-19 10:45:53,016 - INFO - After Exit Request values were saved to: /home/ryan/ros2_ws_groundtruth/src/Ground_Truth_Ros/ground_truth/csv_files/UFO_Tree_1_2024_11_19_10_45_53.csv
