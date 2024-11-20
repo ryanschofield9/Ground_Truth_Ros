@@ -273,6 +273,7 @@ class CenteringCleaned(Node):
         print("argmin tof1: ",np.argmin(self.y_fit_tof1) )
         print("argmin tof1: ",np.argmin(self.y_fit_tof2) )
         
+        
         idx_tof1_cleaned = (np.argmin(self.y_fit_tof1)/len(self.x_fit_tof1) ) * len(self.tof1_inrange_cleaned) + (len(self.tof1_inrange) - len(self.tof1_inrange_cleaned))
 
         idx_tof2_cleaned = (np.argmin(self.y_fit_tof2)/len(self.x_fit_tof2) ) * len(self.tof2_inrange_cleaned) + (len(self.tof2_inrange) - len(self.tof2_inrange_cleaned))
@@ -431,8 +432,21 @@ class CenteringCleaned(Node):
         for idx, val in enumerate(tof2_inrange_cleaned): 
             self.t_2_fit.append(idx)
 
+      
+
         self.tof1_inrange_cleaned = tof1_inrange_cleaned
         self.tof2_inrange_cleaned = tof2_inrange_cleaned
+
+        self.get_logger().info(f"in range tof1 : {self.tof1_inrange}")
+        self.get_logger().info(f"len in range tof1 : {len(self.tof1_inrange)}")
+        self.get_logger().info(f"in range cleaned tof1 : {self.tof1_inrange_cleaned}")
+        self.get_logger().info(f"len in range cleaned tof1 : {len(self.tof1_inrange_cleaned)}")
+
+        self.get_logger().info(f"in range tof2 : {self.tof2_inrange}")
+        self.get_logger().info(f"len in range tof2 : {len(self.tof2_inrange)}")
+        self.get_logger().info(f"in range cleaned tof2 : {self.tof2_inrange_cleaned}")
+        self.get_logger().info(f"len in range cleaned tof2 : {len(self.tof2_inrange_cleaned)}")
+
         params_tof1, covariance_tof1 = curve_fit(parabola, self.t_fit, tof1_inrange_cleaned)
         params_tof2, covariance_tof2 = curve_fit(parabola, self.t_2_fit, tof2_inrange_cleaned)
         a1, b1, c1 = params_tof1

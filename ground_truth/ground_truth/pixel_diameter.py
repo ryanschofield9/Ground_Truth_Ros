@@ -499,9 +499,13 @@ class PixelDiameter(Node):
                 middle_available.append(mid)
   
         #change list so only the top 40% most seen values are in the list 
-        per = 0.6
-        length_from_end = int(len(middle_available) * (per))
-        middle_options = middle_available[-length_from_end:-1]
+
+        if len(middle_available) > 4:
+            per = 0.6
+            length_from_end = int(len(middle_available) * (per))
+            middle_options = middle_available[-length_from_end:-1]
+        else:
+            middle_options = middle_available
 
         return middle_options 
     

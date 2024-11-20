@@ -35,6 +35,7 @@ setup(
             'pub_reset= ground_truth.pub_reset:main',
             'Gui= ground_truth.GUI:main',
             'touch= ground_truth.touch:main',
+            'pub_camera = ground_truth.camera_pub:main',
 
         ],
     },

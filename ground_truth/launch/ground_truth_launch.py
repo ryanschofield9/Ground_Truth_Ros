@@ -37,5 +37,10 @@ def generate_launch_description():
             package='ground_truth',
             executable='record_video_service',
             name='record_video_service',
+        ), 
+         Node(
+            package='ground_truth',
+            executable='pub_camera',
+            name='pub_camera',
         )
     ])

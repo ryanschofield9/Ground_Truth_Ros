@@ -1298,6 +1298,7 @@ class Window(QMainWindow):
         if self.shared_data.get_correction_data()[0]:
             self.angle_add = self.shared_data.get_correction_data()[1]
             self.angle_dir = self.shared_data.get_correction_data()[2]
+            logging.info(f"The angle correction has changed: angle added:{self.angle_add} angle direction: {self.angle_dir} ")
             self.shared_data.set_correction_data(False, self.angle_add, self.angle_dir)
 
     def timerEvent(self, e):

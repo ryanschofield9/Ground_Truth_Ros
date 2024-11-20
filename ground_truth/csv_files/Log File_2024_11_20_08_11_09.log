@@ -1,0 +1,54 @@
+2024-11-20 08:11:09,741 - INFO - File name changed to: UFO_Tree_0
+2024-11-20 08:11:09,742 - INFO - Trial Number changed to: 1
+2024-11-20 08:11:09,742 - INFO - Branch Number changed to: 1
+2024-11-20 08:11:09,742 - INFO - File name changed to: UFO_Tree_1
+2024-11-20 08:11:09,742 - INFO - File name changed to: UFO_Tree_1
+2024-11-20 08:11:09,742 - INFO - Tree Number changed to: 1
+2024-11-20 08:11:25,754 - INFO - Measured Diameter changed to: 0
+2024-11-20 08:11:25,977 - INFO - Measured Diameter changed to: 0.
+2024-11-20 08:11:26,702 - INFO - Measured Diameter changed to: 0.5
+2024-11-20 08:12:26,747 - INFO - Controller change requested : Switching to Forward
+2024-11-20 08:12:27,416 - INFO - Controller change requested : Switching to Joints
+2024-11-20 08:12:28,704 - INFO - Set to Rotate to: 0 degrees (0.0 radians)
+2024-11-20 08:12:30,984 - INFO - Set to Rotate to: 90 degrees (1.5708 radians)
+2024-11-20 08:13:30,198 - INFO - Distance to tree changed to: 9 
+2024-11-20 08:13:30,577 - INFO - Distance to tree changed to: 9. 
+2024-11-20 08:13:30,859 - INFO - Distance to tree changed to: 9.0 
+2024-11-20 08:13:36,981 - INFO - Start Requested
+2024-11-20 08:14:06,806 - INFO - Start Requested
+2024-11-20 08:14:57,453 - INFO - The angle correction has changed: angle added:0.2617995 angle direction: CW 
+2024-11-20 08:15:36,253 - INFO - Diameter W1 changed to: 0.5345816016197205 
+2024-11-20 08:15:36,253 - INFO - Diameter W2 changed to: 0.5246819257736206 
+2024-11-20 08:15:36,253 - INFO - Diameter Mean changed to: 0.5227019786834717 
+2024-11-20 08:15:36,253 - INFO - Diameter Median changed to: 0.5345816016197205 
+2024-11-20 08:15:36,253 - INFO - Total time changed to: 88.1
+2024-11-20 08:15:49,198 - INFO - Hit position changed to: l 
+2024-11-20 08:15:49,495 - INFO - Hit position changed to: le 
+2024-11-20 08:15:49,668 - INFO - Hit position changed to: lef 
+2024-11-20 08:15:49,901 - INFO - Hit position changed to: left 
+2024-11-20 08:15:53,281 - INFO - Note changed to: T 
+2024-11-20 08:15:53,489 - INFO - Note changed to: Te 
+2024-11-20 08:15:53,697 - INFO - Note changed to: Tes 
+2024-11-20 08:15:53,922 - INFO - Note changed to: Test 
+2024-11-20 08:15:54,005 - INFO - Note changed to: Testi 
+2024-11-20 08:15:54,165 - INFO - Note changed to: Testin 
+2024-11-20 08:15:54,224 - INFO - Note changed to: Testing 
+2024-11-20 08:15:54,357 - INFO - Note changed to: Testing  
+2024-11-20 08:15:58,399 - INFO - Note changed to: Testing 
+2024-11-20 08:15:58,899 - INFO - Note changed to: Testin 
+2024-11-20 08:15:58,928 - INFO - Note changed to: Testi 
+2024-11-20 08:15:58,959 - INFO - Note changed to: Test 
+2024-11-20 08:15:58,990 - INFO - Note changed to: Tes 
+2024-11-20 08:15:59,021 - INFO - Note changed to: Te 
+2024-11-20 08:15:59,051 - INFO - Note changed to: T 
+2024-11-20 08:15:59,081 - INFO - Note changed to:  
+2024-11-20 08:16:01,774 - INFO - Note changed to: 1 
+2024-11-20 08:16:01,824 - INFO - Note changed to: 15 
+2024-11-20 08:16:01,923 - INFO - Note changed to: 15  
+2024-11-20 08:16:02,470 - INFO - Note changed to: 15 C 
+2024-11-20 08:16:02,991 - INFO - Note changed to: 15 CW 
+2024-11-20 08:16:07,658 - INFO - Note changed to:  
+2024-11-20 08:16:07,658 - INFO - Hit position changed to:  
+2024-11-20 08:16:07,658 - INFO - Save Requested. Saved Values : [[1, 1, 1, -0.9164648056030273, -2.60227694133901, -0.14980727830995733, 0.35553936540570064, 0.7043392062187195, 1.5564160346984863, '0.5', 0.5345816016197205, 0.5246819257736206, 0.5227019786834717, 0.5345816016197205, 'left', '9.0', 88.1, 0.2617995, 'CW', '15 CW']]
+2024-11-20 08:16:08,509 - INFO - Exit Requested. Saved Values : [[1, 1, 1, -0.9164648056030273, -2.60227694133901, -0.14980727830995733, 0.35553936540570064, 0.7043392062187195, 1.5564160346984863, '0.5', 0.5345816016197205, 0.5246819257736206, 0.5227019786834717, 0.5345816016197205, 'left', '9.0', 88.1, 0.2617995, 'CW', '15 CW']]
+2024-11-20 08:16:08,510 - INFO - After Exit Request values were saved to: /home/ryan/ros2_ws_groundtruth/src/Ground_Truth_Ros/ground_truth/csv_files/UFO_Tree_1_2024_11_20_08_16_08.csv
