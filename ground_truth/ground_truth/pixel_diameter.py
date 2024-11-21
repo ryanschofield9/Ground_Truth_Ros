@@ -32,6 +32,8 @@ import copy
 import cv2
 import statistics
 
+from sensor_msgs.msg import Image
+
 plt.rcParams["savefig.bbox"] = "tight"
 weights = Raft_Small_Weights.DEFAULT
 transforms = weights.transforms()
@@ -77,6 +79,7 @@ class PixelDiameter(Node):
         self.pub_step5 = self.create_publisher(Bool, 'step5_popup', 10)
         self.sub_reset = self.create_subscription(Bool, 'reset',self.calback_reset, 10 )
         self.pub_vel_commands = self.create_publisher(TwistStamped, '/servo_node/delta_twist_cmds', 10)
+        self.pub_recording = self.create_publisher(Bool, 'recording', 10)
         
         #create timers 
         self.control_timer = self.create_timer(1/10, self.main_control)
@@ -96,6 +99,23 @@ class PixelDiameter(Node):
         #set future 
         self.future = None
 
+        #Create Publisher for camera recording 
+        self.pub_camera_image= self.create_publisher(Image, 'camera_image', 10)
+        
+        
+        #self.timer = self.create_timer(1/10, self.camera_image)
+        self.video = cv2.VideoCapture(0)
+        if (self.video.isOpened() == False):
+            print("Error reading video file")
+
+        self.frame_width = int(self.video.get(3))
+        self.frame_height = int(self.video.get(4))
+
+        self.recording = False
+
+
+        
+      
 
         
     def main_control (self):
@@ -103,25 +123,38 @@ class PixelDiameter(Node):
         #The arm will move forward until the tree is touched 
         
         if self.step_3: 
+            
             if not self.future: # A call is not pending
+                self.starting_y = self.tool_y 
+                self.get_logger().info(f"Sending request for camera record. Y Pose want now is {self.starting_y}")
+                self.recording = True
+                self.video.release()
                 request = CameraRecord.Request()
                 self.file_name = '/home/ryan/ros2_ws_groundtruth/src/Ground_Truth_Ros/ground_truth/videos/testing.avi'
                 request.file_name = self.file_name
                 self.future = self.camera_record_client.call_async(request)
-                self.starting_y = self.tool_y 
+                
 
             if self.future.done(): # a call just completed
                 if self.first: 
                     self.get_logger().info("Done")
                     print(self.future.result())
                     self.first = False
+                    
+                   
                 elif self.back_to_original == False:
                     self.publish_twist([0.0, -0.1, 0.0], [0.0, 0.0, 0.0])
                     self.move_up_to_y(self.starting_y) 
                 elif self.back_to_original: 
-                        self.step_3 = False 
-                        self.step_4 = True 
-                        self.future = None
+                    self.step_3 = False 
+                    self.step_4 = True 
+                    self.future = None
+                    self.video = cv2.VideoCapture(0)
+                    if (self.video.isOpened() == False):
+                        print("Error reading video file")
+                    self.recording = False
+                
+    
             
         elif self.step_4: 
             ## HAVE TO ADD HERE TO DO OPTICAL FLOW 
@@ -179,6 +212,23 @@ class PixelDiameter(Node):
                 self.pub_step5.publish(msg)
                 self.reset()
             
+    
+    def camera_image(self):
+        if self.recording == False:
+            ret, frame =self.video.read()
+
+            msg = Image()
+            msg.header.stamp = Node.get_clock(self).now().to_msg()
+            msg.header.frame_id = 'Camera'
+            msg.height = self.frame_height
+            msg.width= self.frame_width
+            msg.encoding = "bgr8"
+            msg.is_bigendian = False
+            msg.step = np.shape(frame)[2] *np.shape(frame)[1]
+            msg.data = np.array(frame).tobytes()
+
+            self.pub_camera_image.publish(msg)
+
     def calback_step3_flag(self,msg):
         self.step_3= msg.data
     
@@ -186,7 +236,8 @@ class PixelDiameter(Node):
         #Using the given y pose that we want to go back to, move down until we reach that location 
         y_pose= self.tool_y #get the current tool y pose 
         #print("y_pose: ", y_pose, " y_pose_want", y_pose_want)
-        if (y_pose_want - y_pose) < 0.001: 
+        self.get_logger().info(f"y_pose: {y_pose} y_pose_want: {y_pose_want}")
+        if ((y_pose_want) - (y_pose)) < 0.001: 
             #when within 1mm of wanted y pose 
             self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving 
             self.back_to_original= True
@@ -216,7 +267,7 @@ class PixelDiameter(Node):
                 #if the pose is given as an array save the position and orientation as p and o respectively 
                 p = pose.pose.position
                 o = pose.pose.orientation
-                return p.y #return just the tool y position with respect to teh base in m 
+                return p.y #return just the tool y position with respect to the base in m 
             else:
                 return pose
             

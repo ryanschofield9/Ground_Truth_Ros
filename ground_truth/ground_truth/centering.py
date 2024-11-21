@@ -17,7 +17,7 @@ import numpy as np
 from std_msgs.msg import Float32, Int64, Bool
 
 from sensor_msgs.msg import JointState
-import time 
+import time as t
 import matplotlib.pyplot as plt
 import math 
 
@@ -29,6 +29,9 @@ from moveit_msgs.msg import (
     JointConstraint,
 )
 from rclpy.action import ActionClient
+
+import datetime
+import logging
 
 
 
@@ -122,7 +125,14 @@ class CenteringCleaned(Node):
         self.switch_controller(self.forward_cntr, self.joint_cntr)
         
         #set start_time 
-        self.start_time = time.time() 
+        self.start_time = t.time() 
+
+        #create logging 
+        time_file = datetime.datetime.now()
+        time_formated = time_file.strftime("_%Y_%m_%d_%H_%M_%S")
+        log_file = "/home/ryan/ros2_ws_groundtruth/src/Ground_Truth_Ros/ground_truth/log_files/Centering Log File" + time_formated +".log"
+        logging.basicConfig(filename=log_file, level=logging.INFO,
+                            format='%(asctime)s - %(levelname)s - %(message)s')
 
 #TO DO, DON'T NEED TO DO MUCH WITH RAW DATA IN THIS ANYMORE 
 
@@ -133,13 +143,13 @@ class CenteringCleaned(Node):
         #this function is called every 0.1 seconds and holds the main control structure for getting parallel to the branch 
         if self.step_1: 
             if self.first:
-                self.start_time = time.time()
+                self.start_time = t.time()
                 self.first = False
                 self.switch_controller(self.forward_cntr, self.joint_cntr)
             if self.done_step1 == False: 
                 #if the system has not yet gotten parallel to the branch with a first guess 
                 if self.move_down_initialize == False:
-                    now = time.time()
+                    now = t.time()
                     if (now - self.start_time ) < self.move_down_start:
                          #if it hasn't been the alloted time for moving down
                         self.publish_twist([0.0, 0.1, 0.0], [0.0, 0.0, 0.0]) #move down at 0.1 m/s (negative y is up ) 
@@ -147,12 +157,12 @@ class CenteringCleaned(Node):
                         self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving (move at 0 m/s) 
                         self.move_down_initialize = True 
                         self.move_down_start = 2
-                        self.start_time = time.time()
+                        self.start_time = t.time()
                 elif self.tof_collected == False: 
 
                     self.collect_data = True
                     # if tof data has not been collected 
-                    now = time.time()
+                    now = t.time()
                     if (now - self.start_time ) < self.move_up_collect:
                         #if it hasn't been the alloted time for moving up and collecting tof data 
                         self.publish_twist([0.0, -0.1, 0.0], [0.0, 0.0, 0.0]) #move up at 0.1 m/s (negative y is up ) 
@@ -187,6 +197,11 @@ class CenteringCleaned(Node):
                     self.switch_controller(self.joint_cntr, self.forward_cntr) #switch from forward_position controller to scaled_joint_trajectory controller 
                     self.rotate_to_w(self.branch_angle)
                     self.plot_tof()
+                    logging.info(f"TOF1: { self.tof1_filtered}" )
+                    logging.info(f"TOF1 in range: { self.tof1_inrange}" )
+
+                    logging.info(f"TOF2: { self.tof2_filtered}" )
+                    logging.info(f"TOF2 in range: { self.tof2_inrange}" )
                     self.done_step1 = True #the system has gotten parallel with the branch, set as True 
                     msg= Bool()
                     msg.data = True
@@ -215,7 +230,7 @@ class CenteringCleaned(Node):
     def callback_tof1 (self, msg):
         #collect raw tof1 data (in mm)
         if self.collect_data:
-            now = time.time()
+            now = t.time()
             if (now - self.start_time ) < self.move_up_collect:
                 #if it hasn't been the alloted time for moving up and collecting tof data 
                 self.tof1_readings.append(msg.data) #add raw data reading to list of tof1 readings 
@@ -224,7 +239,7 @@ class CenteringCleaned(Node):
     def callback_tof2(self, msg):
         #collect raw tof2 data (in mm)
         if self.collect_data:
-            now = time.time()
+            now = t.time()
             if (now - self.start_time ) < self.move_up_collect:
                 #if it hasn't been the alloted time for moving up and collecting tof data
                 self.tof2_readings.append(msg.data) #add raw data reading to list of tof2 readings 
@@ -232,7 +247,7 @@ class CenteringCleaned(Node):
     def callback_tof1_filtered(self, msg):
         #collect and use filtered tof1 data (in mm)
         if self.collect_data:
-            now = time.time()
+            now = t.time()
             if (now - self.start_time ) < self.move_up_collect:
                 #if it hasn't been the alloted time for moving up and collecting tof data
                 self.tof1_filtered.append(msg.data) #add data reading to list of tof1 readings
@@ -248,7 +263,7 @@ class CenteringCleaned(Node):
     def callback_tof2_filtered(self, msg):
         #collect and use filtered tof2 data (in mm)
         if self.collect_data:
-            now = time.time()
+            now = t.time()
             if (now - self.start_time ) < self.move_up_collect:
                 #if it hasn't been the alloted time for moving up and collecting tof data
                 self.tof2_filtered.append(msg.data) #add data reading to list of tof2 readings
@@ -326,7 +341,7 @@ class CenteringCleaned(Node):
             #print("No branch was found. The system will restart its moving up process") 
             #self.move_down_start += self.move_up_collect 
             #self.move_down_initialize = False 
-            #self.start_time = time.time()
+            #self.start_time = t.time()
             #self.tof_collected = False 
 
     def pub_tool_angle(self):

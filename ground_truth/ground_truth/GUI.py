@@ -784,7 +784,7 @@ class Window(QMainWindow):
         #adding logging 
         time = datetime.datetime.now()
         time_formated = time.strftime("_%Y_%m_%d_%H_%M_%S")
-        log_file = "/home/ryan/ros2_ws_groundtruth/src/Ground_Truth_Ros/ground_truth/csv_files/Log File" + time_formated +".log"
+        log_file = "/home/ryan/ros2_ws_groundtruth/src/Ground_Truth_Ros/ground_truth/log_files/Log File" + time_formated +".log"
         logging.basicConfig(filename=log_file, level=logging.INFO,
                             format='%(asctime)s - %(levelname)s - %(message)s')
 

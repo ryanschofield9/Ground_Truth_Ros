@@ -11,6 +11,7 @@ from rclpy.node import Node
 
 import cv2
 import time 
+from std_msgs.msg import Float32, Bool
 
 
 
@@ -24,28 +25,48 @@ class Pub_Camera(Node):
         #Create Publisher 
         self.pub_camera_image= self.create_publisher(Image, 'camera_image', 10)
         self.timer = self.create_timer(1/50, self.camera_image)
-        self.video =   video = cv2.VideoCapture(0)
+        self.video = cv2.VideoCapture(0)
         if (self.video.isOpened() == False):
             print("Error reading video file")
 
         self.frame_width = int(self.video.get(3))
         self.frame_height = int(self.video.get(4))
+
+        #Publisher to know when recording 
+        self.sub_recording = self.create_subscription(Bool, 'recording', self.callback_recording, 10)
+        self.recording = False 
+        self.first = False 
         
     def camera_image(self):
-        
-        ret, frame =self.video.read()
+        if self.recording:
+            if self.first:
+                self.video.release()
+                self.first = False
+        else:
+            if self.first:
+                self.video = cv2.VideoCapture(0)
+                if (self.video.isOpened() == False):
+                    print("Error reading video file")
+                self.first = False
 
-        msg = Image()
-        msg.header.stamp = Node.get_clock(self).now().to_msg()
-        msg.header.frame_id = 'Camera'
-        msg.height = self.frame_height
-        msg.width= self.frame_width
-        msg.encoding = "bgr8"
-        msg.is_bigendian = False
-        msg.step = np.shape(frame)[2] *np.shape(frame)[1]
-        msg.data = np.array(frame).tobytes()
+            ret, frame =self.video.read()
 
-        self.pub_camera_image.publish(msg)
+            msg = Image()
+            msg.header.stamp = Node.get_clock(self).now().to_msg()
+            msg.header.frame_id = 'Camera'
+            msg.height = self.frame_height
+            msg.width= self.frame_width
+            msg.encoding = "bgr8"
+            msg.is_bigendian = False
+            msg.step = np.shape(frame)[2] *np.shape(frame)[1]
+            msg.data = np.array(frame).tobytes()
+
+            self.pub_camera_image.publish(msg)
+
+    def callback_recording(self, msg):
+        self.get_logger().info(f"A message of recording was recieved: {msg.data}")
+        self.recoridng = msg.data
+        self.first = True
     
 
 def main(args=None):
