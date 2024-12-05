@@ -36,6 +36,7 @@ setup(
             'Gui= ground_truth.GUI:main',
             'touch= ground_truth.touch:main',
             'pub_camera = ground_truth.camera_pub:main',
+            'ROB_541 = ground_truth.Rob_541_proj:main',
 
         ],
     },

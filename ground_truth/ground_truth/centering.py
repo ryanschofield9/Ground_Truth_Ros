@@ -55,6 +55,7 @@ class CenteringCleaned(Node):
         self.pub_step2 = self.create_publisher(Bool, 'step2', 10)
         self.pub_step3 = self.create_publisher(Bool, 'step3', 10)
         self.pub_angle =self.create_publisher(Float32, 'angle',10)
+        self.pub_camera_show = self.create_publisher(Bool, 'showing_camera', 10)
         self.pub_correction =self.create_publisher(Bool, 'correction',10)
         self.pub_timer = self.create_timer(1/10, self.main_control)
         self.tool_timer = self.create_timer(1/10, self.pub_tool_pose_y)
@@ -146,6 +147,9 @@ class CenteringCleaned(Node):
                 self.start_time = t.time()
                 self.first = False
                 self.switch_controller(self.forward_cntr, self.joint_cntr)
+                msg = Bool()
+                msg.data = True 
+                self.pub_camera_show.publish(msg)
             if self.done_step1 == False: 
                 #if the system has not yet gotten parallel to the branch with a first guess 
                 if self.move_down_initialize == False:

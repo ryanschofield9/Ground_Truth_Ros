@@ -31,6 +31,7 @@ from torchvision.utils import flow_to_image
 import copy 
 import cv2
 import statistics
+import datetime
 
 from sensor_msgs.msg import Image
 
@@ -100,16 +101,16 @@ class PixelDiameter(Node):
         self.future = None
 
         #Create Publisher for camera recording 
-        self.pub_camera_image= self.create_publisher(Image, 'camera_image', 10)
+        #self.pub_camera_image= self.create_publisher(Image, 'camera_image', 10)
         
         
         #self.timer = self.create_timer(1/10, self.camera_image)
-        self.video = cv2.VideoCapture(0)
-        if (self.video.isOpened() == False):
-            print("Error reading video file")
+        #self.video = cv2.VideoCapture(0)
+        #if (self.video.isOpened() == False):
+            #print("Error reading video file")
 
-        self.frame_width = int(self.video.get(3))
-        self.frame_height = int(self.video.get(4))
+        #self.frame_width = int(self.video.get(3))
+        #self.frame_height = int(self.video.get(4))
 
         self.recording = False
 
@@ -126,11 +127,18 @@ class PixelDiameter(Node):
             
             if not self.future: # A call is not pending
                 self.starting_y = self.tool_y 
-                self.get_logger().info(f"Sending request for camera record. Y Pose want now is {self.starting_y}")
-                self.recording = True
-                self.video.release()
+                #self.get_logger().info(f"Sending request for camera record. Y Pose want now is {self.starting_y}")
+                #self.recording = True
+                #self.video.release()
+                msg = Bool()
+                msg.data = True
+                for x in range (0,3):
+                    self.pub_recording.publish(msg)
                 request = CameraRecord.Request()
-                self.file_name = '/home/ryan/ros2_ws_groundtruth/src/Ground_Truth_Ros/ground_truth/videos/testing.avi'
+                time = datetime.datetime.now()
+                time_formated = time.strftime("_%Y_%m_%d_%H_%M_%S")
+                self.file_name = '/home/ryan/ros2_ws_groundtruth/src/Ground_Truth_Ros/ground_truth/videos/testing' + time_formated + ".avi"
+                self.get_logger().info(f"file name is {self.file_name}")
                 request.file_name = self.file_name
                 self.future = self.camera_record_client.call_async(request)
                 
@@ -149,10 +157,10 @@ class PixelDiameter(Node):
                     self.step_3 = False 
                     self.step_4 = True 
                     self.future = None
-                    self.video = cv2.VideoCapture(0)
-                    if (self.video.isOpened() == False):
-                        print("Error reading video file")
-                    self.recording = False
+                    #self.video = cv2.VideoCapture(0)
+                    #if (self.video.isOpened() == False):
+                        #print("Error reading video file")
+                    #self.recording = False
                 
     
             
