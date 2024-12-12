@@ -64,7 +64,7 @@ class Pub_Camera(Node):
             msg.width= self.frame_width
             msg.encoding = "bgr8"
             msg.is_bigendian = False
-            msg.step = np.shape(frame)[2] *np.shape(frame)[1]
+            #msg.step = np.shape(frame)[2] *np.shape(frame)[1]
             msg.data = np.array(frame).tobytes()
 
             self.pub_camera_image.publish(msg)
@@ -75,6 +75,7 @@ class Pub_Camera(Node):
     
     def callback_showing_camera(self,msg):
         self.get_logger().info(f"A message of showing_camera was recieved: {msg.data}")
+        self.recording = False 
         self.showing_camera = msg.data
         self.first = True
 

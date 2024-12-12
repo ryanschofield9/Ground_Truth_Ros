@@ -1,0 +1,54 @@
+2024-12-12 13:41:44,188 - INFO - File name changed to: UFO_Tree_0
+2024-12-12 13:41:44,189 - INFO - Trial Number changed to: 1
+2024-12-12 13:41:44,189 - INFO - Branch Number changed to: 1
+2024-12-12 13:41:44,189 - INFO - File name changed to: UFO_Tree_1
+2024-12-12 13:41:44,189 - INFO - File name changed to: UFO_Tree_1
+2024-12-12 13:41:44,189 - INFO - Tree Number changed to: 1
+2024-12-12 13:41:46,150 - INFO - Controller change requested : Switching to Forward
+2024-12-12 13:41:46,757 - INFO - Controller change requested : Switching to Joints
+2024-12-12 13:42:00,970 - INFO - Start Requested
+2024-12-12 13:42:30,250 - INFO - Controller change requested : Switching to Forward
+2024-12-12 13:42:30,659 - INFO - Controller change requested : Switching to Joints
+2024-12-12 13:42:40,077 - INFO - Start Requested
+2024-12-12 13:43:35,501 - INFO - The angle correction has changed: angle added:0.08726650000000001 angle direction: CW 
+2024-12-12 13:44:14,201 - INFO - Diameter W1 changed to: 0.9087949991226196 
+2024-12-12 13:44:14,201 - INFO - Diameter W2 changed to: 0.8482086658477783 
+2024-12-12 13:44:14,201 - INFO - Diameter Mean changed to: 0.9004644155502319 
+2024-12-12 13:44:14,201 - INFO - Diameter Median changed to: 0.9050083756446838 
+2024-12-12 13:44:14,201 - INFO - Total time changed to: 92.97
+2024-12-12 13:44:23,692 - INFO - Controller change requested : Switching to Forward
+2024-12-12 13:44:24,249 - INFO - Controller change requested : Switching to Joints
+2024-12-12 13:44:45,168 - INFO - Start Requested
+2024-12-12 13:45:53,749 - INFO - Controller change requested : Switching to Forward
+2024-12-12 13:45:54,941 - INFO - Controller change requested : Switching to Joints
+2024-12-12 13:46:07,523 - INFO - Start Requested
+2024-12-12 13:46:39,623 - INFO - Controller change requested : Switching to Forward
+2024-12-12 13:46:39,933 - INFO - Controller change requested : Switching to Joints
+2024-12-12 13:46:49,863 - INFO - Start Requested
+2024-12-12 13:47:28,365 - INFO - Controller change requested : Switching to Forward
+2024-12-12 13:47:28,661 - INFO - Controller change requested : Switching to Joints
+2024-12-12 13:47:42,964 - INFO - Start Requested
+2024-12-12 13:48:11,001 - INFO - The angle correction has changed: angle added:0.08726650000000001 angle direction: CW 
+2024-12-12 13:48:52,400 - INFO - Diameter W1 changed to: 0.3121449053287506 
+2024-12-12 13:48:52,401 - INFO - Diameter W2 changed to: 0.3121449053287506 
+2024-12-12 13:48:52,401 - INFO - Diameter Mean changed to: 0.7144311666488647 
+2024-12-12 13:48:52,401 - INFO - Diameter Median changed to: 0.8679150938987732 
+2024-12-12 13:48:52,401 - INFO - Total time changed to: 68.16
+2024-12-12 13:49:20,846 - INFO - Controller change requested : Switching to Forward
+2024-12-12 13:49:21,150 - INFO - Controller change requested : Switching to Joints
+2024-12-12 13:49:29,833 - INFO - Start Requested
+2024-12-12 13:51:25,457 - INFO - Controller change requested : Switching to Forward
+2024-12-12 13:51:25,922 - INFO - Controller change requested : Switching to Joints
+2024-12-12 13:51:34,173 - INFO - Start Requested
+2024-12-12 13:52:06,960 - INFO - Controller change requested : Switching to Forward
+2024-12-12 13:52:07,517 - INFO - Controller change requested : Switching to Joints
+2024-12-12 13:52:12,233 - INFO - Start Requested
+2024-12-12 13:52:45,200 - INFO - The angle correction has changed: angle added:0.0 angle direction: CW 
+2024-12-12 13:53:13,401 - INFO - Diameter W1 changed to: 0.5373567938804626 
+2024-12-12 13:53:13,401 - INFO - Diameter W2 changed to: 0.5373567938804626 
+2024-12-12 13:53:13,401 - INFO - Diameter Mean changed to: 1.320487380027771 
+2024-12-12 13:53:13,401 - INFO - Diameter Median changed to: 1.4142931699752808 
+2024-12-12 13:53:13,401 - INFO - Total time changed to: 55.7
+2024-12-12 13:53:27,512 - INFO - Controller change requested : Switching to Forward
+2024-12-12 13:53:27,865 - INFO - Controller change requested : Switching to Joints
+2024-12-12 13:53:48,802 - INFO - Start Requested
