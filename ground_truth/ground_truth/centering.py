@@ -149,7 +149,8 @@ class CenteringCleaned(Node):
                 self.switch_controller(self.forward_cntr, self.joint_cntr)
                 msg = Bool()
                 msg.data = True 
-                self.pub_camera_show.publish(msg)
+                for x in range (0,3):
+                    self.pub_camera_show.publish(msg)
             if self.done_step1 == False: 
                 #if the system has not yet gotten parallel to the branch with a first guess 
                 if self.move_down_initialize == False:

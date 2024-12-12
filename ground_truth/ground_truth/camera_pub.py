@@ -32,12 +32,16 @@ class Pub_Camera(Node):
         self.frame_width = int(self.video.get(3))
         self.frame_height = int(self.video.get(4))
 
+        self.video.release()
+
         #Publisher to know when recording 
         self.sub_recording = self.create_subscription(Bool, 'recording', self.callback_recording, 10)
         self.sub_camera_pub = self.create_subscription(Bool, 'showing_camera', self.callback_showing_camera, 10)
         self.recording = False 
-        self.first = True
+        self.first = False
         self.showing_camera = False
+        
+        
         
     def camera_image(self):
         if self.recording:
@@ -72,6 +76,7 @@ class Pub_Camera(Node):
     def callback_showing_camera(self,msg):
         self.get_logger().info(f"A message of showing_camera was recieved: {msg.data}")
         self.showing_camera = msg.data
+        self.first = True
 
 def main(args=None):
     rclpy.init(args=args)

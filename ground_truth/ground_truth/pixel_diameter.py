@@ -16,8 +16,7 @@ from controller_manager_msgs.srv import SwitchController
 import numpy as np
 
 from std_msgs.msg import Float32, Bool
-from sensor_msgs.msg import JointState
-import time 
+from sensor_msgs.msg import JointState 
 import matplotlib.pyplot as plt
 
 import torch
@@ -32,6 +31,7 @@ import copy
 import cv2
 import statistics
 import datetime
+
 
 from sensor_msgs.msg import Image
 
@@ -50,7 +50,7 @@ from moveit_msgs.msg import (
 from rclpy.action import ActionClient
 '''
 
-import time 
+import time as t
 import math 
 
 
@@ -126,14 +126,18 @@ class PixelDiameter(Node):
         if self.step_3: 
             
             if not self.future: # A call is not pending
-                self.starting_y = self.tool_y 
-                #self.get_logger().info(f"Sending request for camera record. Y Pose want now is {self.starting_y}")
-                #self.recording = True
-                #self.video.release()
                 msg = Bool()
                 msg.data = True
                 for x in range (0,3):
                     self.pub_recording.publish(msg)
+
+                t.sleep(1)
+                
+                self.starting_y = self.tool_y 
+                #self.get_logger().info(f"Sending request for camera record. Y Pose want now is {self.starting_y}")
+                #self.recording = True
+                #self.video.release()
+               
                 request = CameraRecord.Request()
                 time = datetime.datetime.now()
                 time_formated = time.strftime("_%Y_%m_%d_%H_%M_%S")
