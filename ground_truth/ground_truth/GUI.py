@@ -1197,7 +1197,7 @@ class Window(QMainWindow):
         filename_json = '/home/ryan/ros2_ws_groundtruth/src/Ground_Truth_Ros/ground_truth/json_files/'+self.file + time_formated+ '.json'
         print(f"Trying to create json file: {filename_json}")
         with open (filename_json, "w") as outfile: 
-            outfile.write(json.dump(self.tests_dict, indent = 4))
+            json.dump(self.tests_dict, outfile)
         print("json file written to")
 
         logging.info(f"Exit Requested. Saved Values : {self.tests}")

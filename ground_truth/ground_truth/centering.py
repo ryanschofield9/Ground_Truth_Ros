@@ -294,9 +294,9 @@ class CenteringCleaned(Node):
         print("argmin tof1: ",np.argmin(self.y_fit_tof2) )
         
         
-        idx_tof1_cleaned = (np.argmin(self.y_fit_tof1)/len(self.x_fit_tof1) ) * len(self.tof1_inrange_cleaned) + (len(self.tof1_inrange) - len(self.tof1_inrange_cleaned))
+        idx_tof1_cleaned = (np.argmin(self.y_fit_tof1)/len(self.x_fit_tof1) ) * len(self.tof1_inrange_cleaned) + (len(self.tof1_inrange) - len(self.tof1_inrange_cleaned)) -1
 
-        idx_tof2_cleaned = (np.argmin(self.y_fit_tof2)/len(self.x_fit_tof2) ) * len(self.tof2_inrange_cleaned) + (len(self.tof2_inrange) - len(self.tof2_inrange_cleaned))
+        idx_tof2_cleaned = (np.argmin(self.y_fit_tof2)/len(self.x_fit_tof2) ) * len(self.tof2_inrange_cleaned) + (len(self.tof2_inrange) - len(self.tof2_inrange_cleaned)) -1
     
         print("Idx of tof1_cleaned: ", idx_tof1_cleaned)
         print("idx of tof1 poses: ", len(self.tof1_pos_inrange))

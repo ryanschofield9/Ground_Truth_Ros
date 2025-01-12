@@ -1,0 +1,30 @@
+2025-01-12 09:59:26,479 - INFO - File name changed to: UFO_Tree_0
+2025-01-12 09:59:26,480 - INFO - Trial Number changed to: 1
+2025-01-12 09:59:26,480 - INFO - Branch Number changed to: 1
+2025-01-12 09:59:26,480 - INFO - File name changed to: UFO_Tree_1
+2025-01-12 09:59:26,480 - INFO - File name changed to: UFO_Tree_1
+2025-01-12 09:59:26,480 - INFO - Tree Number changed to: 1
+2025-01-12 09:59:28,167 - INFO - Controller change requested : Switching to Forward
+2025-01-12 09:59:28,505 - INFO - Controller change requested : Switching to Joints
+2025-01-12 09:59:37,482 - INFO - Start Requested
+2025-01-12 10:00:10,112 - INFO - The angle correction has changed: angle added:0.0 angle direction: CW 
+2025-01-12 10:00:40,212 - INFO - Diameter W1 changed to: 0.5232409238815308 
+2025-01-12 10:00:40,212 - INFO - Diameter W2 changed to: 0.33453109860420227 
+2025-01-12 10:00:40,212 - INFO - Diameter Mean changed to: 0.5575518012046814 
+2025-01-12 10:00:40,212 - INFO - Diameter Median changed to: 0.5232409238815308 
+2025-01-12 10:00:40,212 - INFO - Total time changed to: 48.58
+2025-01-12 10:00:45,766 - INFO - Hit position changed to: L 
+2025-01-12 10:00:47,713 - INFO - Distance to tree changed to: 7 
+2025-01-12 10:00:47,797 - INFO - Distance to tree changed to: 7. 
+2025-01-12 10:00:48,097 - INFO - Distance to tree changed to: 7.5 
+2025-01-12 10:00:49,959 - INFO - Measured Diameter changed to: 0
+2025-01-12 10:00:50,183 - INFO - Measured Diameter changed to: 0.
+2025-01-12 10:00:50,538 - INFO - Measured Diameter changed to: 0.5
+2025-01-12 10:00:54,964 - INFO - Hit position changed to:  
+2025-01-12 10:00:54,965 - INFO - Save Requested. Saved Values : [[1, 1, 1, 1.9612873236285608, -0.8113489908031006, -1.598119084035055, -4.219369789163107, -1.594905201588766, 0.944798469543457, '0.5', 0.5232409238815308, 0.33453109860420227, 0.5575518012046814, 0.5232409238815308, 'L', '7.5', 48.58, 0.0, 'CW', 'N/a']]
+2025-01-12 10:00:55,012 - INFO - Diameter W1 changed to: 0.5232409238815308 
+2025-01-12 10:00:55,012 - INFO - Diameter W2 changed to: 0.33453109860420227 
+2025-01-12 10:00:55,012 - INFO - Diameter Mean changed to: 0.5575518012046814 
+2025-01-12 10:00:55,012 - INFO - Diameter Median changed to: 0.5232409238815308 
+2025-01-12 10:00:56,176 - INFO - Exit Requested. Saved Values : [[1, 1, 1, 1.9612873236285608, -0.8113489908031006, -1.598119084035055, -4.219369789163107, -1.594905201588766, 0.944798469543457, '0.5', 0.5232409238815308, 0.33453109860420227, 0.5575518012046814, 0.5232409238815308, 'L', '7.5', 48.58, 0.0, 'CW', 'N/a']]
+2025-01-12 10:00:56,176 - INFO - After Exit Request values were saved to: /home/ryan/ros2_ws_groundtruth/src/Ground_Truth_Ros/ground_truth/csv_files/UFO_Tree_1_2025_01_12_10_00_56.csv and /home/ryan/ros2_ws_groundtruth/src/Ground_Truth_Ros/ground_truth/json_files/UFO_Tree_1_2025_01_12_10_00_56.json
