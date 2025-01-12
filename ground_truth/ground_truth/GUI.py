@@ -20,6 +20,8 @@ from PyQt6.QtCore import *
 from PIL import Image as IMG
 from PIL.ImageQt import ImageQt
 
+import json
+
 import sys
 import logging
 from sensor_msgs.msg import JointState
@@ -647,7 +649,7 @@ class Popup_Angle_Correction (QMainWindow):
  
         #Add text  
 
-        self.label = QLabel("Please Select the Angle Correction Needed. Press Save when done", self)
+        self.label = QLabel("Please Select the Angle Correction Needed. Press Yes when done", self)
 
         text_layout.addWidget(self.label)
 
@@ -760,11 +762,13 @@ class Window(QMainWindow):
 
         self.trees_saved = []
 
+        self.tests_dict = {}
+
         self.shared_data = shared_data
 
         self.timer = QtCore.QBasicTimer()
 
-        self.at_0 = True 
+        self.at_0 = False
         self.controller = "Joints"
 
         self.hit_pos = "N/a"
@@ -1158,10 +1162,24 @@ class Window(QMainWindow):
 
         self.trees_saved.append([self.tree_val, self.branch_val, self.trial_val])
         self.tests.append([self.tree_val, self.branch_val, self.trial_val, self.joints_in_order[0],self.joints_in_order[1],self.joints_in_order[2],self.joints_in_order[3], self.joints_in_order[4], self.joints_in_order[5],self.real_diameter, self.diameters[0], self.diameters[1], self.diameters[2], self.diameters[3], self.hit_pos, self.distance_tree, self.total_time, self.angle_add, self.angle_dir, self.notes])
+        tree_string = str(self.tree_val) + '_' + str(self.branch_val) + '_' + str(self.trial_val)
+        self.tests_dict [tree_string] = {'elbow_joint':self.joints_in_order[0],'shoulder_lift_joint': self.joints_in_order[1], 'shoulder_pan_joint': self.joints_in_order[2], 'wrist_1_joint': self.joints_in_order[3],'wrist_2_joint': self.joints_in_order[4],'wrist_3_joint':self.joints_in_order[5], 'measured diameter': self.real_diameter,"W1 Diameter": self.diameters[0], "W2 Diameter":self.diameters[1], "Mean Diameter":self.diameters[2], "Median Diameter":self.diameters[3], "Contact":self.hit_pos, "Distance from Tree":self.distance_tree, "Time (s)":self.total_time, "Angle Correction":self.angle_add, "Angle Correction Direction":self.angle_dir,"Notes":self.notes} 
         self.notes = "N/a"
         self.note_area.clear()
         self.hit_pos = "N/a"
         self.hit_text.clear()
+
+        self.W1 = 0.0
+        self.W2 = 0.0
+        self.mean = 0.0
+        self.median = 0.0
+        
+        self.label_diameter_found_w1.setText(f"W1: {round(self.diameters[0],2)}")
+        self.label_diameter_found_w2.setText(f"W2: {round(self.diameters[1],2)}")
+        self.label_diameter_found_mean.setText(f"Mean: {round(self.diameters[2],2)}")
+        self.label_diameter_found_median.setText(f"Median: {round(self.diameters[3],2)}")
+
+
         logging.info(f"Save Requested. Saved Values : {self.tests}")
        
     
@@ -1176,9 +1194,14 @@ class Window(QMainWindow):
             csvwriter.writerow(fields)   
             # writing the data rows   
             csvwriter.writerows(self.tests) 
+        filename_json = '/home/ryan/ros2_ws_groundtruth/src/Ground_Truth_Ros/ground_truth/json_files/'+self.file + time_formated+ '.json'
+        print(f"Trying to create json file: {filename_json}")
+        with open (filename_json, "w") as outfile: 
+            outfile.write(json.dump(self.tests_dict, indent = 4))
+        print("json file written to")
 
         logging.info(f"Exit Requested. Saved Values : {self.tests}")
-        logging.info(f"After Exit Request values were saved to: {filename}")
+        logging.info(f"After Exit Request values were saved to: {filename} and {filename_json}")
 
     
         popup = Popup_Exit(self, self.tests)
@@ -1255,13 +1278,13 @@ class Window(QMainWindow):
         self.median = self.diameters[3]
 
     def rotate(self):
-        if self.at_0 == True: 
+        if self.at_0 == False: 
             self.shared_data.set_rotate(True, 0.0)
-            self.at_0 = False
+            self.at_0 = True
             logging.info(f"Set to Rotate to: 0 degrees (0.0 radians)")
         else:
             self.shared_data.set_rotate(True, 1.5708) #radians is used, so 1.5708 rads is 90 degrees 
-            self.at_0 = True
+            self.at_0 = False
             logging.info(f"Set to Rotate to: 90 degrees (1.5708 radians)")
         
 

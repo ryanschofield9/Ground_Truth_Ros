@@ -419,7 +419,7 @@ class CenteringCleaned(Node):
         for x in range (1, len(self.tof1_inrange)):
             if cleaned == False: 
                 if self.tof1_inrange[x]- self.tof1_inrange[x-1] > 0: 
-                    count = 0 
+                    count = count 
                 else:
                     count += 1 
                     if count == 3: 

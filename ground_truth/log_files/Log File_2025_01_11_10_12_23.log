@@ -1,0 +1,19 @@
+2025-01-11 10:12:23,785 - INFO - File name changed to: UFO_Tree_0
+2025-01-11 10:12:23,785 - INFO - Trial Number changed to: 1
+2025-01-11 10:12:23,785 - INFO - Branch Number changed to: 1
+2025-01-11 10:12:23,785 - INFO - File name changed to: UFO_Tree_1
+2025-01-11 10:12:23,785 - INFO - File name changed to: UFO_Tree_1
+2025-01-11 10:12:23,785 - INFO - Tree Number changed to: 1
+2025-01-11 10:14:17,191 - INFO - Controller change requested : Switching to Forward
+2025-01-11 10:14:23,975 - INFO - Controller change requested : Switching to Joints
+2025-01-11 10:14:56,905 - INFO - Start Requested
+2025-01-11 10:15:18,809 - INFO - The angle correction has changed: angle added:0.0 angle direction: CW 
+2025-01-11 10:15:57,108 - INFO - Diameter Mean changed to: 0.6193788051605225 
+2025-01-11 10:15:57,108 - INFO - Diameter Median changed to: 0.49186813831329346 
+2025-01-11 10:15:57,108 - INFO - Total time changed to: 58.77
+2025-01-11 10:18:06,194 - INFO - Measured Diameter changed to: 1
+2025-01-11 10:18:06,513 - INFO - Measured Diameter changed to: 1.
+2025-01-11 10:18:06,606 - INFO - Measured Diameter changed to: 1.1
+2025-01-11 10:18:16,535 - INFO - Trying to create json file: /home/ryan/ros2_ws_groundtruth/src/Ground_Truth_Ros/ground_truth/csv_files/UFO_Tree_1_2025_01_11_10_18_16.json
+2025-01-11 10:18:16,535 - INFO - Exit Requested. Saved Values : []
+2025-01-11 10:18:16,535 - INFO - After Exit Request values were saved to: /home/ryan/ros2_ws_groundtruth/src/Ground_Truth_Ros/ground_truth/csv_files/UFO_Tree_1_2025_01_11_10_18_16.csv and /home/ryan/ros2_ws_groundtruth/src/Ground_Truth_Ros/ground_truth/csv_files/UFO_Tree_1_2025_01_11_10_18_16.json

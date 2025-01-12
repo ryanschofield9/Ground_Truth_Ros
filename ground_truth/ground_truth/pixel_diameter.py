@@ -249,7 +249,7 @@ class PixelDiameter(Node):
         y_pose= self.tool_y #get the current tool y pose 
         #print("y_pose: ", y_pose, " y_pose_want", y_pose_want)
         self.get_logger().info(f"y_pose: {y_pose} y_pose_want: {y_pose_want}")
-        if ((y_pose_want) - (y_pose)) < 0.001: 
+        if ((y_pose_want) - (y_pose)) < 0.005: #0.001: 
             #when within 1mm of wanted y pose 
             self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving 
             self.back_to_original= True
