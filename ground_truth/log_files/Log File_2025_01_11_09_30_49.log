@@ -1,9 +1,0 @@
-2025-01-11 09:30:49,219 - INFO - File name changed to: UFO_Tree_0
-2025-01-11 09:30:49,220 - INFO - Trial Number changed to: 1
-2025-01-11 09:30:49,220 - INFO - Branch Number changed to: 1
-2025-01-11 09:30:49,220 - INFO - File name changed to: UFO_Tree_1
-2025-01-11 09:30:49,220 - INFO - File name changed to: UFO_Tree_1
-2025-01-11 09:30:49,220 - INFO - Tree Number changed to: 1
-2025-01-11 09:30:52,096 - INFO - Set to Rotate to: 0 degrees (0.0 radians)
-2025-01-11 09:31:05,013 - INFO - Exit Requested. Saved Values : []
-2025-01-11 09:31:05,013 - INFO - After Exit Request values were saved to: /home/ryan/ros2_ws_groundtruth/src/Ground_Truth_Ros/ground_truth/csv_files/UFO_Tree_1_2025_01_11_09_31_05.csv and /home/ryan/ros2_ws_groundtruth/src/Ground_Truth_Ros/ground_truth/csv_files/UFO_Tree_1_2025_01_11_09_31_05.json

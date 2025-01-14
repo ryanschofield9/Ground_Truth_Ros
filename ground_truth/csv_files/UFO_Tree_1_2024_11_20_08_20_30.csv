@@ -1,2 +1,0 @@
-Tree,Branch,Trial,elbow_joint,shoulder_lift_joint,shoulder_pan_joint,wrist_1_joint,wrist_2_joint,wrist_3_joint,measured diameter,W1 Diameter,W2 Diameter,Mean Diameter,Median Diameter,Contact,Distance from Tree,Time (s),Angle Correction,Angle Correction Direction,Notes
-1,1,1,-0.9037351012229919,-2.6085506878294886,-0.14984018007387334,0.349368615741394,0.7071547508239746,1.2521991729736328,0.5,0.6107250452041626,0.4204992353916168,1.4746079444885254,1.5418305397033691,left,9.0,52.79,0.0,CW,No Correction Allowed

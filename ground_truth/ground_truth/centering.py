@@ -418,7 +418,10 @@ class CenteringCleaned(Node):
 
         for x in range (1, len(self.tof1_inrange)):
             if cleaned == False: 
-                if self.tof1_inrange[x]- self.tof1_inrange[x-1] > 0: 
+                if(len(self.tof1_inrange)<10):
+                    tof1_inrange_cleaned.append(self.tof1_inrange[x-1])
+                    cleaned = True
+                elif self.tof1_inrange[x]- self.tof1_inrange[x-1] > 0: 
                     count = count 
                 else:
                     count += 1 
@@ -433,7 +436,10 @@ class CenteringCleaned(Node):
 
         for x in range (1, len(self.tof2_inrange)):
             if cleaned_2 == False: 
-                if self.tof2_inrange[x]- self.tof2_inrange[x-1] > 0: 
+                if(len(self.tof2_inrange)<10):
+                    tof2_inrange_cleaned.append(self.tof2_inrange[x-1])
+                    cleaned = True
+                elif self.tof2_inrange[x]- self.tof2_inrange[x-1] > 0: 
                     count_2 = 0 
                 else:
                     count_2 += 1 
