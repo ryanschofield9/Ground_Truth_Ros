@@ -186,8 +186,8 @@ class CenteringCleaned(Node):
                     #if the angle has been calculated, but the system has not reached the center of the branch
                     self.publish_twist([0.0, 0.1, 0.0], [0.0, 0.0, 0.0])  #move down at 0.05 m/s (negative y is up )
                     #y_pose_want = (self.lowest_pos_tof1+self.lowest_pos_tof2)/2 #find y_pose_want as the average of y tool position at the lowest filtered tof readings
-                    idx_tof1_cleaned = (np.argmin(self.y_fit_tof1)/len(self.x_fit_tof1) ) * len(self.tof1_inrange_cleaned) + (len(self.tof1_inrange) - len(self.tof1_inrange_cleaned))
-                    idx_tof2_cleaned = (np.argmin(self.y_fit_tof2)/len(self.x_fit_tof2) ) * len(self.tof2_inrange_cleaned) + (len(self.tof2_inrange) - len(self.tof2_inrange_cleaned))
+                    idx_tof1_cleaned = (np.argmin(self.y_fit_tof1)/len(self.x_fit_tof1) ) * len(self.tof1_inrange_cleaned) + (len(self.tof1_inrange) - len(self.tof1_inrange_cleaned)) -1 
+                    idx_tof2_cleaned = (np.argmin(self.y_fit_tof2)/len(self.x_fit_tof2) ) * len(self.tof2_inrange_cleaned) + (len(self.tof2_inrange) - len(self.tof2_inrange_cleaned)) - 1
                     interpolated_reading_tof1 = (idx_tof1_cleaned - math.ceil(idx_tof1_cleaned))* self.tof1_pos_inrange[math.ceil(idx_tof1_cleaned)] + (1-( (idx_tof1_cleaned - math.ceil(idx_tof1_cleaned))))* self.tof1_pos_inrange[math.floor(idx_tof1_cleaned)]
                     interpolated_reading_tof2 = (idx_tof2_cleaned - math.ceil(idx_tof2_cleaned))* self.tof2_pos_inrange[math.ceil(idx_tof2_cleaned)] + (1-( (idx_tof2_cleaned - math.ceil(idx_tof2_cleaned))))* self.tof2_pos_inrange[math.floor(idx_tof2_cleaned)]
                     y_pose_want = (interpolated_reading_tof1+ interpolated_reading_tof2)/2
@@ -414,7 +414,10 @@ class CenteringCleaned(Node):
         cleaned = False
         cleaned_2 = False
         count = 0 
+        count_up = 0 
         count_2 = 0 
+        count_up_2 = 0  
+ 
 
         for x in range (1, len(self.tof1_inrange)):
             if cleaned == False: 
@@ -422,7 +425,9 @@ class CenteringCleaned(Node):
                     tof1_inrange_cleaned.append(self.tof1_inrange[x-1])
                     cleaned = True
                 elif self.tof1_inrange[x]- self.tof1_inrange[x-1] > 0: 
-                    count = count 
+                    count_up = count_up+1
+                    if count_up == 3:
+                        cleaned = True
                 else:
                     count += 1 
                     if count == 3: 
@@ -440,7 +445,9 @@ class CenteringCleaned(Node):
                     tof2_inrange_cleaned.append(self.tof2_inrange[x-1])
                     cleaned = True
                 elif self.tof2_inrange[x]- self.tof2_inrange[x-1] > 0: 
-                    count_2 = 0 
+                    count_up_2 = count_up_2 + 1
+                    if count_up_2 == 3: 
+                        cleaned_2 = True
                 else:
                     count_2 += 1 
                     if count_2 == 3:
