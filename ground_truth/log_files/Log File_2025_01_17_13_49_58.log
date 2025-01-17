@@ -1,0 +1,46 @@
+2025-01-17 13:49:58,107 - INFO - File name changed to: UFO_Tree_0
+2025-01-17 13:49:58,108 - INFO - Trial Number changed to: 1
+2025-01-17 13:49:58,108 - INFO - Branch Number changed to: 1
+2025-01-17 13:49:58,108 - INFO - File name changed to: UFO_Tree_1
+2025-01-17 13:49:58,108 - INFO - File name changed to: UFO_Tree_1
+2025-01-17 13:49:58,108 - INFO - Tree Number changed to: 1
+2025-01-17 13:50:12,867 - INFO - Start Requested
+2025-01-17 13:50:35,970 - INFO - The angle correction has changed: angle added:0.0 angle direction: CW 
+2025-01-17 13:51:26,903 - INFO - Controller change requested : Switching to Forward
+2025-01-17 13:51:27,057 - INFO - Controller change requested : Switching to Joints
+2025-01-17 14:05:14,203 - INFO - Start Requested
+2025-01-17 14:05:36,670 - INFO - The angle correction has changed: angle added:0.0 angle direction: CW 
+2025-01-17 14:06:20,793 - INFO - Controller change requested : Switching to Forward
+2025-01-17 14:06:20,920 - INFO - Controller change requested : Switching to Joints
+2025-01-17 14:07:08,934 - INFO - Start Requested
+2025-01-17 14:08:13,400 - INFO - Controller change requested : Switching to Forward
+2025-01-17 14:08:13,548 - INFO - Controller change requested : Switching to Joints
+2025-01-17 14:08:20,260 - INFO - Start Requested
+2025-01-17 14:08:26,845 - INFO - Start Requested
+2025-01-17 14:08:48,751 - INFO - Controller change requested : Switching to Forward
+2025-01-17 14:08:48,927 - INFO - Controller change requested : Switching to Joints
+2025-01-17 14:10:57,792 - INFO - Start Requested
+2025-01-17 14:11:45,634 - INFO - Start Requested
+2025-01-17 14:11:56,801 - INFO - Controller change requested : Switching to Forward
+2025-01-17 14:11:56,963 - INFO - Controller change requested : Switching to Joints
+2025-01-17 14:13:54,576 - INFO - Start Requested
+2025-01-17 14:19:04,389 - INFO - Controller change requested : Switching to Forward
+2025-01-17 14:19:04,537 - INFO - Controller change requested : Switching to Joints
+2025-01-17 14:19:11,247 - INFO - Start Requested
+2025-01-17 14:19:28,970 - INFO - The angle correction has changed: angle added:0.0 angle direction: CW 
+2025-01-17 14:20:03,470 - INFO - Diameter W1 changed to: 1.538257360458374 
+2025-01-17 14:20:03,470 - INFO - Diameter W2 changed to: 1.538257360458374 
+2025-01-17 14:20:03,471 - INFO - Diameter Mean changed to: 1.5730280876159668 
+2025-01-17 14:20:03,471 - INFO - Diameter Median changed to: 1.5772006511688232 
+2025-01-17 14:20:03,471 - INFO - Total time changed to: 51.45
+2025-01-17 14:20:15,924 - INFO - Controller change requested : Switching to Forward
+2025-01-17 14:20:16,163 - INFO - Controller change requested : Switching to Joints
+2025-01-17 14:21:19,608 - INFO - Start Requested
+2025-01-17 14:21:37,970 - INFO - The angle correction has changed: angle added:0.0 angle direction: CW 
+2025-01-17 14:22:06,170 - INFO - Diameter W1 changed to: 1.3317056894302368 
+2025-01-17 14:22:06,170 - INFO - Diameter W2 changed to: 1.2844821214675903 
+2025-01-17 14:22:06,170 - INFO - Diameter Mean changed to: 1.3147051334381104 
+2025-01-17 14:22:06,170 - INFO - Diameter Median changed to: 1.3222609758377075 
+2025-01-17 14:22:06,170 - INFO - Total time changed to: 45.95
+2025-01-17 14:22:14,727 - INFO - Controller change requested : Switching to Forward
+2025-01-17 14:22:15,016 - INFO - Controller change requested : Switching to Joints

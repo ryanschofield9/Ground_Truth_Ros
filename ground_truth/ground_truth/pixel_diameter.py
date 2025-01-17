@@ -172,7 +172,7 @@ class PixelDiameter(Node):
             ## HAVE TO ADD HERE TO DO OPTICAL FLOW 
             video_path = self.file_name
             frames, _, _ = read_video(str(video_path), output_format="TCHW")
-            frame = int(len(frames)/2)
+            frame = int(len(frames)/4)
             flow_imgs = self.optical_flow(frames, frame)
             closing, flow_saved = self.filter_imgs(flow_imgs)
             final_img = copy.deepcopy(closing)
@@ -249,7 +249,7 @@ class PixelDiameter(Node):
         y_pose= self.tool_y #get the current tool y pose 
         #print("y_pose: ", y_pose, " y_pose_want", y_pose_want)
         self.get_logger().info(f"y_pose: {y_pose} y_pose_want: {y_pose_want}")
-        if ((y_pose_want) - (y_pose)) < -0.002: #0.001: 
+        if ((y_pose_want) - (y_pose)) < -0.000: #0.001: 
             #when within 1mm of wanted y pose 
             self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving 
             self.back_to_original= True
