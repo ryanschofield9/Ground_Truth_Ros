@@ -174,7 +174,7 @@ class PixelDiameter(Node):
             frames, _, _ = read_video(str(video_path), output_format="TCHW")
             frame = int(len(frames)/4)
             flow_imgs = self.optical_flow(frames, frame)
-            closing, flow_saved = self.filter_imgs(flow_imgs)
+            closing, bwimg, flow_saved = self.filter_imgs(flow_imgs)
             final_img = copy.deepcopy(closing)
             submatrix = closing[300:500, 0:1279]
             '''
@@ -249,7 +249,7 @@ class PixelDiameter(Node):
         y_pose= self.tool_y #get the current tool y pose 
         #print("y_pose: ", y_pose, " y_pose_want", y_pose_want)
         self.get_logger().info(f"y_pose: {y_pose} y_pose_want: {y_pose_want}")
-        if ((y_pose_want) - (y_pose)) < -0.000: #0.001: 
+        if ((y_pose_want) - (y_pose)) < 0.004: #0.001: 
             #when within 1mm of wanted y pose 
             self.publish_twist([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) #stop moving 
             self.back_to_original= True
@@ -427,18 +427,20 @@ class PixelDiameter(Node):
         #turn the image from RGB to Gray 
         bwimg = cv2.cvtColor(img2, cv2.COLOR_RGB2GRAY)
 
+
         #Use Gaussian Blur to blur the image to get a better threshold 
         blur = cv2.GaussianBlur(bwimg,(5,5),0)
 
         #Use OTSU thresholding 
-        ret, img=cv2.threshold(blur,100,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+        #ret, img=cv2.threshold(blur,100,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+        ret, img=cv2.threshold(blur,175,255,cv2.THRESH_BINARY)
 
         #filter the image by opening and closing the image (getting rid of any pixels that are by themselves and filling in any small holes)
         kernel = np.ones((5, 5), np.uint8)
         opening = cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel)
         closing = cv2.morphologyEx(opening, cv2.MORPH_CLOSE, kernel)
 
-        return closing, flow_saved
+        return closing, blur, flow_saved
 
     def pixel_count (self,submatrix):
         #set pixel counting variables 

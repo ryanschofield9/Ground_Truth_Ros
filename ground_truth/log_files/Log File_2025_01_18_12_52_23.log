@@ -1,0 +1,76 @@
+2025-01-18 12:52:23,216 - INFO - File name changed to: UFO_Tree_0
+2025-01-18 12:52:23,217 - INFO - Trial Number changed to: 1
+2025-01-18 12:52:23,218 - INFO - Branch Number changed to: 1
+2025-01-18 12:52:23,218 - INFO - File name changed to: UFO_Tree_1
+2025-01-18 12:52:23,218 - INFO - File name changed to: UFO_Tree_1
+2025-01-18 12:52:23,218 - INFO - Tree Number changed to: 1
+2025-01-18 12:52:45,945 - INFO - Start Requested
+2025-01-18 12:52:49,249 - INFO - Measured Diameter changed to: 0
+2025-01-18 12:52:49,480 - INFO - Measured Diameter changed to: 0.
+2025-01-18 12:52:50,197 - INFO - Measured Diameter changed to: 0.5
+2025-01-18 12:52:51,739 - INFO - Distance to tree changed to: 7 
+2025-01-18 12:52:52,217 - INFO - Distance to tree changed to: 7. 
+2025-01-18 12:52:52,532 - INFO - Distance to tree changed to: 7.0 
+2025-01-18 12:53:03,635 - INFO - The angle correction has changed: angle added:0.0 angle direction: CW 
+2025-01-18 12:53:30,035 - INFO - Diameter W1 changed to: 0.5628964304924011 
+2025-01-18 12:53:30,035 - INFO - Diameter W2 changed to: 0.5470402240753174 
+2025-01-18 12:53:30,035 - INFO - Diameter Mean changed to: 0.5776200890541077 
+2025-01-18 12:53:30,035 - INFO - Diameter Median changed to: 0.5787526965141296 
+2025-01-18 12:53:30,036 - INFO - Total time changed to: 43.34
+2025-01-18 12:53:40,859 - INFO - Hit position changed to: C 
+2025-01-18 12:53:42,150 - INFO - Hit position changed to:  
+2025-01-18 12:53:42,151 - INFO - Save Requested. Saved Values : [[1, 1, 1, 1.7849395910846155, -0.7476812166026612, -1.3999903837787073, -4.049514909783834, -1.828179184590475, 1.227860927581787, '0.5', 0.5628964304924011, 0.5470402240753174, 0.5776200890541077, 0.5787526965141296, 'C', '7.0', 43.34, 0.0, 'CW', 'N/a']]
+2025-01-18 12:53:42,234 - INFO - Diameter W1 changed to: 0.5628964304924011 
+2025-01-18 12:53:42,235 - INFO - Diameter W2 changed to: 0.5470402240753174 
+2025-01-18 12:53:42,235 - INFO - Diameter Mean changed to: 0.5776200890541077 
+2025-01-18 12:53:42,235 - INFO - Diameter Median changed to: 0.5787526965141296 
+2025-01-18 12:53:43,468 - INFO - Trial Number changed to: 2
+2025-01-18 12:53:44,482 - INFO - Controller change requested : Switching to Forward
+2025-01-18 12:53:44,609 - INFO - Controller change requested : Switching to Joints
+2025-01-18 12:53:55,679 - INFO - Start Requested
+2025-01-18 12:54:15,734 - INFO - The angle correction has changed: angle added:0.0 angle direction: CW 
+2025-01-18 12:54:40,834 - INFO - Diameter W1 changed to: 0.5425641536712646 
+2025-01-18 12:54:40,835 - INFO - Diameter W2 changed to: 0.5425641536712646 
+2025-01-18 12:54:40,835 - INFO - Diameter Mean changed to: 0.5521388053894043 
+2025-01-18 12:54:40,835 - INFO - Diameter Median changed to: 0.5505430698394775 
+2025-01-18 12:54:40,835 - INFO - Total time changed to: 44.34
+2025-01-18 12:54:52,976 - INFO - Hit position changed to: C 
+2025-01-18 12:54:53,930 - INFO - Hit position changed to:  
+2025-01-18 12:54:53,930 - INFO - Save Requested. Saved Values : [[1, 1, 1, 1.7849395910846155, -0.7476812166026612, -1.3999903837787073, -4.049514909783834, -1.828179184590475, 1.227860927581787, '0.5', 0.5628964304924011, 0.5470402240753174, 0.5776200890541077, 0.5787526965141296, 'C', '7.0', 43.34, 0.0, 'CW', 'N/a'], [1, 1, 2, 1.7807567755328577, -0.7470593017390748, -1.3980658690081995, -4.047206779519552, -1.8300169149981897, 1.2269983291625977, '0.5', 0.5425641536712646, 0.5425641536712646, 0.5521388053894043, 0.5505430698394775, 'C', '7.0', 44.34, 0.0, 'CW', 'N/a']]
+2025-01-18 12:54:53,934 - INFO - Diameter W1 changed to: 0.5425641536712646 
+2025-01-18 12:54:53,934 - INFO - Diameter W2 changed to: 0.5425641536712646 
+2025-01-18 12:54:53,934 - INFO - Diameter Mean changed to: 0.5521388053894043 
+2025-01-18 12:54:53,934 - INFO - Diameter Median changed to: 0.5505430698394775 
+2025-01-18 12:54:54,924 - INFO - Trial Number changed to: 3
+2025-01-18 12:54:55,832 - INFO - Controller change requested : Switching to Forward
+2025-01-18 12:54:55,959 - INFO - Controller change requested : Switching to Joints
+2025-01-18 12:54:59,501 - INFO - Start Requested
+2025-01-18 12:55:16,834 - INFO - The angle correction has changed: angle added:0.0 angle direction: CW 
+2025-01-18 12:55:41,435 - INFO - Diameter W1 changed to: 0.5136531591415405 
+2025-01-18 12:55:41,435 - INFO - Diameter W2 changed to: 0.5136531591415405 
+2025-01-18 12:55:41,435 - INFO - Diameter Mean changed to: 0.4935885965824127 
+2025-01-18 12:55:41,435 - INFO - Diameter Median changed to: 0.5176661014556885 
+2025-01-18 12:55:41,435 - INFO - Total time changed to: 41.24
+2025-01-18 12:55:52,763 - INFO - Hit position changed to: C 
+2025-01-18 12:55:54,339 - INFO - Hit position changed to:  
+2025-01-18 12:55:54,339 - INFO - Save Requested. Saved Values : [[1, 1, 1, 1.7849395910846155, -0.7476812166026612, -1.3999903837787073, -4.049514909783834, -1.828179184590475, 1.227860927581787, '0.5', 0.5628964304924011, 0.5470402240753174, 0.5776200890541077, 0.5787526965141296, 'C', '7.0', 43.34, 0.0, 'CW', 'N/a'], [1, 1, 2, 1.7807567755328577, -0.7470593017390748, -1.3980658690081995, -4.047206779519552, -1.8300169149981897, 1.2269983291625977, '0.5', 0.5425641536712646, 0.5425641536712646, 0.5521388053894043, 0.5505430698394775, 'C', '7.0', 44.34, 0.0, 'CW', 'N/a'], [1, 1, 3, 1.7818592230426233, -0.7472984355739136, -1.4006035963641565, -4.047948261300558, -1.826857868825094, 1.1896963119506836, '0.5', 0.5136531591415405, 0.5136531591415405, 0.4935885965824127, 0.5176661014556885, 'C', '7.0', 41.24, 0.0, 'CW', 'N/a']]
+2025-01-18 12:55:54,434 - INFO - Diameter W1 changed to: 0.5136531591415405 
+2025-01-18 12:55:54,435 - INFO - Diameter W2 changed to: 0.5136531591415405 
+2025-01-18 12:55:54,435 - INFO - Diameter Mean changed to: 0.4935885965824127 
+2025-01-18 12:55:54,435 - INFO - Diameter Median changed to: 0.5176661014556885 
+2025-01-18 12:55:55,607 - INFO - Trial Number changed to: 4
+2025-01-18 12:55:56,544 - INFO - Controller change requested : Switching to Forward
+2025-01-18 12:55:56,678 - INFO - Controller change requested : Switching to Joints
+2025-01-18 12:56:28,993 - INFO - Distance to tree changed to: 7. 
+2025-01-18 12:56:29,133 - INFO - Distance to tree changed to: 7 
+2025-01-18 12:56:29,506 - INFO - Distance to tree changed to:  
+2025-01-18 12:56:29,885 - INFO - Distance to tree changed to: 8 
+2025-01-18 12:56:30,281 - INFO - Distance to tree changed to: 8. 
+2025-01-18 12:56:30,686 - INFO - Distance to tree changed to: 8.5 
+2025-01-18 12:56:32,729 - INFO - Start Requested
+2025-01-18 12:57:15,827 - INFO - Controller change requested : Switching to Forward
+2025-01-18 12:57:16,186 - INFO - Controller change requested : Switching to Joints
+2025-01-18 12:57:21,703 - INFO - Start Requested
+2025-01-18 12:57:39,535 - INFO - The angle correction has changed: angle added:0.0 angle direction: CW 
+2025-01-18 12:58:44,429 - INFO - Controller change requested : Switching to Forward
+2025-01-18 12:58:44,591 - INFO - Controller change requested : Switching to Joints
